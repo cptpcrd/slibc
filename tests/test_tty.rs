@@ -66,6 +66,9 @@ fn test_tty() {
     );
 
     unsafe {
-        assert_eq!(ptsname(r.fd()).unwrap_err().code(), libc::ENOTTY);
+        assert!(matches!(
+            ptsname(r.fd()).unwrap_err().code(),
+            libc::ENOTTY | libc::EINVAL
+        ));
     }
 }
