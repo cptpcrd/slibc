@@ -271,7 +271,7 @@ impl Iterator for PasswdIter {
                         },
                     ) {
                         Ok(Some(entry)) => Some(Ok(entry)),
-                        Ok(None) => unreachable!(),
+                        Ok(None) => None,
 
                         Err(e) if e.code() == libc::ENOENT => None,
                         Err(e) => Some(Err(e)),
