@@ -320,7 +320,7 @@ mod tests {
         assert!(f.write(b"ignored").unwrap() > 0);
     }
 
-    #[cfg(target_os =  "linux")]
+    #[cfg(target_os = "linux")]
     #[test]
     fn test_pipe_sz() {
         let (r, w) = crate::pipe().unwrap();
