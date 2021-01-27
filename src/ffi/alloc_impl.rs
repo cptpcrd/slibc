@@ -238,7 +238,7 @@ impl OsString {
     }
 
     #[inline]
-    pub fn as_os_str_mut(&mut self) -> &mut OsStr {
+    fn as_os_str_mut(&mut self) -> &mut OsStr {
         OsStr::from_bytes_mut(&mut self.0)
     }
 
