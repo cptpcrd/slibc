@@ -432,6 +432,35 @@ mod tests {
     }
 
     #[test]
+    fn test_lookup_cur() {
+        let uid = crate::getuid();
+
+        let cur1 = Passwd::lookup_uid(uid).unwrap().unwrap();
+        let cur2 = Passwd::lookup_name(cur1.name()).unwrap().unwrap();
+
+        #[cfg(feature = "std")]
+        fn hash(pwd: &Passwd) -> u64 {
+            let mut hasher = std::collections::hash_map::DefaultHasher::new();
+            pwd.hash(&mut hasher);
+            hasher.finish()
+        }
+
+        #[cfg(feature = "std")]
+        assert_eq!(hash(&cur1), hash(&cur2), "{:?} != {:?}", cur1, cur2);
+
+        assert_eq!(cur1, cur2);
+
+        for entry in [cur1, cur2].iter() {
+            #[cfg(feature = "std")]
+            assert_eq!(hash(&entry), hash(&entry));
+
+            assert_eq!(entry, &entry.clone());
+
+            assert_eq!(entry.uid(), uid);
+        }
+    }
+
+    #[test]
     fn test_lookup_noexist() {
         assert_eq!(Passwd::lookup_uid(libc::uid_t::MAX).unwrap(), None);
         assert_eq!(Passwd::lookup_name("NO_SUCH_USER_123456").unwrap(), None);
