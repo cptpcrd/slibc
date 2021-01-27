@@ -22,10 +22,13 @@ fn test_passwd_iter() {
         assert_eq!(hash(&pwd), hash(&pwd.clone()));
 
         // Look up by name and make sure we get the same result
-        assert_eq!(&pwd, Passwd::lookup_name(pwd.name()).unwrap().unwrap());
+        assert_eq!(pwd, Passwd::lookup_name(pwd.name()).unwrap().unwrap());
 
         #[cfg(feature = "std")]
-        assert_eq!(hash(&pwd), hash(&Passwd::lookup_name(pwd.name()).unwrap().unwrap())));
+        assert_eq!(
+            hash(&pwd),
+            hash(&Passwd::lookup_name(pwd.name()).unwrap().unwrap())
+        );
 
         // FreeBSD has a "toor" group which is also UID 0. So don't try to compare to the UID
         // lookup if we see an entry with UID 0 that isn't "root".
@@ -34,9 +37,12 @@ fn test_passwd_iter() {
             continue;
         }
 
-        assert_eq!(&pwd, Passwd::lookup_uid(pwd.uid()).unwrap().unwrap());
+        assert_eq!(pwd, Passwd::lookup_uid(pwd.uid()).unwrap().unwrap());
 
         #[cfg(feature = "std")]
-        assert_eq!(hash(&pwd), hash(&Passwd::lookup_uid(pwd.uid()).unwrap().unwrap())));
+        assert_eq!(
+            hash(&pwd),
+            hash(&Passwd::lookup_uid(pwd.uid()).unwrap().unwrap())
+        );
     }
 }
