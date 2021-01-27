@@ -46,7 +46,7 @@ bitflags::bitflags! {
         /// `urandom` source (i.e. `/dev/urandom`) source.
         ///
         /// The `random` source is more limited in its available entropy, and it may not be able to
-        /// fill the supplied buffer if not enough bytes are availabe, or it may
+        /// fill the supplied buffer if not enough bytes are available.
         const RANDOM = libc::GRND_RANDOM;
         /// Fail with `EAGAIN` isntead of blocking if insufficient entropy is available.
         const NONBLOCK = libc::GRND_NONBLOCK;

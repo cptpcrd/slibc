@@ -5,46 +5,57 @@ use crate::TimeSpec;
 pub struct Stat(libc::stat);
 
 impl Stat {
+    /// Get the device ID of the device containing this file.
     #[inline]
     pub fn dev(&self) -> u64 {
         self.0.st_dev as u64
     }
 
+    /// Get his file's inode number.
     #[inline]
     pub fn ino(&self) -> u64 {
         self.0.st_ino as u64
     }
 
+    /// Get this file's mode.
+    ///
+    /// This embeds the file type and the access mode.
     #[inline]
     pub fn mode(&self) -> u32 {
         self.0.st_mode as u32
     }
 
+    /// Get the number of hardlinks to this file.
     #[inline]
     pub fn nlink(&self) -> u64 {
         self.0.st_nlink as u64
     }
 
+    /// Get the user ID of the owner of this file.
     #[inline]
     pub fn uid(&self) -> libc::uid_t {
         self.0.st_uid
     }
 
+    /// Get the group ID of the owning group of this file.
     #[inline]
     pub fn gid(&self) -> libc::gid_t {
         self.0.st_gid
     }
 
+    /// Get the device ID of this file (if it is a special file).
     #[inline]
     pub fn rdev(&self) -> u64 {
         self.0.st_dev
     }
 
+    /// Get the size of this file.
     #[inline]
     pub fn size(&self) -> u64 {
         self.0.st_size as u64
     }
 
+    /// Get the last access time of this file (if available).
     #[inline]
     pub fn atime(&self) -> Option<TimeSpec> {
         if self.0.st_atime == 0 && self.0.st_atime_nsec == 0 {
@@ -57,6 +68,7 @@ impl Stat {
         }
     }
 
+    /// Get the last status change time of this file (if available).
     #[inline]
     pub fn ctime(&self) -> Option<TimeSpec> {
         if self.0.st_ctime == 0 && self.0.st_ctime_nsec == 0 {
@@ -69,6 +81,7 @@ impl Stat {
         }
     }
 
+    /// Get the last modification time of this file (if available).
     #[inline]
     pub fn mtime(&self) -> Option<TimeSpec> {
         if self.0.st_mtime == 0 && self.0.st_mtime_nsec == 0 {
@@ -81,6 +94,13 @@ impl Stat {
         }
     }
 
+    /// Get the creation time of this file (if available).
+    ///
+    /// This is currently only available on the following platforms:
+    /// - macOS
+    /// - FreeBSD
+    /// - OpenBSD
+    /// - NetBSD
     #[inline]
     pub fn birthtime(&self) -> Option<TimeSpec> {
         #[cfg(any(
