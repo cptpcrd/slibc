@@ -88,11 +88,11 @@ impl FileDesc {
     /// Read the exact amount of data required to fill the given buffer.
     ///
     /// This will retry on partial reads, or if `EINTR` is returned by `read()`. It will also fail
-    /// with `ENODATA` upon reaching end-of-file.
+    /// with `EINVAL` upon reaching end-of-file.
     pub fn read_exact(&mut self, mut buf: &mut [u8]) -> Result<()> {
         while !buf.is_empty() {
             match self.read(buf) {
-                Ok(0) => return Err(Error::from_code(libc::ENODATA)),
+                Ok(0) => return Err(Error::from_code(libc::EINVAL)),
                 Ok(n) => buf = &mut buf[n..],
 
                 Err(e) if e.code() == libc::EINTR => (),

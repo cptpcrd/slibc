@@ -54,6 +54,6 @@ fn test_open_openat() {
 
     assert_eq!(
         file.read_exact(&mut [0; 1]).unwrap_err().code(),
-        libc::ENODATA
+        libc::EINVAL
     );
 }
