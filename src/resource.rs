@@ -355,6 +355,7 @@ pub enum RusageWho {
     /// been waited for.
     Children = libc::RUSAGE_CHILDREN,
     /// Return usage statistics for the current thread.
+    #[cfg(any(target_os = "linux", target_os = "freebsd", target_os = "openbsd"))]
     Thread = libc::RUSAGE_THREAD,
 }
 
