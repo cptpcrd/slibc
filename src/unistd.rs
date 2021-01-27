@@ -2,6 +2,7 @@ use core::convert::TryInto;
 
 use crate::internal_prelude::*;
 
+#[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 #[repr(i32)]
 pub enum SysconfName {
@@ -13,7 +14,7 @@ pub enum SysconfName {
 
 #[inline]
 pub fn sysconf(name: SysconfName) -> Result<usize> {
-    Error::unpack_isize(unsafe { libc::sysconf(name) })
+    Error::unpack_size(unsafe { libc::sysconf(name as libc::c_int) } as isize)
 }
 
 /// Get the number of bytes in a memory page.

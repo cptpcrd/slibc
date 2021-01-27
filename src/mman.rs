@@ -1,8 +1,8 @@
 use crate::internal_prelude::*;
 
+#[cfg(target_os = "linux")]
 bitflags::bitflags! {
     #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
-    #[cfg(target_os = "linux")]
     #[derive(Default)]
     pub struct Mlock2Flags: i32 {
         const ONFAULT = sys::MLOCK_ONFAULT;

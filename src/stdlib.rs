@@ -36,10 +36,10 @@ pub fn ptsname_r(fd: RawFd, buf: &mut [u8]) -> Result<&CStr> {
     }
 }
 
+#[cfg(target_os = "linux")]
 bitflags::bitflags! {
     /// Flags for [`getrandom()`].
     #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
-    #[cfg(target_os = "linux")]
     #[derive(Default)]
     pub struct GrndFlags: libc::c_uint {
         /// Obtain the random data from the `random` source (i.e. `/dev/random`) instead of the
