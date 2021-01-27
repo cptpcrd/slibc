@@ -36,6 +36,7 @@ task:
     - cargo build
   std_test_script:
     - . $HOME/.cargo/env
+    - cargo clean
     - cargo test
     - |
       mkdir -p coverage-std
@@ -46,6 +47,7 @@ task:
       done
   alloc_test_script:
     - . $HOME/.cargo/env
+    - cargo clean
     - cargo test
     - |
       mkdir -p coverage-alloc
@@ -56,6 +58,7 @@ task:
       done
   no_std_test_script:
     - . $HOME/.cargo/env
+    - cargo clean
     - cargo test
     - |
       mkdir -p coverage-no-std
