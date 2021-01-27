@@ -77,3 +77,15 @@ pub fn getrandom(buf: &mut [u8], flags: GrndFlags) -> Result<usize> {
         )
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn test_getrandom() {
+        let mut buf = [0; 256];
+        assert_eq!(getrandom(&mut buf, GrndFlags::default()).unwrap(), 256);
+    }
+}

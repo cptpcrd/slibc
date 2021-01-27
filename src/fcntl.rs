@@ -319,4 +319,16 @@ mod tests {
         // Writes are accepted but ignored
         assert!(f.write(b"ignored").unwrap() > 0);
     }
+
+    #[test]
+    fn test_pipe_sz() {
+        let (r, w) = crate::pipe().unwrap();
+
+        let mut size = fcntl_getpipe_sz(r.fd()).unwrap();
+        assert_eq!(size, fcntl_getpipe_sz(w.fd()).unwrap());
+
+        size /= 2;
+        fcntl_setpipe_sz(w.fd(), size).unwrap();
+        assert_eq!(size, fcntl_getpipe_sz(r.fd()).unwrap());
+    }
 }

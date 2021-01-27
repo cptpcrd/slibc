@@ -381,3 +381,66 @@ osstr_partial_ordeq! { str }
 #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 #[cfg(feature = "alloc")]
 osstr_partial_ordeq! { Cow<'_, OsStr> OsString }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_cstr_error() {
+        let err = CStr::from_bytes_with_nul(b"").unwrap_err();
+        assert!(!err.is_mid);
+        #[cfg(feature = "alloc")]
+        assert_eq!(err.to_string(), "expected nul byte at end of string");
+
+        let err = CStr::from_bytes_with_nul(b"a").unwrap_err();
+        assert!(!err.is_mid);
+        #[cfg(feature = "alloc")]
+        assert_eq!(err.to_string(), "expected nul byte at end of string");
+
+        let err = CStr::from_bytes_with_nul(b"\0a").unwrap_err();
+        assert!(!err.is_mid);
+        #[cfg(feature = "alloc")]
+        assert_eq!(err.to_string(), "expected nul byte at end of string");
+
+        let err = CStr::from_bytes_with_nul(b"\0a\0").unwrap_err();
+        assert!(err.is_mid);
+        #[cfg(feature = "alloc")]
+        assert_eq!(err.to_string(), "unexpected nul byte in middle of string");
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn test_cstr_alloc() {
+        let abc = CStr::from_bytes_with_nul(b"abc\0").unwrap();
+
+        assert_eq!(abc.to_str().unwrap(), "abc");
+        assert_eq!(abc.to_string_lossy(), "abc");
+
+        assert_eq!(abc.to_owned().into_bytes_with_nul(), b"abc\0");
+    }
+
+    #[test]
+    fn test_cstr() {
+        let abc = CStr::from_bytes_with_nul(b"abc\0").unwrap();
+        let bc = CStr::from_bytes_with_nul(b"bc\0").unwrap();
+        let empty = CStr::from_bytes_with_nul(b"\0").unwrap();
+
+        assert_eq!(empty, <&CStr as Default>::default());
+
+        assert_eq!(&abc[0..], abc);
+        assert_eq!(&abc[1..], bc);
+        assert_eq!(&abc[3..], empty);
+        assert_eq!(&bc[2..], empty);
+        assert_eq!(&empty[0..], empty);
+
+        assert_eq!(abc.to_bytes(), b"abc");
+        assert_eq!(abc.to_bytes_with_nul(), b"abc\0");
+
+        assert_eq!(bc.to_bytes(), b"bc");
+        assert_eq!(bc.to_bytes_with_nul(), b"bc\0");
+
+        assert_eq!(empty.to_bytes(), b"");
+        assert_eq!(empty.to_bytes_with_nul(), b"\0");
+    }
+}
