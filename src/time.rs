@@ -1,5 +1,6 @@
 use crate::internal_prelude::*;
 
+#[allow(deprecated)]
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 #[repr(C)]
 pub struct TimeSpec {
