@@ -51,7 +51,7 @@ task:
   alloc_test_script:
     - . $HOME/.cargo/env
     - cargo clean
-    - cargo test
+    - cargo test --no-default-features --features alloc
     - |
       mkdir -p coverage-alloc
       for f in target/debug/deps/*; do
@@ -65,7 +65,7 @@ task:
   no_std_test_script:
     - . $HOME/.cargo/env
     - cargo clean
-    - cargo test
+    - cargo test --no-default-features
     - |
       mkdir -p coverage-no-std
       for f in target/debug/deps/*; do
