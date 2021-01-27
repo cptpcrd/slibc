@@ -17,10 +17,6 @@ jobs:
         target:
           - x86_64-unknown-netbsd
         os: [ubuntu-latest]
-        features:
-          - std
-          - alloc
-          - ''
 
     # Allow nightly builds to fail
     continue-on-error: ${{ matrix.toolchain == 'nightly' }}
@@ -36,12 +32,26 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
           target: ${{ matrix.target }}
 
-      - name: Build
+      - name: Build (std)
         uses: actions-rs/cargo@v1
         with:
           toolchain: ${{ matrix.toolchain }}
           command: build
-          args: --verbose --target ${{ matrix.target }}
+          args: --verbose --target ${{ matrix.target }} --no-default-features --features std
+
+      - name: Build (alloc)
+        uses: actions-rs/cargo@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          command: build
+          args: --verbose --target ${{ matrix.target }} --no-default-features --features alloc
+
+      - name: Build (no_std)
+        uses: actions-rs/cargo@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          command: build
+          args: --verbose --target ${{ matrix.target }} --no-default-features
 
   test:
     name: Test
@@ -57,50 +67,17 @@ jobs:
           - i686-unknown-linux-gnu
           - i686-unknown-linux-musl
         os: [ubuntu-latest]
-        features:
-          - std
-          - alloc
-          - ''
 
         include:
           - toolchain: stable
             target: x86_64-apple-darwin
             os: macos-latest
-            features: std
-          - toolchain: stable
-            target: x86_64-apple-darwin
-            os: macos-latest
-            features: alloc
-          - toolchain: stable
-            target: x86_64-apple-darwin
-            os: macos-latest
-            features: ''
-
           - toolchain: beta
             target: x86_64-apple-darwin
             os: macos-latest
-            features: std
-          - toolchain: beta
-            target: x86_64-apple-darwin
-            os: macos-latest
-            features: alloc
-          - toolchain: beta
-            target: x86_64-apple-darwin
-            os: macos-latest
-            features: ''
-
           - toolchain: nightly
             target: x86_64-apple-darwin
             os: macos-latest
-            features: std
-          - toolchain: nightly
-            target: x86_64-apple-darwin
-            os: macos-latest
-            features: alloc
-          - toolchain: nightly
-            target: x86_64-apple-darwin
-            os: macos-latest
-            features: ''
 
     # Allow nightly builds to fail
     continue-on-error: ${{ matrix.toolchain == 'nightly' }}
@@ -119,12 +96,26 @@ jobs:
         run: sudo apt-get update && sudo apt-get -y install gcc-multilib
         if: matrix.os == 'ubuntu-latest' && matrix.target == 'i686-unknown-linux-gnu'
 
-      - name: Run tests
+      - name: Test (std)
         uses: actions-rs/cargo@v1
         with:
           toolchain: ${{ matrix.toolchain }}
           command: test
-          args: --verbose --target ${{ matrix.target }} --no-default-features --features "${{ matrix.features }}"
+          args: --verbose --target ${{ matrix.target }} --no-default-features --features std
+
+      - name: Test (alloc)
+        uses: actions-rs/cargo@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          command: test
+          args: --verbose --target ${{ matrix.target }} --no-default-features --features alloc
+
+      - name: Test (no_std)
+        uses: actions-rs/cargo@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          command: test
+          args: --verbose --target ${{ matrix.target }} --no-default-features
 
   coverage-tarpaulin:
     name: Tarpaulin
@@ -138,10 +129,6 @@ jobs:
           - x86_64-unknown-linux-gnu
           - x86_64-unknown-linux-musl
         os: [ubuntu-latest]
-        features:
-          - std
-          - alloc
-          - ''
 
     runs-on: ${{ matrix.os }}
 
@@ -165,7 +152,7 @@ jobs:
         with:
           toolchain: ${{ matrix.toolchain }}
           command: tarpaulin
-          args: --verbose --out Xml --target ${{ matrix.target }} --no-default-features --features "${{ matrix.features }}"
+          args: --verbose --out Xml --target ${{ matrix.target }}
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1.0.13
