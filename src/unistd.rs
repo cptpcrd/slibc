@@ -833,10 +833,12 @@ pub fn getcwd(buf: &mut [u8]) -> Result<&CStr> {
 mod tests {
     use super::*;
 
+    #[cfg(target_os = "linux")]
     fn tgkill(tgid: libc::pid_t, tid: libc::pid_t, sig: libc::c_int) -> Result<()> {
         Error::unpack_nz(unsafe { libc::syscall(libc::SYS_tgkill, tgid, tid, sig) } as _)
     }
 
+    #[cfg(target_os = "linux")]
     #[test]
     fn test_getpids_valid() {
         // Check that each is valid:
