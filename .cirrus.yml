@@ -42,6 +42,9 @@ task:
       mkdir -p coverage-std
       for f in target/debug/deps/*; do
         if [ -x "$f" ]; then
+          echo
+          echo "=== $f ==="
+          echo
           kcov --exclude-pattern=/.cargo,/.rustup,/usr/lib --verify coverage-std "$f"
         fi
       done
@@ -53,6 +56,9 @@ task:
       mkdir -p coverage-alloc
       for f in target/debug/deps/*; do
         if [ -x "$f" ]; then
+          echo
+          echo "=== $f ==="
+          echo
           kcov --exclude-pattern=/.cargo,/.rustup,/usr/lib --verify coverage-alloc "$f"
         fi
       done
@@ -64,6 +70,9 @@ task:
       mkdir -p coverage-no-std
       for f in target/debug/deps/*; do
         if [ -x "$f" ]; then
+          echo
+          echo "=== $f ==="
+          echo
           kcov --exclude-pattern=/.cargo,/.rustup,/usr/lib --verify coverage-no-std "$f"
         fi
       done
