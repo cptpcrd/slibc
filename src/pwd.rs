@@ -413,7 +413,7 @@ mod tests {
         }
 
         #[cfg(feature = "std")]
-        assert_eq!(hash(&root1), hash(&root2));
+        assert_eq!(hash(&root1), hash(&root2), "{:?} != {:?}", root1, root2);
 
         assert_eq!(root1, root2);
 
