@@ -21,16 +21,22 @@ fn test_passwd_iter() {
         #[cfg(feature = "std")]
         assert_eq!(hash(&pwd), hash(&pwd.clone()));
 
-        for pwd2 in [
-            Passwd::lookup_uid(pwd.uid()).unwrap().unwrap(),
-            Passwd::lookup_name(pwd.name()).unwrap().unwrap(),
-        ]
-        .iter()
-        {
-            assert_eq!(&pwd, pwd2);
+        // Look up by name and make sure we get the same result
+        assert_eq!(&pwd, Passwd::lookup_name(pwd.name()).unwrap().unwrap());
 
-            #[cfg(feature = "std")]
-            assert_eq!(hash(&pwd), hash(&pwd2));
+        #[cfg(feature = "std")]
+        assert_eq!(hash(&pwd), hash(&Passwd::lookup_name(pwd.name()).unwrap().unwrap())));
+
+        // FreeBSD has a "toor" group which is also UID 0. So don't try to compare to the UID
+        // lookup if we see an entry with UID 0 that isn't "root".
+        #[cfg(target_os = "freebsd")]
+        if pwd.uid() == 0 && pwd.name() != slibc::ffi::OsStr::new("root") {
+            continue;
         }
+
+        assert_eq!(&pwd, Passwd::lookup_uid(pwd.uid()).unwrap().unwrap());
+
+        #[cfg(feature = "std")]
+        assert_eq!(hash(&pwd), hash(&Passwd::lookup_uid(pwd.uid()).unwrap().unwrap())));
     }
 }
