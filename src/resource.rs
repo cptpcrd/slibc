@@ -231,13 +231,12 @@ pub fn getrlimit(resource: Resource) -> Result<(Limit, Limit)> {
 /// cause the program to misbehave, panic, and/or segfault.
 #[inline]
 pub unsafe fn setrlimit(resource: Resource, new_limits: (Limit, Limit)) -> Result<()> {
-    Error::unpack_nz(libc::setrlimit(
-        resource as _,
-        &libc::rlimit {
-            rlim_cur: new_limits.0,
-            rlim_max: new_limits.1,
-        },
-    ))
+    let rlim = libc::rlimit {
+        rlim_cur: new_limits.0,
+        rlim_max: new_limits.1,
+    };
+
+    Error::unpack_nz(libc::setrlimit(resource as _, &rlim))
 }
 
 /// Get/Set the soft and hard limits for the given resource on an arbitrary process.
