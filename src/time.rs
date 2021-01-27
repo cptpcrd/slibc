@@ -41,6 +41,6 @@ pub fn clock_gettime(clock: Clock) -> Result<TimeSpec> {
 #[inline]
 pub fn clock_settime(clock: Clock, t: TimeSpec) -> Result<()> {
     Error::unpack_nz(unsafe {
-        libc::clock_settime(clock as libc::clockid_t, &t as *const _ as *const _)
+        sys::clock_settime(clock as libc::clockid_t, &t as *const _ as *const _)
     })
 }

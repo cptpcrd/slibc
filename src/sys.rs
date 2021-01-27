@@ -3,6 +3,8 @@ extern "C" {
     pub fn setregid(rgid: libc::gid_t, egid: libc::gid_t) -> libc::c_int;
 
     pub fn getpagesize() -> libc::c_int;
+
+    pub fn clock_settime(clockid: libc::clockid_t, tp: *const libc::timespec) -> libc::c_int;
 }
 
 cfg_if::cfg_if! {
@@ -65,9 +67,7 @@ extern "C" {
     pub fn setlogin(name: *const libc::c_char) -> libc::c_int;
 }
 
-#[cfg(target_os = "dragonfly")]
+#[cfg(not(any(target_os = "macos", target_os = "ios")))]
 extern "C" {
     pub fn dup3(oldd: libc::c_int, newd: libc::c_int, flags: libc::c_int) -> libc::c_int;
 }
-#[cfg(not(any(target_os = "dragonfly", target_os = "macos", target_os = "ios")))]
-pub use libc::dup3;
