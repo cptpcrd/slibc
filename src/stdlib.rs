@@ -78,11 +78,11 @@ pub fn getrandom(buf: &mut [u8], flags: GrndFlags) -> Result<usize> {
     })
 }
 
+#[cfg(target_os = "linux")]
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[cfg(target_os = "linux")]
     #[test]
     fn test_getrandom() {
         let mut buf = [0; 256];
