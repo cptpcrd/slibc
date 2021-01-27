@@ -400,6 +400,9 @@ impl Drop for PasswdIter {
 mod tests {
     use super::*;
 
+    // macOS behaves strangely in situations like this
+
+    #[cfg(not(target_os = "macos"))]
     #[test]
     fn test_lookup_root() {
         let root1 = Passwd::lookup_uid(0).unwrap().unwrap();

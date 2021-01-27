@@ -1,4 +1,6 @@
 #![cfg(feature = "alloc")]
+// macOS behaves strangely in situations like this
+#![cfg(not(target_os = "macos"))]
 
 use slibc::{Passwd, PasswdIter};
 
