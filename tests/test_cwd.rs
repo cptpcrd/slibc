@@ -8,6 +8,8 @@ use slibc::{chdir, fchdir, getcwd, open, OFlag, PATH_MAX};
 fn test_chdir_getcwd() {
     let mut buf = [0; PATH_MAX];
 
+    // chdir()
+
     chdir("/").unwrap();
     assert_eq!(getcwd(&mut buf).unwrap().to_bytes(), b"/");
 
@@ -19,11 +21,8 @@ fn test_chdir_getcwd() {
             .as_os_str()
             .as_bytes()
     );
-}
 
-#[test]
-fn test_fchdir_getcwd() {
-    let mut buf = [0; PATH_MAX];
+    // fchdir()
 
     let f = open(
         "/",
