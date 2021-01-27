@@ -1,13 +1,9 @@
+#[cfg(feature = "alloc")]
+use crate::internal_prelude::*;
+
 use core::cmp::{Ordering, PartialEq, PartialOrd};
 use core::fmt;
 use core::ops::{Index, RangeFrom};
-
-#[cfg(feature = "alloc")]
-use alloc::borrow::{Cow, ToOwned};
-#[cfg(feature = "alloc")]
-use alloc::boxed::Box;
-#[cfg(feature = "alloc")]
-use alloc::string::String;
 
 #[cfg(feature = "alloc")]
 use super::alloc_impl::{CString, OsString};

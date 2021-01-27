@@ -86,7 +86,12 @@ mod internal_prelude {
     pub use super::errno::{get_errno, set_errno};
 
     #[cfg(all(feature = "alloc", not(feature = "std")))]
-    pub use alloc::vec::Vec;
+    pub use alloc::{
+        borrow::{Cow, ToOwned},
+        boxed::Box,
+        string::{String, ToString},
+        vec::Vec,
+    };
 }
 
 pub mod ffi;
