@@ -6,7 +6,6 @@ fn test_tty() {
     let (master, slave) = unsafe { openpty(None) }.unwrap();
 
     let mut buf1 = [0; 4096];
-    let mut buf2 = [0; 4096];
 
     // Check isatty()
 
@@ -47,10 +46,13 @@ fn test_tty() {
     // ptsname(master) should match ttyname(slave)
 
     #[cfg(target_os = "linux")]
-    assert_eq!(
-        slibc::ptsname_r(master.fd(), &mut buf2).unwrap(),
-        slave_name
-    );
+    {
+        let mut buf2 = [0; 4096];
+        assert_eq!(
+            slibc::ptsname_r(master.fd(), &mut buf2).unwrap(),
+            slave_name
+        );
+    }
 
     unsafe {
         assert_eq!(ptsname(master.fd()).unwrap(), slave_name);
