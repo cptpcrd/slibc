@@ -132,6 +132,19 @@ define_oflag! {
     O_EXEC,
 }
 
+bitflags::bitflags! {
+    pub struct AtFlag: libc::c_int {
+        const AT_REMOVEDIR = libc::AT_REMOVEDIR;
+        const AT_SYMLINK_NOFOLLOW = libc::AT_SYMLINK_NOFOLLOW;
+        const AT_SYMLINK_FOLLOW = libc::AT_SYMLINK_FOLLOW;
+
+        #[cfg(target_os = "linux")]
+        const AT_EMPTY_PATH = libc::AT_EMPTY_PATH;
+        #[cfg(target_os = "linux")]
+        const AT_NO_AUTOMOUNT = libc::AT_NO_AUTOMOUNT;
+    }
+}
+
 #[inline]
 pub fn open<P: AsPath>(path: P, flags: OFlag, mode: u32) -> Result<FileDesc> {
     path.with_cstr(|path| unsafe {

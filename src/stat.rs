@@ -1,5 +1,5 @@
 use crate::internal_prelude::*;
-use crate::TimeSpec;
+use crate::{AtFlag, TimeSpec};
 
 #[derive(Copy, Clone, Debug)]
 pub struct Stat(libc::stat);
@@ -149,6 +149,17 @@ pub fn lstat<P: AsPath>(path: P) -> Result<Stat> {
     let mut buf = MaybeUninit::uninit();
     path.with_cstr(|path| {
         Error::unpack_nz(unsafe { libc::lstat(path.as_ptr(), buf.as_mut_ptr()) })
+    })?;
+    Ok(Stat(unsafe { buf.assume_init() }))
+}
+
+#[inline]
+pub fn fstatat<P: AsPath>(dfd: RawFd, path: P, flags: AtFlag) -> Result<Stat> {
+    let mut buf = MaybeUninit::uninit();
+    path.with_cstr(|path| {
+        Error::unpack_nz(unsafe {
+            libc::fstatat(dfd, path.as_ptr(), buf.as_mut_ptr(), flags.bits())
+        })
     })?;
     Ok(Stat(unsafe { buf.assume_init() }))
 }
