@@ -856,5 +856,57 @@ mod tests {
         assert_eq!(getpagesize(), unsafe {
             libc::sysconf(libc::_SC_PAGESIZE) as usize
         });
+
+        assert_eq!(getpagesize(), sysconf(SysconfName::PAGESIZE).unwrap());
+    }
+
+    #[test]
+    fn test_pgid() {
+        assert_eq!(getpgid(0).unwrap(), getpgrp());
+        assert_eq!(getpgid(getpid()).unwrap(), getpgrp());
+
+        assert_eq!(getpgid(1).unwrap(), 1);
+
+        assert_eq!(getpgid(libc::pid_t::MAX).unwrap_err().code(), libc::ESRCH);
+    }
+
+    #[test]
+    fn test_sid() {
+        assert_eq!(getsid(libc::pid_t::MAX).unwrap_err().code(), libc::ESRCH);
+
+        if getpgrp() != getpid() {
+            // Not a process group leader
+            setsid().unwrap();
+
+            // If setsid() succeeded, the session ID should match the process ID
+            assert_eq!(getsid(0).unwrap(), getpid());
+            assert_eq!(getsid(getpid()).unwrap(), getpid());
+        }
+
+        // Now that we're a process group leader, setsid() should fail with EPERM
+        assert_eq!(setsid().unwrap_err().code(), libc::EPERM);
+    }
+
+    #[cfg(any(
+        target_os = "linux",
+        target_os = "freebsd",
+        target_os = "openbsd",
+        target_os = "dragonfly",
+    ))]
+    #[test]
+    fn test_resids() {
+        let uid = getuid();
+        assert_eq!(geteuid(), uid);
+        assert_eq!(getresuid(), (uid, uid, uid));
+
+        let gid = getgid();
+        assert_eq!(getegid(), gid);
+        assert_eq!(getresgid(), (gid, gid, gid));
+    }
+
+    #[test]
+    fn test_getcwd_error() {
+        assert_eq!(getcwd(&mut []).unwrap_err().code(), libc::EINVAL);
+        assert_eq!(getcwd(&mut [0]).unwrap_err().code(), libc::ERANGE);
     }
 }
