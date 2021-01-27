@@ -857,17 +857,4 @@ mod tests {
             libc::sysconf(libc::_SC_PAGESIZE) as usize
         });
     }
-
-    #[test]
-    fn test_gethostname() {
-        assert_eq!(gethostname(&mut []).unwrap_err().code(), libc::ENAMETOOLONG);
-    }
-
-    #[test]
-    fn test_getdomainname() {
-        assert_eq!(
-            getdomainname(&mut []).unwrap_err().code(),
-            libc::ENAMETOOLONG
-        );
-    }
 }
