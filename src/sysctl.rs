@@ -49,19 +49,19 @@ pub unsafe fn sysctl<T>(
     let (old_ptr, mut old_len) = if let Some(old_data_slice) = old_data {
         (
             old_data_slice.as_mut_ptr(),
-            old_data_slice.len() * std::mem::size_of::<T>(),
+            old_data_slice.len() * core::mem::size_of::<T>(),
         )
     } else {
-        (std::ptr::null_mut(), 0)
+        (core::ptr::null_mut(), 0)
     };
 
     let (new_ptr, new_len) = if let Some(new_data_slice) = new_data {
         (
             new_data_slice.as_mut_ptr(),
-            new_data_slice.len() * std::mem::size_of::<T>(),
+            new_data_slice.len() * core::mem::size_of::<T>(),
         )
     } else {
-        (std::ptr::null_mut(), 0)
+        (core::ptr::null_mut(), 0)
     };
 
     Error::unpack_nz(libc::sysctl(
