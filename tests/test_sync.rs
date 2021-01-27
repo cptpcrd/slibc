@@ -7,6 +7,7 @@ fn test_sync() {
     sync();
 }
 
+#[cfg(target_os = "linux")]
 #[test]
 fn test_syncfs() {
     let f = open(
