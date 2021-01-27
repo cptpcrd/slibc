@@ -46,7 +46,7 @@ impl Stat {
     /// Get the device ID of this file (if it is a special file).
     #[inline]
     pub fn rdev(&self) -> u64 {
-        self.0.st_dev
+        self.0.st_rdev as u64
     }
 
     /// Get the size of this file.
@@ -58,39 +58,51 @@ impl Stat {
     /// Get the last access time of this file (if available).
     #[inline]
     pub fn atime(&self) -> Option<TimeSpec> {
-        if self.0.st_atime == 0 && self.0.st_atime_nsec == 0 {
+        let tv_sec = self.0.st_atime;
+
+        #[cfg(target_os = "netbsd")]
+        let tv_nsec = self.0.st_atimensec as _;
+        #[cfg(not(target_os = "netbsd"))]
+        let tv_nsec = self.0.st_atime_nsec as _;
+
+        if tv_sec == 0 && tv_nsec == 0 {
             None
         } else {
-            Some(TimeSpec {
-                tv_sec: self.0.st_atime,
-                tv_nsec: self.0.st_atime_nsec as _,
-            })
+            Some(TimeSpec { tv_sec, tv_nsec })
         }
     }
 
     /// Get the last status change time of this file (if available).
     #[inline]
     pub fn ctime(&self) -> Option<TimeSpec> {
-        if self.0.st_ctime == 0 && self.0.st_ctime_nsec == 0 {
+        let tv_sec = self.0.st_ctime;
+
+        #[cfg(target_os = "netbsd")]
+        let tv_nsec = self.0.st_ctimensec as _;
+        #[cfg(not(target_os = "netbsd"))]
+        let tv_nsec = self.0.st_ctime_nsec as _;
+
+        if tv_sec == 0 && tv_nsec == 0 {
             None
         } else {
-            Some(TimeSpec {
-                tv_sec: self.0.st_ctime,
-                tv_nsec: self.0.st_ctime_nsec as _,
-            })
+            Some(TimeSpec { tv_sec, tv_nsec })
         }
     }
 
     /// Get the last modification time of this file (if available).
     #[inline]
     pub fn mtime(&self) -> Option<TimeSpec> {
-        if self.0.st_mtime == 0 && self.0.st_mtime_nsec == 0 {
+        let tv_sec = self.0.st_mtime;
+
+        #[cfg(target_os = "netbsd")]
+        let tv_nsec = self.0.st_mtimensec as _;
+        #[cfg(not(target_os = "netbsd"))]
+        let tv_nsec = self.0.st_mtime_nsec as _;
+
+        if tv_sec == 0 && tv_nsec == 0 {
             None
         } else {
-            Some(TimeSpec {
-                tv_sec: self.0.st_mtime,
-                tv_nsec: self.0.st_mtime_nsec as _,
-            })
+            Some(TimeSpec { tv_sec, tv_nsec })
         }
     }
 
@@ -110,11 +122,17 @@ impl Stat {
             target_os = "macos",
             target_os = "ios",
         ))]
-        if self.0.st_birthtime != 0 && self.0.st_birthtime_nsec != 0 {
-            return Some(TimeSpec {
-                tv_sec: self.0.st_mtime,
-                tv_nsec: self.0.st_mtime_nsec as _,
-            });
+        {
+            let tv_sec = self.0.st_birthtime;
+
+            #[cfg(target_os = "netbsd")]
+            let tv_nsec = self.0.st_birthtimensec as _;
+            #[cfg(not(target_os = "netbsd"))]
+            let tv_nsec = self.0.st_birthtime_nsec as _;
+
+            if tv_sec != 0 || tv_nsec != 0 {
+                return Some(TimeSpec { tv_sec, tv_nsec });
+            }
         }
 
         None
