@@ -15,7 +15,6 @@ jobs:
       matrix:
         toolchain: [stable, beta, nightly]
         target:
-          - x86_64-linux-android
           - x86_64-unknown-netbsd
         os: [ubuntu-latest]
         features:
