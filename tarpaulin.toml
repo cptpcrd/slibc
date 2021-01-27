@@ -1,0 +1,11 @@
+[std_coverage]
+
+[alloc_coverage]
+no-default-features = true
+features = "alloc"
+
+[no_std_coverage]
+no-default-features = true
+
+[report]
+out = ["Html"]

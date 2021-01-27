@@ -1,0 +1,69 @@
+task:
+  name: FreeBSD $FREEBSD_VERSION ($TOOLCHAIN)
+
+  freebsd_instance:
+    cpu: 1
+    image_family: $FREEBSD_IMAGE
+
+  matrix:
+    - env:
+        FREEBSD_VERSION: 12.1
+        FREEBSD_IMAGE: freebsd-12-1
+    - env:
+        FREEBSD_VERSION: 12.1 STABLE
+        FREEBSD_IMAGE: freebsd-12-1-snap
+    # - env:
+    #     FREEBSD_VERSION: 13.0
+    #     FREEBSD_IMAGE: freebsd-13-0-snap
+
+  matrix:
+    - env:
+        TOOLCHAIN: stable
+    - env:
+        TOOLCHAIN: beta
+    - env:
+        TOOLCHAIN: nightly
+
+  env:
+    CODECOV_TOKEN: ENCRYPTED[645300bf2ccb6ac55e3f14cb514d949af92487a838157dd08ecb814b375b4c9c1825a3eacc113862068f32072106baaa]
+
+  install_script:
+    - pkg install -y curl kcov bash
+    - curl -sSf https://sh.rustup.rs -o rustup.sh
+    - sh rustup.sh -y --profile default --default-toolchain $TOOLCHAIN
+  build_script:
+    - . $HOME/.cargo/env
+    - cargo build
+  std_test_script:
+    - . $HOME/.cargo/env
+    - cargo test
+    - |
+      mkdir -p coverage-std
+      for f in target/debug/deps/*; do
+        if [ -x "$f" ]; then
+          kcov --exclude-pattern=/.cargo,/.rustup,/usr/lib --verify coverage-std "$f"
+        fi
+      done
+  alloc_test_script:
+    - . $HOME/.cargo/env
+    - cargo test
+    - |
+      mkdir -p coverage-alloc
+      for f in target/debug/deps/*; do
+        if [ -x "$f" ]; then
+          kcov --exclude-pattern=/.cargo,/.rustup,/usr/lib --verify coverage-alloc "$f"
+        fi
+      done
+  no_std_test_script:
+    - . $HOME/.cargo/env
+    - cargo test
+    - |
+      mkdir -p coverage-no-std
+      for f in target/debug/deps/*; do
+        if [ -x "$f" ]; then
+          kcov --exclude-pattern=/.cargo,/.rustup,/usr/lib --verify coverage-no-std "$f"
+        fi
+      done
+  coverage_collect_upload_script:
+    - kcov --merge coverage-merged/ coverage-std/ coverage-alloc/ coverage-no-std/
+    - OS="$FREEBSD_IMAGE" bash <(curl -s https://codecov.io/bash) -e OS,TOOLCHAIN -n "$FREEBSD_IMAGE-$TOOLCHAIN" -Z -f coverage-merged/kcov-merged/cobertura.xml
