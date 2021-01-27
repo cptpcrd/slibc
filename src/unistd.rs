@@ -448,7 +448,7 @@ pub fn lseek(fd: RawFd, pos: SeekPos) -> Result<u64> {
         SeekPos::Current(off) => (off, libc::SEEK_CUR),
     };
 
-    match unsafe { libc::lseek(fd, off, whence) } {
+    match unsafe { libc::lseek(fd, off as _, whence) } {
         -1 => Err(Error::last()),
         pos => Ok(pos as u64),
     }
