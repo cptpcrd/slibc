@@ -13,9 +13,6 @@ cfg_if::cfg_if! {
             pub fn syncfs(fd: libc::c_int) -> libc::c_int;
 
             pub fn mlock2(addr: *const libc::c_void, len: libc::size_t, flags: libc::c_int) -> libc::c_int;
-
-            #[cfg(any(target_env = "", target_env = "gnu"))]
-            pub fn gettid() -> libc::pid_t;
         }
 
         pub const MLOCK_ONFAULT: libc::c_int = 1;

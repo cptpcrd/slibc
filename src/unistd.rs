@@ -137,13 +137,7 @@ pub fn getpid() -> libc::pid_t {
 #[allow(clippy::needless_return)]
 #[inline]
 pub fn gettid() -> libc::pid_t {
-    cfg_if::cfg_if! {
-        if #[cfg(target_env = "musl")] {
-            return unsafe { libc::syscall(libc::SYS_gettid) as libc::pid_t };
-        } else {
-            return unsafe { sys::gettid() };
-        }
-    }
+    unsafe { libc::syscall(libc::SYS_gettid) as libc::pid_t }
 }
 
 /// Get the parent process's PID.
