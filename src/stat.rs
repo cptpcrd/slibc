@@ -167,3 +167,8 @@ pub fn fstatat<P: AsPath>(dfd: RawFd, path: P, flags: AtFlag) -> Result<Stat> {
     })?;
     Ok(Stat(unsafe { buf.assume_init() }))
 }
+
+#[inline]
+pub fn umask(mask: u32) -> u32 {
+    unsafe { libc::umask(mask as _) as u32 }
+}
