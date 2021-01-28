@@ -415,6 +415,20 @@ macro_rules! osstring_partial_ordeq {
                 }
             }
 
+            impl PartialOrd<OsString> for &$type {
+                #[inline]
+                fn partial_cmp(&self, other: &OsString) -> Option<Ordering> {
+                    Some(self.as_bytes().cmp(other.as_bytes()))
+                }
+            }
+
+            impl PartialEq<OsString> for &$type {
+                #[inline]
+                fn eq(&self, other: &OsString) -> bool {
+                    self.as_bytes().eq(other.as_bytes())
+                }
+            }
+
             impl PartialOrd<$type> for OsString {
                 #[inline]
                 fn partial_cmp(&self, other: &$type) -> Option<Ordering> {
