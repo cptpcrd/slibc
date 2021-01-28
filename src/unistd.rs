@@ -898,6 +898,11 @@ mod tests {
             // If setsid() succeeded, the session ID should match the process ID
             assert_eq!(getsid(0).unwrap(), getpid());
             assert_eq!(getsid(getpid()).unwrap(), getpid());
+
+            // And the process group ID should also match
+            assert_eq!(getpgrp(), getpid());
+            assert_eq!(getpgid(0).unwrap(), getpid());
+            assert_eq!(getpgid(getpid()).unwrap(), getpid());
         }
 
         // Now that we're a process group leader, setsid() should fail with EPERM
