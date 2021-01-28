@@ -464,3 +464,117 @@ osstring_partial_ordeq! { str }
 
 #[cfg(feature = "alloc")]
 osstring_partial_ordeq! { Cow<'_, OsStr> }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_cstring() {
+        let abc = CString::new(*b"abc").unwrap();
+        let empty = CString::new([]).unwrap();
+
+        let abc_cstr = CStr::from_bytes_with_nul(b"abc\0").unwrap();
+        let empty_cstr: &CStr = Default::default();
+
+        assert_eq!(abc.as_ref(), abc_cstr);
+        assert_eq!(abc.borrow() as &CStr, abc_cstr);
+        assert_eq!(&abc[..], abc_cstr);
+        assert_eq!(empty.as_ref(), empty_cstr);
+        assert_eq!(empty.borrow() as &CStr, empty_cstr);
+        assert_eq!(&empty[..], empty_cstr);
+
+        assert_eq!(empty, CString::default());
+
+        assert_eq!(abc.as_bytes(), b"abc");
+        assert_eq!(empty.as_bytes(), b"");
+        assert_eq!(abc.as_bytes_with_nul(), b"abc\0");
+        assert_eq!(empty.as_bytes_with_nul(), b"\0");
+
+        assert_eq!(abc.clone().into_string().unwrap(), "abc");
+        assert_eq!(empty.clone().into_string().unwrap(), "");
+
+        assert_eq!(abc.clone().into_bytes(), b"abc");
+        assert_eq!(empty.clone().into_bytes(), b"");
+        assert_eq!(abc.clone().into_bytes_with_nul(), b"abc\0");
+        assert_eq!(empty.clone().into_bytes_with_nul(), b"\0");
+
+        assert_eq!(CString::from(abc_cstr), abc);
+        assert_eq!(CString::from(Cow::Borrowed(abc_cstr)), abc);
+        assert_eq!(Vec::from(abc), b"abc");
+    }
+
+    #[test]
+    fn test_cstring_error() {
+        let err = CString::new(*b"\0").unwrap_err();
+        assert_eq!(err.nul_position(), 0);
+        assert_eq!(err.to_string(), "nul byte found at position: 0");
+        assert_eq!(err.into_vec(), b"\0");
+
+        let err = CString::new(*b"abc\0def").unwrap_err();
+        assert_eq!(err.nul_position(), 3);
+        assert_eq!(err.to_string(), "nul byte found at position: 3");
+        assert_eq!(err.into_vec(), b"abc\0def");
+    }
+
+    #[test]
+    fn test_osstring() {
+        use core::str::FromStr;
+
+        let abc = OsString::from("abc");
+        let empty = OsString::new();
+        let empty_cap = OsString::with_capacity(10);
+
+        assert_eq!(abc.len(), 3);
+        assert_eq!(empty.len(), 0);
+        assert_eq!(empty_cap.len(), 0);
+        assert_eq!(abc.capacity(), 3);
+        assert_eq!(empty.capacity(), 0);
+        assert_eq!(empty_cap.capacity(), 10);
+
+        assert_eq!(abc, OsStr::new("abc"));
+        assert_eq!(empty, OsStr::new(""));
+        assert_eq!(empty_cap, OsStr::new(""));
+
+        assert_eq!(empty, empty_cap);
+        assert_eq!(OsStr::new(""), empty);
+        assert_eq!(empty, "");
+        assert_eq!("", empty);
+
+        assert_eq!(abc.borrow() as &OsStr, OsStr::new("abc"));
+        assert_eq!(empty.borrow() as &OsStr, OsStr::new(""));
+        assert_eq!(&abc[..], OsStr::new("abc"));
+        assert_eq!(&empty[..], OsStr::new(""));
+
+        assert_eq!(abc.clone().into_vec(), b"abc");
+        assert_eq!(empty.clone().into_vec(), b"");
+        assert_eq!(empty_cap.clone().into_vec(), b"");
+
+        assert_eq!(OsString::from_vec(b"abc".to_vec()), abc);
+        assert_eq!(OsString::from_vec(b"".to_vec()), empty);
+
+        assert_eq!(abc.clone().into_string().unwrap(), "abc");
+        assert_eq!(empty.clone().into_string().unwrap(), "");
+
+        assert_eq!(OsString::from_str("abc").unwrap(), abc);
+        assert_eq!(OsString::from_str("").unwrap(), empty);
+    }
+
+    #[test]
+    fn test_osstring_mut() {
+        let mut s = OsString::new();
+
+        s.push("abc");
+        assert_eq!(s, "abc");
+
+        s.reserve(10);
+        assert!(s.capacity() >= 13);
+        s.reserve_exact(10);
+        assert!(s.capacity() >= 13 && s.capacity() <= 16);
+        s.shrink_to_fit();
+        assert!(s.capacity() <= 6);
+
+        s.clear();
+        assert_eq!(s, "");
+    }
+}

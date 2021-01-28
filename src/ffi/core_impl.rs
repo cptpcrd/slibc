@@ -447,4 +447,42 @@ mod tests {
         assert_eq!(empty.to_bytes(), b"");
         assert_eq!(empty.to_bytes_with_nul(), b"\0");
     }
+
+    #[test]
+    fn test_osstr() {
+        let abc = OsStr::from_bytes(b"abc");
+        let empty = OsStr::from_bytes(b"");
+
+        assert_eq!("abc".as_ref() as &OsStr, abc);
+        assert_eq!("".as_ref() as &OsStr, empty);
+        assert_eq!(<&OsStr as Default>::default(), empty);
+
+        assert!(!abc.is_empty());
+        assert!(empty.is_empty());
+        assert_eq!(abc.len(), 3);
+        assert_eq!(empty.len(), 0);
+
+        assert!(abc.is_ascii());
+        assert!(empty.is_ascii());
+
+        assert_eq!(abc.to_str(), Some("abc"));
+        assert_eq!(empty.to_str(), Some(""));
+
+        assert!(empty.eq_ignore_ascii_case(""));
+        assert!(abc.eq_ignore_ascii_case("abc"));
+        assert!(abc.eq_ignore_ascii_case("Abc"));
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn test_osstr_alloc() {
+        let abc = OsStr::from_bytes(b"abc");
+        let empty = OsStr::from_bytes(b"");
+
+        assert_eq!(abc.to_string_lossy(), "abc");
+        assert_eq!(empty.to_string_lossy(), "");
+
+        assert_eq!(abc.to_os_string(), abc);
+        assert_eq!(empty.to_os_string(), empty);
+    }
 }
