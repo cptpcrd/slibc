@@ -41,7 +41,7 @@ pub fn ioctl_fionclex(fd: RawFd) -> Result<()> {
 pub fn ioctl_getwinsz(fd: RawFd) -> Result<Winsize> {
     let mut winsize = MaybeUninit::uninit();
     unsafe {
-        ioctl(fd, libc::TIOCGWINSZ, &mut winsize as *mut _ as *mut _)?;
+        ioctl(fd, libc::TIOCGWINSZ as _, &mut winsize as *mut _ as *mut _)?;
     }
     Ok(unsafe { winsize.assume_init() })
 }
@@ -49,7 +49,7 @@ pub fn ioctl_getwinsz(fd: RawFd) -> Result<Winsize> {
 #[inline]
 pub fn ioctl_setwinsz(fd: RawFd, winsz: &Winsize) -> Result<()> {
     unsafe {
-        ioctl(fd, libc::TIOCSWINSZ, winsz as *const _ as *mut _)?;
+        ioctl(fd, libc::TIOCSWINSZ as _, winsz as *const _ as *mut _)?;
     }
     Ok(())
 }
