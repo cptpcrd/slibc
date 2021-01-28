@@ -329,58 +329,62 @@ impl ToOwned for OsStr {
 }
 
 macro_rules! osstr_partial_ordeq {
-    ($($type:ty)*) => {
+    (#[cfg($cfg:meta)] $($ostype:ty, $cmdtype:ty;)*) => {
         $(
-            impl PartialOrd<OsStr> for $type {
+            #[cfg($cfg)]
+            #[cfg_attr(docsrs, doc(cfg($cfg)))]
+            impl PartialEq<$ostype> for $cmdtype {
                 #[inline]
-                fn partial_cmp(&self, other: &OsStr) -> Option<Ordering> {
-                    Some(self.as_bytes().cmp(other.as_bytes()))
-                }
-            }
-
-            impl PartialEq<OsStr> for $type {
-                #[inline]
-                fn eq(&self, other: &OsStr) -> bool {
+                fn eq(&self, other: &$ostype) -> bool {
                     self.as_bytes().eq(other.as_bytes())
                 }
             }
 
-            impl PartialOrd<$type> for OsStr {
+            #[cfg($cfg)]
+            #[cfg_attr(docsrs, doc(cfg($cfg)))]
+            impl PartialEq<$cmdtype> for $ostype {
                 #[inline]
-                fn partial_cmp(&self, other: &$type) -> Option<Ordering> {
-                    Some(self.as_bytes().cmp(other.as_bytes()))
-                }
-            }
-
-            impl PartialEq<$type> for OsStr {
-                #[inline]
-                fn eq(&self, other: &$type) -> bool {
+                fn eq(&self, other: &$cmdtype) -> bool {
                     self.as_bytes().eq(other.as_bytes())
                 }
             }
 
-            impl PartialOrd<&$type> for OsStr {
+            #[cfg($cfg)]
+            #[cfg_attr(docsrs, doc(cfg($cfg)))]
+            impl PartialOrd<$ostype> for $cmdtype {
                 #[inline]
-                fn partial_cmp(&self, other: &&$type) -> Option<Ordering> {
+                fn partial_cmp(&self, other: &$ostype) -> Option<Ordering> {
                     Some(self.as_bytes().cmp(other.as_bytes()))
                 }
             }
 
-            impl PartialEq<&$type> for OsStr {
+            #[cfg($cfg)]
+            #[cfg_attr(docsrs, doc(cfg($cfg)))]
+            impl PartialOrd<$cmdtype> for $ostype {
                 #[inline]
-                fn eq(&self, other: &&$type) -> bool {
-                    self.as_bytes().eq(other.as_bytes())
+                fn partial_cmp(&self, other: &$cmdtype) -> Option<Ordering> {
+                    Some(self.as_bytes().cmp(other.as_bytes()))
                 }
             }
         )*
     };
 }
 
-osstr_partial_ordeq! { str }
+osstr_partial_ordeq! {
+    #[cfg(all())]
 
-#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
-#[cfg(feature = "alloc")]
-osstr_partial_ordeq! { Cow<'_, OsStr> OsString }
+    str, OsStr;
+    str, &OsStr;
+}
+
+osstr_partial_ordeq! {
+    #[cfg(feature = "alloc")]
+
+    Cow<'_, OsStr>, OsStr;
+    Cow<'_, OsStr>, &OsStr;
+    OsString, OsStr;
+    OsString, &OsStr;
+}
 
 #[cfg(test)]
 mod tests {
