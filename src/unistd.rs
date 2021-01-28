@@ -823,6 +823,23 @@ pub fn getcwd(buf: &mut [u8]) -> Result<&CStr> {
     }
 }
 
+#[inline]
+pub fn unlink<P: AsPath>(path: P) -> Result<()> {
+    path.with_cstr(|path| Error::unpack_nz(unsafe { libc::unlink(path.as_ptr()) }))
+}
+
+#[inline]
+pub fn rmdir<P: AsPath>(path: P) -> Result<()> {
+    path.with_cstr(|path| Error::unpack_nz(unsafe { libc::rmdir(path.as_ptr()) }))
+}
+
+#[inline]
+pub fn unlinkat<P: AsPath>(dfd: RawFd, path: P, flags: crate::AtFlag) -> Result<()> {
+    path.with_cstr(|path| {
+        Error::unpack_nz(unsafe { libc::unlinkat(dfd, path.as_ptr(), flags.bits()) })
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
