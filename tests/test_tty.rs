@@ -1,4 +1,7 @@
-use slibc::{isatty, isatty_raw, openpty, pipe, ptsname, ttyname, ttyname_r};
+use slibc::{
+    ioctl_getwinsz, ioctl_setwinsz, isatty, isatty_raw, openpty, pipe, ptsname, ttyname, ttyname_r,
+    Winsize,
+};
 
 #[test]
 fn test_tty() {
@@ -71,4 +74,21 @@ fn test_tty() {
             libc::ENOTTY | libc::EINVAL
         ));
     }
+
+    // Now change the sizes
+
+    let mut winsz = Winsize {
+        ws_row: 12,
+        ws_col: 20,
+        ws_xpixel: 0,
+        ws_ypixel: 0,
+    };
+
+    let (master, slave) = unsafe { openpty(Some(&winsz.clone())) }.unwrap();
+    assert_eq!(ioctl_getwinsz(master.fd()).unwrap(), winsz);
+
+    winsz.ws_row = 40;
+    winsz.ws_col = 80;
+    ioctl_setwinsz(master.fd(), &winsz.clone()).unwrap();
+    assert_eq!(ioctl_getwinsz(slave.fd()).unwrap(), winsz);
 }

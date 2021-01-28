@@ -10,16 +10,11 @@ use crate::internal_prelude::*;
 /// [`ptsname()`](./fn.ptsname.html) internally. It should not be called concurrently from multiple
 /// threads, or concurrently with `ptsname()`.
 #[inline]
-pub unsafe fn openpty(winsize: Option<(u16, u16)>) -> Result<(FileDesc, FileDesc)> {
+pub unsafe fn openpty(winsize: Option<&crate::Winsize>) -> Result<(FileDesc, FileDesc)> {
     let mut master = -1;
     let mut slave = -1;
 
-    let mut winsize = winsize.map(|(r, c)| libc::winsize {
-        ws_row: r,
-        ws_col: c,
-        ws_xpixel: 0,
-        ws_ypixel: 0,
-    });
+    let mut winsize = winsize.copied();
 
     Error::unpack_nz(libc::openpty(
         &mut master,
@@ -28,7 +23,7 @@ pub unsafe fn openpty(winsize: Option<(u16, u16)>) -> Result<(FileDesc, FileDesc
         core::ptr::null_mut(),
         winsize
             .as_mut()
-            .map(|w| w as *mut _)
+            .map(|w| w as *mut _ as *mut _)
             .unwrap_or_else(core::ptr::null_mut),
     ))?;
 
