@@ -57,58 +57,44 @@ impl Stat {
 
     /// Get the last access time of this file (if available).
     #[inline]
-    pub fn atime(&self) -> Option<TimeSpec> {
-        let tv_sec = self.0.st_atime;
-
-        #[cfg(target_os = "netbsd")]
-        let tv_nsec = self.0.st_atimensec as _;
-        #[cfg(not(target_os = "netbsd"))]
-        let tv_nsec = self.0.st_atime_nsec as _;
-
-        if tv_sec == 0 && tv_nsec == 0 {
-            None
-        } else {
-            Some(TimeSpec { tv_sec, tv_nsec })
+    pub fn atime(&self) -> TimeSpec {
+        TimeSpec {
+            tv_sec: self.0.st_atime,
+            #[cfg(target_os = "netbsd")]
+            tv_nsec: self.0.st_atimensec as _,
+            #[cfg(not(target_os = "netbsd"))]
+            tv_nsec: self.0.st_atime_nsec as _,
         }
     }
 
     /// Get the last status change time of this file (if available).
     #[inline]
-    pub fn ctime(&self) -> Option<TimeSpec> {
-        let tv_sec = self.0.st_ctime;
-
-        #[cfg(target_os = "netbsd")]
-        let tv_nsec = self.0.st_ctimensec as _;
-        #[cfg(not(target_os = "netbsd"))]
-        let tv_nsec = self.0.st_ctime_nsec as _;
-
-        if tv_sec == 0 && tv_nsec == 0 {
-            None
-        } else {
-            Some(TimeSpec { tv_sec, tv_nsec })
+    pub fn ctime(&self) -> TimeSpec {
+        TimeSpec {
+            tv_sec: self.0.st_ctime,
+            #[cfg(target_os = "netbsd")]
+            tv_nsec: self.0.st_ctimensec as _,
+            #[cfg(not(target_os = "netbsd"))]
+            tv_nsec: self.0.st_ctime_nsec as _,
         }
     }
 
     /// Get the last modification time of this file (if available).
     #[inline]
-    pub fn mtime(&self) -> Option<TimeSpec> {
-        let tv_sec = self.0.st_mtime;
-
-        #[cfg(target_os = "netbsd")]
-        let tv_nsec = self.0.st_mtimensec as _;
-        #[cfg(not(target_os = "netbsd"))]
-        let tv_nsec = self.0.st_mtime_nsec as _;
-
-        if tv_sec == 0 && tv_nsec == 0 {
-            None
-        } else {
-            Some(TimeSpec { tv_sec, tv_nsec })
+    pub fn mtime(&self) -> TimeSpec {
+        TimeSpec {
+            tv_sec: self.0.st_mtime,
+            #[cfg(target_os = "netbsd")]
+            tv_nsec: self.0.st_mtimensec as _,
+            #[cfg(not(target_os = "netbsd"))]
+            tv_nsec: self.0.st_mtime_nsec as _,
         }
     }
 
     /// Get the creation time of this file (if available).
     ///
     /// This is currently only available on the following platforms:
+    ///
     /// - macOS
     /// - FreeBSD
     /// - OpenBSD
@@ -130,7 +116,7 @@ impl Stat {
             #[cfg(not(target_os = "netbsd"))]
             let tv_nsec = self.0.st_birthtime_nsec as _;
 
-            if tv_sec != 0 || tv_nsec != 0 {
+            if tv_sec > 0 {
                 return Some(TimeSpec { tv_sec, tv_nsec });
             }
         }
