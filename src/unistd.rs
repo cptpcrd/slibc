@@ -13,8 +13,11 @@ pub enum SysconfName {
 }
 
 #[inline]
-pub fn sysconf(name: SysconfName) -> Result<usize> {
-    Error::unpack_size(unsafe { libc::sysconf(name as libc::c_int) } as isize)
+pub fn sysconf(name: SysconfName) -> Option<usize> {
+    match unsafe { libc::sysconf(name as libc::c_int) } {
+        -1 => None,
+        res => Some(res as usize),
+    }
 }
 
 /// Get the number of bytes in a memory page.
