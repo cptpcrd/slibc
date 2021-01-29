@@ -843,6 +843,20 @@ pub fn unlinkat<P: AsPath>(dfd: RawFd, path: P, flags: crate::AtFlag) -> Result<
     })
 }
 
+bitflags::bitflags! {
+    pub struct AccessMode: libc::c_int {
+        const F_OK = libc::F_OK;
+        const R_OK = libc::R_OK;
+        const W_OK = libc::W_OK;
+        const X_OK = libc::X_OK;
+    }
+}
+
+#[inline]
+pub fn access<P: AsPath>(path: P, mode: AccessMode) -> Result<()> {
+    path.with_cstr(|path| Error::unpack_nz(unsafe { libc::access(path.as_ptr(), mode.bits()) }))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -933,5 +947,34 @@ mod tests {
     fn test_getcwd_error() {
         assert_eq!(getcwd(&mut []).unwrap_err().code(), libc::EINVAL);
         assert_eq!(getcwd(&mut [0]).unwrap_err().code(), libc::ERANGE);
+    }
+
+    #[test]
+    fn test_access() {
+        access(CStr::from_bytes_with_nul(b".\0").unwrap(), AccessMode::F_OK).unwrap();
+        access(
+            CStr::from_bytes_with_nul(b".\0").unwrap(),
+            AccessMode::R_OK | AccessMode::X_OK,
+        )
+        .unwrap();
+
+        assert_eq!(
+            access(
+                CStr::from_bytes_with_nul(b"/NOEXIST\0").unwrap(),
+                AccessMode::F_OK
+            )
+            .unwrap_err()
+            .code(),
+            libc::ENOENT
+        );
+        assert_eq!(
+            access(
+                CStr::from_bytes_with_nul(b"/NOEXIST\0").unwrap(),
+                AccessMode::R_OK | AccessMode::W_OK | AccessMode::X_OK
+            )
+            .unwrap_err()
+            .code(),
+            libc::ENOENT
+        );
     }
 }
