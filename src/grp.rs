@@ -189,7 +189,32 @@ impl<'a> Iterator for GroupMemberIter<'a> {
         self.mem_ptr = unsafe { self.mem_ptr.add(1) };
         Some(member)
     }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let len = self.len();
+        (len, Some(len))
+    }
+
+    #[inline]
+    fn count(self) -> usize {
+        self.len()
+    }
 }
+
+impl<'a> ExactSizeIterator for GroupMemberIter<'a> {
+    fn len(&self) -> usize {
+        let mut mem_ptr = self.mem_ptr;
+        let mut len = 0;
+        while !unsafe { *mem_ptr }.is_null() {
+            mem_ptr = unsafe { mem_ptr.add(1) };
+            len += 1;
+        }
+        len
+    }
+}
+
+impl<'a> core::iter::FusedIterator for GroupMemberIter<'a> {}
 
 /// An iterator over the entries in the group database.
 #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
@@ -357,8 +382,6 @@ impl Drop for GroupIter {
 mod tests {
     use super::*;
 
-    // macOS behaves strangely in situations like this
-
     #[test]
     fn test_lookup_cur() {
         let gid = crate::getgid();
@@ -386,6 +409,24 @@ mod tests {
 
             assert_eq!(entry.gid(), gid);
         }
+    }
+
+    #[test]
+    fn test_member_iter() {
+        let grp = Group::lookup_gid(crate::getgid()).unwrap().unwrap();
+
+        let mut members = grp.members();
+        let len = members.len();
+        assert_eq!(members.size_hint(), (len, Some(len)));
+
+        members.nth(len);
+
+        for _ in 0..2 {
+            assert_eq!(members.next(), None);
+            assert_eq!(members.len(), 0);
+            assert_eq!(members.size_hint(), (0, Some(0)));
+        }
+        assert_eq!(members.count(), 0);
     }
 
     #[test]
