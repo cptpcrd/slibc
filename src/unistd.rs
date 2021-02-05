@@ -899,7 +899,7 @@ mod tests {
         assert_eq!(getpgid(0).unwrap(), getpgrp());
         assert_eq!(getpgid(getpid()).unwrap(), getpgrp());
 
-        assert_eq!(getpgid(1).unwrap(), 1);
+        assert!(matches!(getpgid(1).unwrap(), 0 | 1));
 
         assert_eq!(getpgid(libc::pid_t::MAX).unwrap_err().code(), libc::ESRCH);
     }
