@@ -236,13 +236,16 @@ impl PasswdIter {
     /// is dropped), none of the following actions may be performed (in any thread):
     ///
     /// - Calling this method to create another `PasswdIter` object.
+    /// - Calling `Passwd::lookup_uid()` or `Passwd::lookup_name()`.
     /// - Calling any of the following C functions:
     ///   - `setpwent()`
     ///   - `getpwent()`
     ///   - `getpwent_r()`
     ///   - `endpwent()`
     ///   - `getpwuid()`
+    ///   - `getpwuid_r()`
     ///   - `getpwnam()`
+    ///   - `getpwnam_r()`
     #[inline]
     pub unsafe fn new() -> Self {
         libc::setpwent();

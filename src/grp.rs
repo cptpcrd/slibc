@@ -229,13 +229,16 @@ impl GroupIter {
     /// is dropped), none of the following actions may be performed (in any thread):
     ///
     /// - Calling this method to create another `GroupIter` object.
+    /// - Calling `Group::lookup_gid()` or `Group::lookup_name()`.
     /// - Calling any of the following C functions:
     ///   - `setgrent()`
     ///   - `getgrent()`
     ///   - `getgrent_r()`
     ///   - `endgrent()`
     ///   - `getgrgid()`
+    ///   - `getgrgid_r()`
     ///   - `getgrnam()`
+    ///   - `getgrnam_r()`
     #[inline]
     pub unsafe fn new() -> Self {
         libc::setgrent();

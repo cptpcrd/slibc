@@ -15,9 +15,9 @@ fn hash(grp: &Group) -> u64 {
 
 #[test]
 fn test_group_iter() {
-    for grp in unsafe { GroupIter::new() } {
-        let grp = grp.unwrap();
+    let groups: Vec<Group> = unsafe { GroupIter::new() }.map(|g| g.unwrap()).collect();
 
+    for grp in groups {
         assert_eq!(grp, grp.clone());
 
         #[cfg(feature = "std")]
