@@ -183,11 +183,12 @@ impl<'a> Iterator for GroupMemberIter<'a> {
     type Item = &'a OsStr;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if unsafe { *self.mem_ptr }.is_null() {
+        let member = unsafe { *self.mem_ptr };
+        if member.is_null() {
             return None;
         }
 
-        let member = OsStr::from_bytes(unsafe { CStr::from_ptr(*self.mem_ptr) }.to_bytes());
+        let member = OsStr::from_bytes(unsafe { CStr::from_ptr(member) }.to_bytes());
         self.mem_ptr = unsafe { self.mem_ptr.add(1) };
         Some(member)
     }
