@@ -434,7 +434,7 @@ mod tests {
 
     #[test]
     fn test_lookup_noexist() {
-        assert_eq!(Group::lookup_gid(libc::gid_t::MAX).unwrap(), None);
+        assert_eq!(Group::lookup_gid(libc::gid_t::MAX - 2).unwrap(), None);
         assert_eq!(Group::lookup_name("NO_SUCH_USER_123456").unwrap(), None);
     }
 }

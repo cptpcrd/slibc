@@ -466,7 +466,7 @@ mod tests {
 
     #[test]
     fn test_lookup_noexist() {
-        assert_eq!(Passwd::lookup_uid(libc::uid_t::MAX).unwrap(), None);
+        assert_eq!(Passwd::lookup_uid(libc::uid_t::MAX - 2).unwrap(), None);
         assert_eq!(Passwd::lookup_name("NO_SUCH_USER_123456").unwrap(), None);
     }
 }
