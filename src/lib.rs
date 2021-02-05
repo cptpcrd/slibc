@@ -87,9 +87,9 @@ mod internal_prelude {
 
     #[cfg(all(feature = "alloc", not(feature = "std")))]
     pub use alloc::{
-        format,
         borrow::{Cow, ToOwned},
         boxed::Box,
+        format,
         string::{String, ToString},
         vec::Vec,
     };
