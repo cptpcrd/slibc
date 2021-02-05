@@ -18,19 +18,19 @@ fn test_passwd_iter() {
     let passwds: Vec<Passwd> = unsafe { PasswdIter::new() }.map(|g| g.unwrap()).collect();
 
     for pwd in passwds {
+        assert_eq!(format!("{:?}", pwd), format!("{:?}", pwd.clone()));
         assert_eq!(pwd, pwd.clone());
 
         #[cfg(feature = "std")]
         assert_eq!(hash(&pwd), hash(&pwd.clone()));
 
         // Look up by name and make sure we get the same result
-        assert_eq!(pwd, Passwd::lookup_name(pwd.name()).unwrap().unwrap());
+        let pwd2 = Passwd::lookup_name(pwd.name()).unwrap().unwrap();
+        assert_eq!(pwd, pwd2);
+        assert_eq!(format!("{:?}", pwd), format!("{:?}", pwd2));
 
         #[cfg(feature = "std")]
-        assert_eq!(
-            hash(&pwd),
-            hash(&Passwd::lookup_name(pwd.name()).unwrap().unwrap())
-        );
+        assert_eq!(hash(&pwd), hash(&pwd2));
 
         // FreeBSD has a "toor" group which is also UID 0. So don't try to compare to the UID
         // lookup if we see an entry with UID 0 that isn't "root".
@@ -39,12 +39,12 @@ fn test_passwd_iter() {
             continue;
         }
 
-        assert_eq!(pwd, Passwd::lookup_uid(pwd.uid()).unwrap().unwrap());
+        // Look up by UID and make sure we get the same result
+        let pwd3 = Passwd::lookup_uid(pwd.uid()).unwrap().unwrap();
+        assert_eq!(pwd, pwd3);
+        assert_eq!(format!("{:?}", pwd), format!("{:?}", pwd3));
 
         #[cfg(feature = "std")]
-        assert_eq!(
-            hash(&pwd),
-            hash(&Passwd::lookup_uid(pwd.uid()).unwrap().unwrap())
-        );
+        assert_eq!(hash(&pwd), hash(&pwd3));
     }
 }

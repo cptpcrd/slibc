@@ -422,12 +422,14 @@ mod tests {
         #[cfg(feature = "std")]
         assert_eq!(hash(&root1), hash(&root2), "{:?} != {:?}", root1, root2);
 
+        assert_eq!(format!("{:?}", root1), format!("{:?}", root2));
         assert_eq!(root1, root2);
 
         for entry in [root1, root2].iter() {
             #[cfg(feature = "std")]
-            assert_eq!(hash(&entry), hash(&entry));
+            assert_eq!(hash(&entry), hash(&entry.clone()));
 
+            assert_eq!(format!("{:?}", entry), format!("{:?}", entry));
             assert_eq!(entry, &entry.clone());
 
             assert_eq!(entry.uid(), 0);
@@ -452,12 +454,17 @@ mod tests {
         #[cfg(feature = "std")]
         assert_eq!(hash(&cur1), hash(&cur2), "{:?} != {:?}", cur1, cur2);
 
+        assert_eq!(format!("{:?}", cur1), format!("{:?}", cur2));
         assert_eq!(cur1, cur2);
 
         for entry in [cur1, cur2].iter() {
             #[cfg(feature = "std")]
-            assert_eq!(hash(&entry), hash(&entry));
+            assert_eq!(hash(&entry), hash(&entry.clone()));
 
+            assert_eq!(
+                format!("{:?}", entry.clone()),
+                format!("{:?}", entry.clone())
+            );
             assert_eq!(entry, &entry.clone());
 
             assert_eq!(entry.uid(), uid);

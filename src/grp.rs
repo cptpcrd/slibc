@@ -402,12 +402,14 @@ mod tests {
         #[cfg(feature = "std")]
         assert_eq!(hash(&cur1), hash(&cur2), "{:?} != {:?}", cur1, cur2);
 
+        assert_eq!(format!("{:?}", cur1), format!("{:?}", cur2));
         assert_eq!(cur1, cur2);
 
         for entry in [cur1, cur2].iter() {
             #[cfg(feature = "std")]
-            assert_eq!(hash(&entry), hash(&entry));
+            assert_eq!(hash(&entry), hash(&entry.clone()));
 
+            assert_eq!(format!("{:?}", entry), format!("{:?}", entry.clone()));
             assert_eq!(entry, &entry.clone());
 
             assert_eq!(entry.gid(), gid);
