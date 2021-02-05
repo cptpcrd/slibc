@@ -76,6 +76,8 @@ impl Group {
                     });
                 }
 
+                libc::ENOENT | libc::ESRCH => return Ok(None),
+
                 libc::ERANGE if buf.capacity() < MAX_BUFSIZE => buf.reserve(buf.capacity() * 2),
 
                 eno => return Err(Error::from_code(eno)),
@@ -259,20 +261,14 @@ impl Iterator for GroupIter {
                 target_os = "netbsd",
             ))] {
                 return unsafe {
-                    match Group::lookup(
+                    Group::lookup(
                         |grp: *mut libc::group,
                          buf: *mut libc::c_char,
                          buflen: usize,
                          result: *mut *mut libc::group| {
                             libc::getgrent_r(grp, buf, buflen, result)
                         },
-                    ) {
-                        Ok(Some(entry)) => Some(Ok(entry)),
-                        Ok(None) => None,
-
-                        Err(e) if e.code() == libc::ENOENT => None,
-                        Err(e) => Some(Err(e)),
-                    }
+                    ).transpose()
                 };
             } else {
                 return unsafe {

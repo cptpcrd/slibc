@@ -91,6 +91,8 @@ impl Passwd {
                     });
                 }
 
+                libc::ENOENT | libc::ESRCH => return Ok(None),
+
                 libc::ERANGE if buf.capacity() < MAX_BUFSIZE => buf.reserve(buf.capacity() * 2),
 
                 eno => return Err(Error::from_code(eno)),
@@ -266,20 +268,14 @@ impl Iterator for PasswdIter {
                 target_os = "netbsd",
             ))] {
                 return unsafe {
-                    match Passwd::lookup(
+                    Passwd::lookup(
                         |pwd: *mut libc::passwd,
                          buf: *mut libc::c_char,
                          buflen: usize,
                          result: *mut *mut libc::passwd| {
                             libc::getpwent_r(pwd, buf, buflen, result)
                         },
-                    ) {
-                        Ok(Some(entry)) => Some(Ok(entry)),
-                        Ok(None) => None,
-
-                        Err(e) if e.code() == libc::ENOENT => None,
-                        Err(e) => Some(Err(e)),
-                    }
+                    ).transpose()
                 };
             } else {
                 return unsafe {
