@@ -895,17 +895,14 @@ mod tests {
     }
 
     #[test]
-    fn test_pgid() {
+    fn test_pgid_sid() {
         assert_eq!(getpgid(0).unwrap(), getpgrp());
         assert_eq!(getpgid(getpid()).unwrap(), getpgrp());
 
         assert!(matches!(getpgid(1).unwrap(), 0 | 1));
 
         assert_eq!(getpgid(libc::pid_t::MAX).unwrap_err().code(), libc::ESRCH);
-    }
 
-    #[test]
-    fn test_sid() {
         assert_eq!(getsid(libc::pid_t::MAX).unwrap_err().code(), libc::ESRCH);
 
         if getpgrp() != getpid() {
