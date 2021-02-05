@@ -15,7 +15,7 @@ fn hash(pwd: &Passwd) -> u64 {
 
 #[test]
 fn test_passwd_iter() {
-    let mut passwds: Vec<Passwd> = unsafe { PasswdIter::new() }.map(|g| g.unwrap()).collect();
+    let passwds: Vec<Passwd> = unsafe { PasswdIter::new() }.map(|g| g.unwrap()).collect();
 
     for pwd in passwds {
         assert_eq!(pwd, pwd.clone());
