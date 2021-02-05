@@ -223,6 +223,7 @@ impl fmt::Debug for Passwd {
     }
 }
 
+/// An iterator over the entries in the password database.
 #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 pub struct PasswdIter(());
 
@@ -232,7 +233,7 @@ impl PasswdIter {
     /// # Safety
     ///
     /// From the time this method is called, to the time the object returned goes out of scope (or
-    /// is dropped), none of the following actions may be performed:
+    /// is dropped), none of the following actions may be performed (in any thread):
     ///
     /// - Calling this method to create another `PasswdIter` object.
     /// - Calling any of the following C functions:
