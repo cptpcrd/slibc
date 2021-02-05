@@ -128,10 +128,14 @@ pub use time::*;
 pub use unistd::*;
 pub use utsname::*;
 
-#[cfg(feature = "alloc")]
-mod pwd;
-#[cfg(feature = "alloc")]
-pub use pwd::*;
+cfg_if::cfg_if! {
+    if #[cfg(feature = "alloc")] {
+        mod grp;
+        mod pwd;
+        pub use grp::*;
+        pub use pwd::*;
+    }
+}
 
 cfg_if::cfg_if! {
     if #[cfg(target_os = "linux")] {
