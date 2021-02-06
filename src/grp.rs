@@ -174,6 +174,7 @@ impl fmt::Debug for Group {
 ///
 /// This is created by [`Group::members()`]. It yields `OsStr`s representing the name of each user
 /// that is a member of the group.
+#[derive(Clone)]
 pub struct GroupMemberIter<'a> {
     mem_ptr: *mut *mut libc::c_char,
     phantom: PhantomData<&'a Group>,
@@ -191,6 +192,18 @@ impl<'a> Iterator for GroupMemberIter<'a> {
         let member = OsStr::from_bytes(unsafe { CStr::from_ptr(member) }.to_bytes());
         self.mem_ptr = unsafe { self.mem_ptr.add(1) };
         Some(member)
+    }
+
+    fn nth(&mut self, n: usize) -> Option<Self::Item> {
+        for _ in 0..n {
+            if unsafe { *self.mem_ptr }.is_null() {
+                return None;
+            } else {
+                self.mem_ptr = unsafe { self.mem_ptr.add(1) };
+            }
+        }
+
+        self.next()
     }
 
     #[inline]
@@ -425,10 +438,27 @@ mod tests {
 
         for _ in 0..2 {
             assert_eq!(members.next(), None);
+            assert_eq!(members.nth(0), None);
+            assert_eq!(members.nth(1), None);
+
             assert_eq!(members.len(), 0);
             assert_eq!(members.size_hint(), (0, Some(0)));
         }
         assert_eq!(members.count(), 0);
+
+        let members: Vec<_> = grp.members().collect();
+        for i in 0..members.len() {
+            assert_eq!(members[i], grp.members().nth(i).unwrap());
+        }
+
+        assert_eq!(grp.members().nth(members.len()), None);
+        assert_eq!(grp.members().nth(members.len() + 1), None);
+
+        let members = grp.members();
+        assert_eq!(
+            members.clone().collect::<Vec<_>>(),
+            members.collect::<Vec<_>>()
+        );
     }
 
     #[test]
