@@ -436,6 +436,7 @@ mod tests {
 
         members.nth(len);
 
+        #[allow(clippy::iter_nth_zero)]
         for _ in 0..2 {
             assert_eq!(members.next(), None);
             assert_eq!(members.nth(0), None);
@@ -447,8 +448,8 @@ mod tests {
         assert_eq!(members.count(), 0);
 
         let members: Vec<_> = grp.members().collect();
-        for i in 0..members.len() {
-            assert_eq!(members[i], grp.members().nth(i).unwrap());
+        for (i, &member) in members.iter().enumerate() {
+            assert_eq!(grp.members().nth(i).unwrap(), member);
         }
 
         assert_eq!(grp.members().nth(members.len()), None);
