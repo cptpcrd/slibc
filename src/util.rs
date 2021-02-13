@@ -87,12 +87,12 @@ mod tests {
         let empty = CString::new(*b"").unwrap();
 
         assert_eq!(cstring_from_buf(b"abc\0".to_vec()), Some(abc.clone()));
-        assert_eq!(cstring_from_buf(b"abc\0def".to_vec()), Some(abc.clone()));
+        assert_eq!(cstring_from_buf(b"abc\0def".to_vec()), Some(abc));
         assert_eq!(
             cstring_from_buf(b"\0abc\0def".to_vec()),
             Some(empty.clone())
         );
-        assert_eq!(cstring_from_buf(b"\0".to_vec()), Some(empty.clone()));
+        assert_eq!(cstring_from_buf(b"\0".to_vec()), Some(empty));
 
         assert_eq!(cstring_from_buf(b"".to_vec()), None);
         assert_eq!(cstring_from_buf(b"abc".to_vec()), None);
