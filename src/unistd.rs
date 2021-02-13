@@ -87,10 +87,13 @@ pub fn chdir<P: AsPath>(path: P) -> Result<()> {
 /// then immediately `chroot(".")`.
 /// example:
 ///
-/// ```ignore
-/// # use slibc::unistd::{chdir, chroot};
+/// ```no_run
+/// # #[cfg(feature = "alloc")]
+/// # {
+/// # use slibc::{chdir, chroot};
 /// chdir("/a/b/c").unwrap();
 /// chroot(".").unwrap();
+/// # }
 /// ```
 ///
 /// Or, using `fchdir()` (notably, this allows `chroot()`ing to a directory specified by a file

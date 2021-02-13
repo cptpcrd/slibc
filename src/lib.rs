@@ -40,8 +40,11 @@
 //! result, strings that are not nul-terminated (like `str`, `String`, `OsStr`, and `OsString`,
 //! though see [FFI strings](#ffi-strings) above) can be used, like this:
 //!
-//! ```ignore
-//! slibc::unistd::chdir(".").unwrap();
+//! ```
+//! # #[cfg(feature = "alloc")]
+//! # {
+//! slibc::chdir(".").unwrap();
+//! # }
 //! ```
 //!
 //! However, note that this is wasteful, since it allocates memory just to perform a single operation. If you
