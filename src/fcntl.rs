@@ -146,6 +146,8 @@ bitflags::bitflags! {
     }
 }
 
+pub const AT_FDCWD: RawFd = libc::AT_FDCWD;
+
 #[inline]
 pub fn open<P: AsPath>(path: P, flags: OFlag, mode: u32) -> Result<FileDesc> {
     path.with_cstr(|path| unsafe {
