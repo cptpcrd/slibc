@@ -395,6 +395,28 @@ pub fn getgroups(groups: &mut [libc::gid_t]) -> Result<usize> {
     Ok(n as usize)
 }
 
+#[cfg(feature = "alloc")]
+pub fn getgroups_alloc() -> Result<Vec<libc::gid_t>> {
+    let mut groups = Vec::new();
+
+    loop {
+        let ngroups = getgroups(&mut groups)?;
+        if ngroups == 0 {
+            return Ok(Vec::new());
+        }
+        groups.resize(ngroups, 0);
+
+        match getgroups(&mut groups) {
+            Ok(n) => {
+                groups.truncate(n);
+                return Ok(groups);
+            }
+            Err(e) if e.code() == libc::EINVAL => (),
+            Err(e) => return Err(e),
+        }
+    }
+}
+
 #[inline]
 pub fn setgroups(groups: &[libc::gid_t]) -> Result<()> {
     // BSD-based systems have the length as type `int`; check for overflow on 64-bit
