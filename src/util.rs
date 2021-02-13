@@ -17,7 +17,8 @@ pub fn cvt_char_buf(buf: &[libc::c_char]) -> &[u8] {
 #[inline]
 pub fn cstr_from_buf(buf: &[u8]) -> Option<&CStr> {
     let index = crate::memchr(buf, 0)?;
-    let buf = &buf[..index + 1];
+    debug_assert!(index < buf.len());
+    let buf = unsafe { &buf.get_unchecked(0..index + 1) };
 
     #[cfg(debug_assertions)]
     CStr::from_bytes_with_nul(buf).unwrap();
