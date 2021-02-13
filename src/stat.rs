@@ -1,6 +1,58 @@
 use crate::internal_prelude::*;
 use crate::{AtFlag, TimeSpec};
 
+/// Represents the file type mask from a `Stat` structure. Can be used to determine the file type.
+///
+/// Note: This is derived from [`Stat::mode()`] such that:
+/// ```
+/// # #[cfg(feature = "alloc")]
+/// # {
+/// # use slibc::*;
+/// let st = stat(".").unwrap();
+/// assert_eq!(st.file_type().mask, st.mode() & (libc::S_IFMT as u32));
+/// # }
+#[derive(Copy, Clone, Eq, Hash, PartialEq)]
+pub struct StatFileType {
+    pub mask: u32,
+}
+
+impl StatFileType {
+    #[inline]
+    pub fn is_dir(&self) -> bool {
+        self.mask == libc::S_IFDIR as u32
+    }
+
+    #[inline]
+    pub fn is_file(&self) -> bool {
+        self.mask == libc::S_IFREG as u32
+    }
+
+    #[inline]
+    pub fn is_symlink(&self) -> bool {
+        self.mask == libc::S_IFLNK as u32
+    }
+
+    #[inline]
+    pub fn is_block_device(&self) -> bool {
+        self.mask == libc::S_IFBLK as u32
+    }
+
+    #[inline]
+    pub fn is_char_device(&self) -> bool {
+        self.mask == libc::S_IFCHR as u32
+    }
+
+    #[inline]
+    pub fn is_fifo(&self) -> bool {
+        self.mask == libc::S_IFIFO as u32
+    }
+
+    #[inline]
+    pub fn is_socket(&self) -> bool {
+        self.mask == libc::S_IFSOCK as u32
+    }
+}
+
 #[derive(Copy, Clone, Debug)]
 pub struct Stat(libc::stat);
 
@@ -19,10 +71,29 @@ impl Stat {
 
     /// Get this file's mode.
     ///
-    /// This embeds the file type and the access mode.
+    /// This embeds the file type and the access mode (see [`Stat::file_type()`] and
+    /// [`Stat::access_mode()`]).
     #[inline]
     pub fn mode(&self) -> u32 {
         self.0.st_mode as u32
+    }
+
+    /// Get the file type information associated with this `Stat` structure.
+    ///
+    /// See [`StatFileType`] for more information.
+    #[inline]
+    pub fn file_type(&self) -> StatFileType {
+        StatFileType {
+            mask: self.mode() & (libc::S_IFMT as u32),
+        }
+    }
+
+    /// Get the access mode associated with this `Stat` structure.
+    ///
+    /// This is the portion of [`Stat::mode()`] that does not embed the file type.
+    #[inline]
+    pub fn access_mode(&self) -> u32 {
+        self.mode() & 0o777
     }
 
     /// Get the number of hardlinks to this file.
