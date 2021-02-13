@@ -1,3 +1,7 @@
+//! Re-exports of various useful FFI types (or re-implementations in `#[no_std]` environments).
+//!
+//! See [FFI strings](../index.html#ffi-strings) for more information.
+
 #[cfg(feature = "std")]
 pub use std::ffi::{CStr, CString, FromBytesWithNulError, NulError, OsStr, OsString};
 
