@@ -109,8 +109,8 @@ define_resource! {
     MSGQUEUE = RLIMIT_MSGQUEUE,
     /// A ceiling to which the process's nice value can be raised.
     ///
-    /// See the helper functions [`nice_rlimit_to_thresh()`] and [`nice_thresh_to_rlimit()`] and
-    /// getrlimit(2) for more infromation
+    /// See the helper functions [`rlimits::nice_rlimit_to_thresh()`] and
+    /// [`rlimits::nice_thresh_to_rlimit()`] and getrlimit(2) for more information.
     NICE = RLIMIT_NICE,
     /// A ceiling to the real-time priority that can be set for this process.
     RTPRIO = RLIMIT_RTPRIO,
@@ -200,19 +200,6 @@ pub type Limit = libc::rlim_t;
 
 /// A special resource limit value that that means "infinity" or "no limit".
 pub const RLIM_INFINITY: Limit = libc::RLIM_INFINITY;
-
-/// Compare two resource limits.
-///
-/// This is equivalent to `val1.cmp(&val2)`, except that it properly acknowledges "infinite"
-/// resource limits (i.e. [`RLIM_INFINITY`]).
-pub fn compare_limits(val1: Limit, val2: Limit) -> Ordering {
-    match (val1, val2) {
-        (RLIM_INFINITY, RLIM_INFINITY) => Ordering::Equal,
-        (RLIM_INFINITY, _) => Ordering::Greater,
-        (_, RLIM_INFINITY) => Ordering::Less,
-        (_, _) => val1.cmp(&val2),
-    }
-}
 
 /// Get the soft and hard limits for the given resource.
 #[inline]
@@ -314,35 +301,53 @@ pub unsafe fn proc_rlimit(
     Ok((old_rlim.rlim_cur, old_rlim.rlim_max))
 }
 
-/// Convert a `NICE` resource limit value to the corresponding maximum priority value.
-///
-/// Notes:
-/// 1. This function will only produce results in the range -20 to 19 (inclusive), since that is
-///    the range of acceptable priority values.
-/// 2. An infinite resource limit will translate to -20.
-/// 3. Remember, lower priority values mean higher priority.
-#[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
-#[cfg(target_os = "linux")]
-#[inline]
-pub fn nice_rlimit_to_thresh(nice_rlim: Limit) -> libc::c_int {
-    if nice_rlim == RLIM_INFINITY {
-        -20
-    } else {
-        20 - (nice_rlim.max(1).min(40) as libc::c_int)
-    }
-}
+/// A module with utility functions for manipulating resource limits.
+pub mod rlimits {
+    use super::*;
 
-/// Convert a `NICE` resource limit value to the corresponding priority value.
-///
-/// Notes:
-/// 1. This function will only produce results in the range 1 to 20 (inclusive), since that is
-///    the range of useful `NICE` resource limit values.
-/// 2. Remember, lower priority values mean higher priority.
-#[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
-#[cfg(target_os = "linux")]
-#[inline]
-pub fn nice_thresh_to_rlimit(nice_thresh: libc::c_int) -> Limit {
-    (20 - nice_thresh.max(-20).min(19)) as Limit
+    /// Compare two resource limits.
+    ///
+    /// This is equivalent to `val1.cmp(&val2)`, except that it properly acknowledges "infinite"
+    /// resource limits (i.e. [`RLIM_INFINITY`]).
+    pub fn compare_limits(val1: Limit, val2: Limit) -> Ordering {
+        match (val1, val2) {
+            (RLIM_INFINITY, RLIM_INFINITY) => Ordering::Equal,
+            (RLIM_INFINITY, _) => Ordering::Greater,
+            (_, RLIM_INFINITY) => Ordering::Less,
+            (_, _) => val1.cmp(&val2),
+        }
+    }
+
+    /// Convert a `NICE` resource limit value to the corresponding maximum priority value.
+    ///
+    /// Notes:
+    /// 1. This function will only produce results in the range -20 to 19 (inclusive), since that is
+    ///    the range of acceptable priority values.
+    /// 2. An infinite resource limit will translate to -20.
+    /// 3. Remember, lower priority values mean higher priority.
+    #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
+    #[cfg(target_os = "linux")]
+    #[inline]
+    pub fn nice_rlimit_to_thresh(nice_rlim: Limit) -> libc::c_int {
+        if nice_rlim == RLIM_INFINITY {
+            -20
+        } else {
+            20 - (nice_rlim.max(1).min(40) as libc::c_int)
+        }
+    }
+
+    /// Convert a `NICE` resource limit value to the corresponding priority value.
+    ///
+    /// Notes:
+    /// 1. This function will only produce results in the range 1 to 20 (inclusive), since that is
+    ///    the range of useful `NICE` resource limit values.
+    /// 2. Remember, lower priority values mean higher priority.
+    #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
+    #[cfg(target_os = "linux")]
+    #[inline]
+    pub fn nice_thresh_to_rlimit(nice_thresh: libc::c_int) -> Limit {
+        (20 - nice_thresh.max(-20).min(19)) as Limit
+    }
 }
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
@@ -461,6 +466,8 @@ mod tests {
 
     #[test]
     fn test_compare_limits() {
+        use rlimits::*;
+
         assert_eq!(compare_limits(0, 0), Ordering::Equal);
         assert_eq!(compare_limits(1, 0), Ordering::Greater);
         assert_eq!(compare_limits(0, 1), Ordering::Less);
@@ -476,6 +483,8 @@ mod tests {
     #[cfg(target_os = "linux")]
     #[test]
     fn test_nice_rlimit_thresh() {
+        use rlimits::*;
+
         assert_eq!(nice_rlimit_to_thresh(RLIM_INFINITY), -20);
 
         assert_eq!(nice_rlimit_to_thresh(40), -20);
