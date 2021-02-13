@@ -907,6 +907,86 @@ pub fn faccessat<P: AsPath>(
     })
 }
 
+#[inline]
+pub fn chown<P: AsPath>(
+    path: P,
+    owner: Option<libc::uid_t>,
+    group: Option<libc::gid_t>,
+) -> Result<()> {
+    path.with_cstr(|path| {
+        Error::unpack_nz(unsafe {
+            libc::chown(
+                path.as_ptr(),
+                owner.unwrap_or(libc::uid_t::MAX),
+                group.unwrap_or(libc::gid_t::MAX),
+            )
+        })
+    })
+}
+
+#[inline]
+pub fn lchown<P: AsPath>(
+    path: P,
+    owner: Option<libc::uid_t>,
+    group: Option<libc::gid_t>,
+) -> Result<()> {
+    path.with_cstr(|path| {
+        Error::unpack_nz(unsafe {
+            libc::lchown(
+                path.as_ptr(),
+                owner.unwrap_or(libc::uid_t::MAX),
+                group.unwrap_or(libc::gid_t::MAX),
+            )
+        })
+    })
+}
+
+#[inline]
+pub fn fchown(fd: RawFd, owner: Option<libc::uid_t>, group: Option<libc::gid_t>) -> Result<()> {
+    Error::unpack_nz(unsafe {
+        libc::fchown(
+            fd,
+            owner.unwrap_or(libc::uid_t::MAX),
+            group.unwrap_or(libc::gid_t::MAX),
+        )
+    })
+}
+
+#[inline]
+pub fn fchownat<P: AsPath>(
+    fd: RawFd,
+    path: P,
+    owner: Option<libc::uid_t>,
+    group: Option<libc::gid_t>,
+    flags: crate::AtFlag,
+) -> Result<()> {
+    path.with_cstr(|path| {
+        Error::unpack_nz(unsafe {
+            libc::fchownat(
+                fd,
+                path.as_ptr(),
+                owner.unwrap_or(libc::uid_t::MAX),
+                group.unwrap_or(libc::gid_t::MAX),
+                flags.bits(),
+            )
+        })
+    })
+}
+
+pub fn chmod<P: AsPath>(path: P, mode: u32) -> Result<()> {
+    path.with_cstr(|path| Error::unpack_nz(unsafe { libc::chmod(path.as_ptr(), mode) }))
+}
+
+pub fn fchmod(fd: RawFd, mode: u32) -> Result<()> {
+    Error::unpack_nz(unsafe { libc::fchmod(fd, mode) })
+}
+
+pub fn fchmodat<P: AsPath>(dirfd: RawFd, path: P, mode: u32, flags: crate::AtFlag) -> Result<()> {
+    path.with_cstr(|path| {
+        Error::unpack_nz(unsafe { libc::fchmodat(dirfd, path.as_ptr(), mode, flags.bits()) })
+    })
+}
+
 #[cfg_attr(
     docsrs,
     doc(cfg(any(
