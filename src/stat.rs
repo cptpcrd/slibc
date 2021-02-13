@@ -72,7 +72,8 @@ impl Stat {
     /// Get this file's mode.
     ///
     /// This embeds the file type and the access mode (see [`Stat::file_type()`] and
-    /// [`Stat::access_mode()`]).
+    /// [`Stat::access_mode()`]). It also embeds several "flags" (see [`Stat::is_suid()`],
+    /// [`Stat::is_sgid()`], and [`Stat::is_sticky()`]).
     #[inline]
     pub fn mode(&self) -> u32 {
         self.0.st_mode as u32
@@ -86,6 +87,27 @@ impl Stat {
         StatFileType {
             mask: self.mode() & (libc::S_IFMT as u32),
         }
+    }
+
+    /// Check whether this file is set-user-ID.
+    #[inline]
+    pub fn is_suid(&self) -> bool {
+        self.mode() & libc::S_ISUID as u32 == libc::S_ISUID as u32
+    }
+
+    /// Check whether this file is set-group-ID.
+    #[inline]
+    pub fn is_sgid(&self) -> bool {
+        self.mode() & libc::S_ISGID as u32 == libc::S_ISGID as u32
+    }
+
+    /// Check whether this file is sticky.
+    ///
+    /// For directories, this means users can only create files in the directory if they own the
+    /// files.
+    #[inline]
+    pub fn is_sticky(&self) -> bool {
+        self.mode() & libc::S_ISVTX as u32 == libc::S_ISVTX as u32
     }
 
     /// Get the access mode associated with this `Stat` structure.
