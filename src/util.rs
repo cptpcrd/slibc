@@ -34,6 +34,14 @@ pub fn osstr_from_buf(buf: &[u8]) -> &OsStr {
     })
 }
 
+#[cfg(feature = "alloc")]
+#[inline]
+pub fn cstring_from_buf(mut buf: Vec<u8>) -> Option<CString> {
+    let index = crate::memchr(&buf, 0)?;
+    buf.truncate(index);
+    Some(unsafe { CString::from_vec_unchecked(buf) })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -70,5 +78,23 @@ mod tests {
         assert_eq!(osstr_from_buf(b"\0"), empty);
 
         assert_eq!(osstr_from_buf(b""), empty);
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn test_cstring_from_buf() {
+        let abc = CString::new(*b"abc").unwrap();
+        let empty = CString::new(*b"").unwrap();
+
+        assert_eq!(cstring_from_buf(b"abc\0".to_vec()), Some(abc.clone()));
+        assert_eq!(cstring_from_buf(b"abc\0def".to_vec()), Some(abc.clone()));
+        assert_eq!(
+            cstring_from_buf(b"\0abc\0def".to_vec()),
+            Some(empty.clone())
+        );
+        assert_eq!(cstring_from_buf(b"\0".to_vec()), Some(empty.clone()));
+
+        assert_eq!(cstring_from_buf(b"".to_vec()), None);
+        assert_eq!(cstring_from_buf(b"abc".to_vec()), None);
     }
 }

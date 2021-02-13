@@ -826,6 +826,20 @@ pub fn getcwd(buf: &mut [u8]) -> Result<&CStr> {
     }
 }
 
+#[cfg(feature = "alloc")]
+pub fn getcwd_alloc() -> Result<CString> {
+    let mut buf = Vec::with_capacity(crate::PATH_MAX);
+    unsafe {
+        buf.set_len(crate::PATH_MAX);
+    }
+
+    if unsafe { libc::getcwd(buf.as_mut_ptr() as *mut _, buf.len()) }.is_null() {
+        return Err(Error::last());
+    }
+
+    Ok(util::cstring_from_buf(buf).unwrap())
+}
+
 #[inline]
 pub fn unlink<P: AsPath>(path: P) -> Result<()> {
     path.with_cstr(|path| Error::unpack_nz(unsafe { libc::unlink(path.as_ptr()) }))
