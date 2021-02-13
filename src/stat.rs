@@ -63,7 +63,7 @@ impl Stat {
         self.0.st_dev as u64
     }
 
-    /// Get his file's inode number.
+    /// Get this file's inode number.
     #[inline]
     pub fn ino(&self) -> u64 {
         self.0.st_ino as u64
