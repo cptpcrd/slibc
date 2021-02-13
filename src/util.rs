@@ -56,6 +56,7 @@ mod tests {
         assert_eq!(cstr_from_buf(b"\0"), Some(empty));
 
         assert_eq!(cstr_from_buf(b""), None);
+        assert_eq!(cstr_from_buf(b"abc"), None);
     }
 
     #[test]
