@@ -893,6 +893,20 @@ pub fn access<P: AsPath>(path: P, mode: AccessMode) -> Result<()> {
     path.with_cstr(|path| Error::unpack_nz(unsafe { libc::access(path.as_ptr(), mode.bits()) }))
 }
 
+#[inline]
+pub fn faccessat<P: AsPath>(
+    dirfd: RawFd,
+    path: P,
+    mode: AccessMode,
+    flags: crate::AtFlag,
+) -> Result<()> {
+    path.with_cstr(|path| {
+        Error::unpack_nz(unsafe {
+            libc::faccessat(dirfd, path.as_ptr(), mode.bits(), flags.bits())
+        })
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
