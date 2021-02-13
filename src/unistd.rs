@@ -907,6 +907,26 @@ pub fn faccessat<P: AsPath>(
     })
 }
 
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(
+        target_os = "freebsd",
+        target_os = "dragonfly",
+        target_os = "openbsd",
+        target_os = "netbsd",
+        target_os = "macos",
+        target_os = "ios",
+    )))
+)]
+#[cfg(bsd)]
+#[inline]
+pub fn getpeereid(sock: RawFd) -> Result<(libc::uid_t, libc::gid_t)> {
+    let mut uid = MaybeUninit::uninit();
+    let mut gid = MaybeUninit::uninit();
+    Error::unpack_nz(unsafe { libc::getpeereid(sock, uid.as_mut_ptr(), gid.as_mut_ptr()) })?;
+    unsafe { Ok((uid.assume_init(), gid.assume_init())) }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
