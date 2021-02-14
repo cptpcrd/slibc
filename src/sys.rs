@@ -50,6 +50,16 @@ extern "C" {
 ))]
 extern "C" {
     pub fn getlogin_r(name: *mut libc::c_char, len: libc::size_t) -> libc::c_int;
+
+    pub fn clock_getcpuclockid(pid: libc::pid_t, clock_id: *mut libc::clockid_t) -> libc::c_int;
+}
+
+#[cfg(any(target_os = "freebsd", target_os = "dragonfly", target_os = "openbsd"))]
+extern "C" {
+    pub fn pthread_getcpuclockid(
+        thread: libc::pthread_t,
+        clock_id: *mut libc::clockid_t,
+    ) -> libc::c_int;
 }
 
 #[cfg(any(

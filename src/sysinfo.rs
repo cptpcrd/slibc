@@ -130,7 +130,7 @@ mod tests {
     fn test_uptime() {
         let info = sysinfo().unwrap();
 
-        let boot_time = crate::clock_gettime(crate::Clock::BootTime).unwrap();
+        let boot_time = crate::clock_gettime(crate::ClockId::BOOTTIME).unwrap();
 
         assert!(
             ((boot_time.tv_sec as i64) - (info.uptime() as i64)).abs() <= 1,
