@@ -1,3 +1,5 @@
+use core::fmt;
+
 use crate::internal_prelude::*;
 use crate::{AtFlag, TimeSpec};
 
@@ -50,6 +52,30 @@ impl StatFileType {
     #[inline]
     pub fn is_socket(&self) -> bool {
         self.mask == libc::S_IFSOCK as u32
+    }
+}
+
+impl fmt::Debug for StatFileType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let s = if self.is_dir() {
+            "Directory"
+        } else if self.is_file() {
+            "File"
+        } else if self.is_symlink() {
+            "Symlink"
+        } else if self.is_block_device() {
+            "BlockDevice"
+        } else if self.is_char_device() {
+            "CharacterDevice"
+        } else if self.is_fifo() {
+            "Fifo"
+        } else if self.is_socket() {
+            "Socket"
+        } else {
+            "Unknown"
+        };
+
+        f.write_str(s)
     }
 }
 
