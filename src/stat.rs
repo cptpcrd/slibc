@@ -291,3 +291,118 @@ pub fn fstatat<P: AsPath>(dfd: RawFd, path: P, flags: AtFlag) -> Result<Stat> {
 pub fn umask(mask: u32) -> u32 {
     unsafe { libc::umask(mask as _) as u32 }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_filetype_is() {
+        macro_rules! check {
+            ($meth:ident, $true_mask:ident, !, $($false_mask:ident),+ $(,)?) => {{
+                assert!(StatFileType { mask: libc::$true_mask }.$meth());
+
+                $(
+                    assert!(!StatFileType { mask: libc::$false_mask }.$meth());
+                )+
+            }};
+        }
+
+        check!(
+            is_file,
+            S_IFREG,
+            !,
+            S_IFDIR,
+            S_IFLNK,
+            S_IFBLK,
+            S_IFCHR,
+            S_IFIFO,
+            S_IFSOCK
+        );
+        check!(
+            is_dir,
+            S_IFDIR,
+            !,
+            S_IFREG,
+            S_IFLNK,
+            S_IFBLK,
+            S_IFCHR,
+            S_IFIFO,
+            S_IFSOCK
+        );
+        check!(
+            is_symlink,
+            S_IFLNK,
+            !,
+            S_IFREG,
+            S_IFDIR,
+            S_IFBLK,
+            S_IFCHR,
+            S_IFIFO,
+            S_IFSOCK
+        );
+        check!(
+            is_block_device,
+            S_IFBLK,
+            !,
+            S_IFREG,
+            S_IFDIR,
+            S_IFLNK,
+            S_IFCHR,
+            S_IFIFO,
+            S_IFSOCK
+        );
+        check!(
+            is_char_device,
+            S_IFCHR,
+            !,
+            S_IFREG,
+            S_IFDIR,
+            S_IFLNK,
+            S_IFBLK,
+            S_IFIFO,
+            S_IFSOCK
+        );
+        check!(
+            is_fifo,
+            S_IFIFO,
+            !,
+            S_IFREG,
+            S_IFDIR,
+            S_IFLNK,
+            S_IFBLK,
+            S_IFCHR,
+            S_IFSOCK
+        );
+        check!(
+            is_socket,
+            S_IFSOCK,
+            !,
+            S_IFREG,
+            S_IFDIR,
+            S_IFLNK,
+            S_IFBLK,
+            S_IFCHR,
+            S_IFIFO
+        );
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn test_filetype_debug() {
+        macro_rules! check {
+            ($mask:expr, $s:expr) => {
+                assert_eq!(format!("{:?}", StatFileType { mask: $mask }), $s);
+            };
+        }
+
+        check!(libc::S_IFDIR, "Directory");
+        check!(libc::S_IFREG, "File");
+        check!(libc::S_IFLNK, "Symlink");
+        check!(libc::S_IFBLK, "BlockDevice");
+        check!(libc::S_IFCHR, "CharacterDevice");
+        check!(libc::S_IFIFO, "Fifo");
+        check!(libc::S_IFSOCK, "Socket");
+        check!(u32::MAX, "Unknown");
+    }
+}
