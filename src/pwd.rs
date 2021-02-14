@@ -15,8 +15,9 @@ const MAX_BUFSIZE: usize = 32768;
 
 macro_rules! osstr_getter {
     ($name:ident, $field_name:ident) => {
+        #[inline]
         pub fn $name<'a>(&'a self) -> &'a OsStr {
-            OsStr::from_bytes(unsafe { CStr::from_ptr(self.pwd.$field_name) }.to_bytes())
+            OsStr::from_bytes(unsafe { util::bytes_from_ptr(self.pwd.$field_name) })
         }
     };
 }
@@ -283,14 +284,14 @@ impl Iterator for PasswdIter {
                     *eno_ptr = 0;
 
                     if let Some(pwd) = libc::getpwent().as_ref() {
-                        let pw_name = CStr::from_ptr(pwd.pw_name).to_bytes();
-                        let pw_passwd = CStr::from_ptr(pwd.pw_passwd).to_bytes();
-                        let pw_gecos = CStr::from_ptr(pwd.pw_gecos).to_bytes();
-                        let pw_dir = CStr::from_ptr(pwd.pw_dir).to_bytes();
-                        let pw_shell = CStr::from_ptr(pwd.pw_shell).to_bytes();
+                        let pw_name = util::bytes_from_ptr(pwd.pw_name);
+                        let pw_passwd = util::bytes_from_ptr(pwd.pw_passwd);
+                        let pw_gecos = util::bytes_from_ptr(pwd.pw_gecos);
+                        let pw_dir = util::bytes_from_ptr(pwd.pw_dir);
+                        let pw_shell = util::bytes_from_ptr(pwd.pw_shell);
 
                         #[cfg(bsd)]
-                        let pw_class = CStr::from_ptr(pwd.pw_class).to_bytes();
+                        let pw_class = util::bytes_from_ptr(pwd.pw_class);
 
                         let buflen = 5
                             + pw_name.len()

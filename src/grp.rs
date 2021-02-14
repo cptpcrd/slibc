@@ -16,8 +16,9 @@ const MAX_BUFSIZE: usize = 32768;
 
 macro_rules! osstr_getter {
     ($name:ident, $field_name:ident) => {
+        #[inline]
         pub fn $name<'a>(&'a self) -> &'a OsStr {
-            OsStr::from_bytes(unsafe { CStr::from_ptr(self.grp.$field_name) }.to_bytes())
+            OsStr::from_bytes(unsafe { util::bytes_from_ptr(self.grp.$field_name) })
         }
     };
 }
@@ -38,6 +39,7 @@ impl Group {
     osstr_getter!(name, gr_name);
     osstr_getter!(passwd, gr_passwd);
 
+    #[inline]
     pub fn members(&self) -> GroupMemberIter<'_> {
         GroupMemberIter {
             mem_ptr: self.grp.gr_mem,
@@ -189,7 +191,7 @@ impl<'a> Iterator for GroupMemberIter<'a> {
             return None;
         }
 
-        let member = OsStr::from_bytes(unsafe { CStr::from_ptr(member) }.to_bytes());
+        let member = OsStr::from_bytes(unsafe { util::bytes_from_ptr(member) });
         self.mem_ptr = unsafe { self.mem_ptr.add(1) };
         Some(member)
     }
@@ -298,8 +300,8 @@ impl Iterator for GroupIter {
                     *eno_ptr = 0;
 
                     if let Some(grp) = libc::getgrent().as_ref() {
-                        let gr_name = CStr::from_ptr(grp.gr_name).to_bytes();
-                        let gr_passwd = CStr::from_ptr(grp.gr_passwd).to_bytes();
+                        let gr_name = util::bytes_from_ptr(grp.gr_name);
+                        let gr_passwd = util::bytes_from_ptr(grp.gr_passwd);
 
                         let ptrsize = core::mem::size_of::<*mut libc::c_char>();
 
@@ -308,7 +310,7 @@ impl Iterator for GroupIter {
                         let mut extra_size = 0;
                         while !(*mem_ptr).is_null() {
                             gr_mem_len += 1;
-                            extra_size += CStr::from_ptr(*mem_ptr).to_bytes_with_nul().len();
+                            extra_size += libc::strlen(*mem_ptr) + 1;
                             mem_ptr = mem_ptr.add(1);
                         }
 

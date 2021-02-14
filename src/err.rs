@@ -92,7 +92,7 @@ impl Error {
         let ptr = unsafe { libc::strerror(self.0) };
         debug_assert!(!ptr.is_null());
 
-        let msg = unsafe { CStr::from_ptr(ptr) }.to_str().unwrap();
+        let msg = core::str::from_utf8(unsafe { util::bytes_from_ptr(ptr) }).unwrap();
 
         #[cfg(not(all(target_os = "linux", target_env = "musl")))]
         if msg.starts_with(UNKNOWN_ERROR) {
