@@ -335,7 +335,7 @@ mod tests {
         check!(is_socket, S_IFSOCK, S_IFREG, S_IFDIR, S_IFLNK, S_IFBLK, S_IFCHR, S_IFIFO);
     }
 
-    #[cfg(feature = "std")]
+    #[cfg(feature = "alloc")]
     #[test]
     fn test_filetype_debug() {
         macro_rules! check {
