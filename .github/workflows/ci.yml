@@ -53,6 +53,47 @@ jobs:
           command: build
           args: --verbose --target ${{ matrix.target }} --no-default-features
 
+  build-no-std:
+    name: Build (no_std only)
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        toolchain: [stable, beta, nightly]
+        target:
+          - x86_64-unknown-openbsd
+          - x86_64-unknown-dragonfly
+
+    # Allow nightly builds to fail
+    continue-on-error: ${{ matrix.toolchain == 'nightly' }}
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up repo
+        uses: actions/checkout@v2
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          target: ${{ matrix.target }}
+          components: rust-src
+
+      - name: Build (alloc)
+        uses: actions-rs/cargo@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          command: build
+          args: --verbose --target ${{ matrix.target }} --no-default-features --features alloc
+
+      - name: Build (no_std)
+        uses: actions-rs/cargo@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          command: build
+          args: --verbose --target ${{ matrix.target }} --no-default-features
+
   test:
     name: Test
 
