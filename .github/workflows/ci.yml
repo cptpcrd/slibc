@@ -60,7 +60,6 @@ jobs:
       fail-fast: false
 
       matrix:
-        toolchain: [stable, beta, nightly]
         target:
           - x86_64-unknown-openbsd
           - x86_64-unknown-dragonfly
@@ -76,23 +75,19 @@ jobs:
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: ${{ matrix.toolchain }}
-          target: ${{ matrix.target }}
+          toolchain: nightly
+          default: true
           components: rust-src
 
-      - name: Build (alloc)
-        uses: actions-rs/cargo@v1
+      - name: Install xargo
+        uses: actions-rs/install@v0.1
         with:
-          toolchain: ${{ matrix.toolchain }}
-          command: build
-          args: --verbose --target ${{ matrix.target }} --no-default-features --features alloc
+          crate: xargo
+          version: latest
+          use-tool-cache: true
 
       - name: Build (no_std)
-        uses: actions-rs/cargo@v1
-        with:
-          toolchain: ${{ matrix.toolchain }}
-          command: build
-          args: --verbose --target ${{ matrix.target }} --no-default-features
+        run: xargo build --verbose --target ${{ matrix.target }} --no-default-features
 
   test:
     name: Test
