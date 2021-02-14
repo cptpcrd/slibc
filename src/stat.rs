@@ -300,10 +300,10 @@ mod tests {
     fn test_filetype_is() {
         macro_rules! check {
             ($meth:ident, $true_mask:ident, !, $($false_mask:ident),+ $(,)?) => {{
-                assert!(StatFileType { mask: libc::$true_mask }.$meth());
+                assert!(StatFileType { mask: libc::$true_mask as u32 }.$meth());
 
                 $(
-                    assert!(!StatFileType { mask: libc::$false_mask }.$meth());
+                    assert!(!StatFileType { mask: libc::$false_mask as u32 }.$meth());
                 )+
             }};
         }
@@ -392,7 +392,7 @@ mod tests {
     fn test_filetype_debug() {
         macro_rules! check {
             ($mask:expr, $s:expr) => {
-                assert_eq!(format!("{:?}", StatFileType { mask: $mask }), $s);
+                assert_eq!(format!("{:?}", StatFileType { mask: $mask as u32 }), $s);
             };
         }
 
