@@ -299,7 +299,7 @@ mod tests {
     #[test]
     fn test_filetype_is() {
         macro_rules! check {
-            ($meth:ident, $true_mask:ident, !, $($false_mask:ident),+ $(,)?) => {{
+            ($meth:ident, $true_mask:ident, $($false_mask:ident),+ $(,)?) => {{
                 assert!(StatFileType { mask: libc::$true_mask as u32 }.$meth());
 
                 $(
@@ -308,43 +308,12 @@ mod tests {
             }};
         }
 
-        check!(
-            is_file,
-            S_IFREG,
-            !,
-            S_IFDIR,
-            S_IFLNK,
-            S_IFBLK,
-            S_IFCHR,
-            S_IFIFO,
-            S_IFSOCK
-        );
-        check!(
-            is_dir,
-            S_IFDIR,
-            !,
-            S_IFREG,
-            S_IFLNK,
-            S_IFBLK,
-            S_IFCHR,
-            S_IFIFO,
-            S_IFSOCK
-        );
-        check!(
-            is_symlink,
-            S_IFLNK,
-            !,
-            S_IFREG,
-            S_IFDIR,
-            S_IFBLK,
-            S_IFCHR,
-            S_IFIFO,
-            S_IFSOCK
-        );
+        check!(is_file, S_IFREG, S_IFDIR, S_IFLNK, S_IFBLK, S_IFCHR, S_IFIFO, S_IFSOCK);
+        check!(is_dir, S_IFDIR, S_IFREG, S_IFLNK, S_IFBLK, S_IFCHR, S_IFIFO, S_IFSOCK);
+        check!(is_symlink, S_IFLNK, S_IFREG, S_IFDIR, S_IFBLK, S_IFCHR, S_IFIFO, S_IFSOCK);
         check!(
             is_block_device,
             S_IFBLK,
-            !,
             S_IFREG,
             S_IFDIR,
             S_IFLNK,
@@ -355,7 +324,6 @@ mod tests {
         check!(
             is_char_device,
             S_IFCHR,
-            !,
             S_IFREG,
             S_IFDIR,
             S_IFLNK,
@@ -363,28 +331,8 @@ mod tests {
             S_IFIFO,
             S_IFSOCK
         );
-        check!(
-            is_fifo,
-            S_IFIFO,
-            !,
-            S_IFREG,
-            S_IFDIR,
-            S_IFLNK,
-            S_IFBLK,
-            S_IFCHR,
-            S_IFSOCK
-        );
-        check!(
-            is_socket,
-            S_IFSOCK,
-            !,
-            S_IFREG,
-            S_IFDIR,
-            S_IFLNK,
-            S_IFBLK,
-            S_IFCHR,
-            S_IFIFO
-        );
+        check!(is_fifo, S_IFIFO, S_IFREG, S_IFDIR, S_IFLNK, S_IFBLK, S_IFCHR, S_IFSOCK);
+        check!(is_socket, S_IFSOCK, S_IFREG, S_IFDIR, S_IFLNK, S_IFBLK, S_IFCHR, S_IFIFO);
     }
 
     #[cfg(feature = "std")]
