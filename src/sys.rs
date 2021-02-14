@@ -18,6 +18,9 @@ cfg_if::cfg_if! {
         pub const MLOCK_ONFAULT: libc::c_int = 1;
 
         pub const MCL_ONFAULT: libc::c_int = 4;
+    } else if #[cfg(any(target_os = "macos", target_os = "ios"))] {
+        pub const CTL_MAXNAME: usize = 12;
+
     }
 }
 

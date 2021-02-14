@@ -40,9 +40,13 @@ pub unsafe fn sysctl<T>(
     new_data: Option<&mut [T]>,
 ) -> Result<usize> {
     cfg_if::cfg_if! {
-        if #[cfg(target_os = "macos")] {
+        if #[cfg(any(target_os = "macos", target_os = "ios"))] {
             // macOS requires a non-const pointer for some reason
-            let mut mib_buf = [0; 10];
+            let mut mib_buf = [0; sys::CTL_MAXNAME];
+            if mib.len() > mib_buf.len() {
+                return Err(Error::from_code(libc::ENOENT));
+            }
+
             mib_buf[..mib.len()].copy_from_slice(mib);
             let mib_ptr = mib_buf.as_ptr() as *mut _;
         } else {
