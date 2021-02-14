@@ -977,16 +977,16 @@ pub fn fchownat<P: AsPath>(
 }
 
 pub fn chmod<P: AsPath>(path: P, mode: u32) -> Result<()> {
-    path.with_cstr(|path| Error::unpack_nz(unsafe { libc::chmod(path.as_ptr(), mode) }))
+    path.with_cstr(|path| Error::unpack_nz(unsafe { libc::chmod(path.as_ptr(), mode as _) }))
 }
 
 pub fn fchmod(fd: RawFd, mode: u32) -> Result<()> {
-    Error::unpack_nz(unsafe { libc::fchmod(fd, mode) })
+    Error::unpack_nz(unsafe { libc::fchmod(fd, mode as _) })
 }
 
 pub fn fchmodat<P: AsPath>(dirfd: RawFd, path: P, mode: u32, flags: crate::AtFlag) -> Result<()> {
     path.with_cstr(|path| {
-        Error::unpack_nz(unsafe { libc::fchmodat(dirfd, path.as_ptr(), mode, flags.bits()) })
+        Error::unpack_nz(unsafe { libc::fchmodat(dirfd, path.as_ptr(), mode as _, flags.bits()) })
     })
 }
 
