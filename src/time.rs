@@ -18,17 +18,32 @@ macro_rules! define_clockids {
     ($(
         #[cfg($cfg:meta)]
         $(
-            $(#[doc = $doc:literal])*
-            $name:ident = $libc_name:ident,
-        )+
+            $(#[doc = $doc1:literal])*
+            $name1:ident = $libc_name:ident,
+        )*
+        $(
+            @sys,
+            $(
+                $(#[doc = $doc2:literal])*
+                $name2:ident = $sys_name:ident,
+            )+
+        )?
     )*) => {
         impl ClockId {
-            $($(
-                #[cfg($cfg)]
-                #[cfg_attr(docsrs, doc(cfg($cfg)))]
-                $(#[doc = $doc])*
-                pub const $name: Self = Self(libc::$libc_name);
-            )*)*
+            $(
+                $(
+                    #[cfg($cfg)]
+                    #[cfg_attr(docsrs, doc(cfg($cfg)))]
+                    $(#[doc = $doc1])*
+                    pub const $name1: Self = Self(libc::$libc_name);
+                )*
+                $($(
+                    #[cfg($cfg)]
+                    #[cfg_attr(docsrs, doc(cfg($cfg)))]
+                    $(#[doc = $doc2])*
+                    pub const $name2: Self = Self(sys::$sys_name);
+                )+)?
+            )*
         }
     };
 }
@@ -37,6 +52,7 @@ define_clockids! {
     #[cfg(all())]
     REALTIME = CLOCK_REALTIME,
     MONOTONIC = CLOCK_MONOTONIC,
+    @sys,
     PROCESS_CPUTIME_ID = CLOCK_PROCESS_CPUTIME_ID,
     THREAD_CPUTIME_ID = CLOCK_THREAD_CPUTIME_ID,
 
@@ -50,14 +66,17 @@ define_clockids! {
     SECOND = CLOCK_SECOND,
 
     #[cfg(any(target_os = "freebsd", target_os = "dragonfly", target_os = "netbsd"))]
+    @sys,
     VIRTUAL = CLOCK_VIRTUAL,
     PROF = CLOCK_PROF,
 
     #[cfg(target_os = "openbsd")]
+    @sys,
     BOOTTIME = CLOCK_BOOTTIME,
     UPTIME = CLOCK_UPTIME,
 
     #[cfg(any(target_os = "macos", target_os = "ios"))]
+    @sys,
     MONOTONIC_RAW = CLOCK_MONOTONIC_RAW,
     MONOTONIC_RAW_APPROX = CLOCK_MONOTONIC_RAW_APPROX,
     UPTIME_RAW = CLOCK_UPTIME_RAW,

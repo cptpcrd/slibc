@@ -21,8 +21,27 @@ cfg_if::cfg_if! {
     } else if #[cfg(any(target_os = "macos", target_os = "ios"))] {
         pub const CTL_MAXNAME: usize = 12;
 
+        pub const CLOCK_MONOTONIC_RAW: libc::clockid_t = 4;
+        pub const CLOCK_MONOTONIC_RAW_APPROX: libc::clockid_t = 5;
+        pub const CLOCK_UPTIME_RAW: libc::clockid_t = 8;
+        pub const CLOCK_UPTIME_RAW_APPROX: libc::clockid_t = 9;
+    } else if #[cfg(target_os = "netbsd")] {
+        pub const CLOCK_VIRTUAL: libc::clockid_t = 1;
+        pub const CLOCK_PROF: libc::clockid_t = 2;
+        pub const CLOCK_THREAD_CPUTIME_ID: libc::clockid_t = 0x20000000;
+        pub const CLOCK_PROCESS_CPUTIME_ID: libc::clockid_t = 0x40000000;
+    } else if #[cfg(target_os = "openbsd")] {
+        pub const CLOCK_PROCESS_CPUTIME_ID: libc::clockid_t = 2;
+        pub const CLOCK_THREAD_CPUTIME_ID: libc::clockid_t = 4;
+        pub const CLOCK_UPTIME: libc::clockid_t = 5;
+        pub const CLOCK_BOOTTIME: libc::clockid_t = 6;
     }
 }
+
+#[cfg(not(netbsdlike))]
+pub use libc::{CLOCK_PROCESS_CPUTIME_ID, CLOCK_THREAD_CPUTIME_ID};
+#[cfg(freebsdlike)]
+pub use libc::{CLOCK_PROF, CLOCK_VIRTUAL};
 
 #[cfg(any(
     target_os = "linux",
