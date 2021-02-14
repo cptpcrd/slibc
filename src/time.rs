@@ -109,11 +109,7 @@ impl ClockId {
     /// Get the clock ID for the given thread using `pthread_getcpuclockid()`.
     #[cfg_attr(
         docsrs,
-        doc(cfg(any(
-            target_os = "freebsd",
-            target_os = "dragonfly",
-            target_os = "openbsd",
-        )))
+        doc(cfg(any(target_os = "freebsd", target_os = "dragonfly", target_os = "openbsd")))
     )]
     #[cfg(any(freebsdlike, target_os = "openbsd"))]
     #[inline]
