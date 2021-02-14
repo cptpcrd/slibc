@@ -75,7 +75,7 @@ define_oflag! {
 
     // Present on most systems, but not all
 
-    #[cfg(not(any(target_os = "macos", target_os = "ios")))]
+    #[cfg(not(any(target_os = "macos", target_os = "ios", target_os = "openbsd")))]
     O_DIRECT,
     /// Synchronize file data (not metadata) after each write (often roughly equivalent to an
     /// `fdatasync()` after each write).
