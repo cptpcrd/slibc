@@ -232,6 +232,14 @@ impl<'a> ExactSizeIterator for GroupMemberIter<'a> {
 
 impl<'a> core::iter::FusedIterator for GroupMemberIter<'a> {}
 
+impl<'a> fmt::Debug for GroupMemberIter<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_tuple("GroupMemberIter")
+            .field(&self.clone().collect::<Vec<_>>())
+            .finish()
+    }
+}
+
 /// An iterator over the entries in the group database.
 #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 pub struct GroupIter(());
