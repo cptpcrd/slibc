@@ -23,13 +23,17 @@ use crate::internal_prelude::*;
 /// If it can be verified that neither of these is the case (the data structure
 /// is correct for the given option AND the amount of data read is correct for
 /// the given structure), then this function should be safe to use.
-#[cfg(any(
-    target_os = "macos",
-    target_os = "openbsd",
-    target_os = "netbsd",
-    target_os = "freebsd",
-    target_os = "dragonfly",
-))]
+#[cfg_attr(
+    docsrs,
+    doc(cfg(
+        target_os = "freebsd",
+        target_os = "dragonfly",
+        target_os = "openbsd",
+        target_os = "netbsd",
+        target_os = "macos",
+        target_os = "ios",
+    ))
+)]
 pub unsafe fn sysctl<T>(
     mib: &[libc::c_int],
     old_data: Option<&mut [T]>,

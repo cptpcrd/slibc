@@ -157,17 +157,6 @@ cfg_if::cfg_if! {
         target_os = "macos",
         target_os = "ios",
     ))] {
-        #[cfg_attr(
-            docsrs,
-            doc(cfg(
-                target_os = "freebsd",
-                target_os = "dragonfly",
-                target_os = "openbsd",
-                target_os = "netbsd",
-                target_os = "macos",
-                target_os = "ios",
-            ))
-        )]
         mod sysctl;
         pub use sysctl::*;
     }
