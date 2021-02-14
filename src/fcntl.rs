@@ -143,6 +143,19 @@ bitflags::bitflags! {
         const AT_EMPTY_PATH = libc::AT_EMPTY_PATH;
         #[cfg(target_os = "linux")]
         const AT_NO_AUTOMOUNT = libc::AT_NO_AUTOMOUNT;
+
+        /// When using [`statx()`] to query a remote filesystem, match the behavior of `stat()`
+        /// when deciding whether to synchronize (this is the default).
+        #[cfg(target_os = "linux")]
+        const AT_STATX_SYNC_AS_STAT = 0x0;
+        /// When using [`statx()`] to query a remote filesystem, force synchronizing the latest
+        /// attributes.
+        #[cfg(target_os = "linux")]
+        const AT_STATX_FORCE_SYNC = 0x2000;
+        /// When using [`statx()`] to query a remote filesystem, use the latest cached information
+        /// if possible (may be out of date).
+        #[cfg(target_os = "linux")]
+        const AT_STATX_DONT_SYNC = 0x4000;
     }
 }
 

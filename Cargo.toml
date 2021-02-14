@@ -24,3 +24,4 @@ nix = { version = "0.19", optional = true }
 
 [dev-dependencies]
 tempfile = "3.2"
+getrandom = "0.2"
