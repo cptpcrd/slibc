@@ -398,6 +398,7 @@ pub fn getgroups(groups: &mut [libc::gid_t]) -> Result<usize> {
     Ok(n as usize)
 }
 
+#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 #[cfg(feature = "alloc")]
 pub fn getgroups_alloc() -> Result<Vec<libc::gid_t>> {
     let mut groups = Vec::new();
@@ -851,6 +852,7 @@ pub fn getcwd(buf: &mut [u8]) -> Result<&CStr> {
     }
 }
 
+#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 #[cfg(feature = "alloc")]
 pub fn getcwd_alloc() -> Result<CString> {
     let mut buf = Vec::with_capacity(crate::PATH_MAX);
