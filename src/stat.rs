@@ -242,6 +242,30 @@ impl Stat {
 
         None
     }
+
+    /// Get the major ID of the device containing this file.
+    #[inline]
+    pub fn dev_major(&self) -> u32 {
+        unsafe { libc::major(self.0.st_dev) as _ }
+    }
+
+    /// Get the minor ID of the device containing this file.
+    #[inline]
+    pub fn dev_minor(&self) -> u32 {
+        unsafe { libc::minor(self.0.st_dev) as _ }
+    }
+
+    /// Get the major device ID of this file (if it is a special file).
+    #[inline]
+    pub fn rdev_major(&self) -> u32 {
+        unsafe { libc::major(self.0.st_rdev) as _ }
+    }
+
+    /// Get the minor device ID of this file (if it is a special file).
+    #[inline]
+    pub fn rdev_minor(&self) -> u32 {
+        unsafe { libc::minor(self.0.st_rdev) as _ }
+    }
 }
 
 impl From<Stat> for libc::stat {
