@@ -712,10 +712,10 @@ pub fn getdomainname(buf: &mut [u8]) -> Result<&CStr> {
 pub fn getdomainname_alloc() -> Result<CString> {
     // On Linux, the maximum length of an NIS domainname (with the terminating NUL) is 64 bytes
     #[allow(non_upper_case_globals)]
-    #[cfg(linux_like)]
+    #[cfg(linuxlike)]
     const maxlen: usize = 64;
     // On most other OSes, the limit is the same as for gethostname()
-    #[cfg(not(linux_like))]
+    #[cfg(not(linuxlike))]
     let maxlen = sysconf(SysconfName::HOST_NAME_MAX).unwrap_or(1024) + 1;
 
     let mut buf = Vec::with_capacity(maxlen);

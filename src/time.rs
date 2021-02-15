@@ -119,7 +119,7 @@ impl ClockId {
             target_os = "netbsd",
         )))
     )]
-    #[cfg(any(freebsdlike, netbsdlike, linux_like))]
+    #[cfg(any(freebsdlike, netbsdlike, linuxlike))]
     #[inline]
     pub fn get_for_process(pid: libc::pid_t) -> Result<Self> {
         clock_getcpuclockid(pid)
@@ -182,7 +182,7 @@ pub fn clock_settime(clock: ClockId, t: TimeSpec) -> Result<()> {
         target_os = "netbsd",
     )))
 )]
-#[cfg(any(freebsdlike, netbsdlike, linux_like))]
+#[cfg(any(freebsdlike, netbsdlike, linuxlike))]
 #[inline]
 pub fn clock_getcpuclockid(pid: libc::pid_t) -> Result<ClockId> {
     let mut clockid = MaybeUninit::uninit();
@@ -245,7 +245,7 @@ mod tests {
         }
     }
 
-    #[cfg(any(freebsdlike, netbsdlike, linux_like))]
+    #[cfg(any(freebsdlike, netbsdlike, linuxlike))]
     #[test]
     fn test_clock_getcpuclockid() {
         assert_close!(
