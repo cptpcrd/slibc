@@ -1,6 +1,6 @@
 use slibc::{
-    ioctl_getwinsz, ioctl_setwinsz, isatty, isatty_raw, openpty, pipe, ptsname, ttyname, ttyname_r,
-    Winsize,
+    ioctl_getwinsz, ioctl_setwinsz, isatty, isatty_raw, isatty_simple, openpty, pipe, ptsname,
+    ttyname, ttyname_r, Winsize,
 };
 
 #[cfg(all(target_os = "linux", feature = "alloc"))]
@@ -19,17 +19,21 @@ fn test_tty() {
 
     assert!(!r.isatty().unwrap());
     assert_eq!(isatty_raw(r.fd()).unwrap_err().code(), libc::ENOTTY);
+    assert!(!isatty_simple(r.fd()));
 
     assert!(master.isatty().unwrap());
     assert!(slave.isatty().unwrap());
     isatty_raw(master.fd()).unwrap();
     isatty_raw(slave.fd()).unwrap();
+    assert!(isatty_simple(master.fd()));
+    assert!(isatty_simple(slave.fd()));
 
     assert_eq!(isatty(libc::c_int::MAX).unwrap_err().code(), libc::EBADF);
     assert_eq!(
         isatty_raw(libc::c_int::MAX).unwrap_err().code(),
         libc::EBADF
     );
+    assert!(!isatty_simple(libc::c_int::MAX));
 
     // Check ttyname() and ttyname_r()
 

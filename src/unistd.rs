@@ -780,6 +780,15 @@ pub fn isatty_raw(fd: RawFd) -> Result<()> {
     }
 }
 
+/// Check if the given file descriptor refers to a terminal (simple check).
+///
+/// This returns `true` if the given file descriptor is a terminal, and `false` if it is not OR if
+/// an error occurred.
+#[inline]
+pub fn isatty_simple(fd: RawFd) -> bool {
+    unsafe { libc::isatty(fd) == 1 }
+}
+
 /// Get the path to the specified terminal device.
 ///
 /// **WARNING**: It is **highly recommended** to use [`ttyname_r()`] instead.
