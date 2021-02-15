@@ -404,7 +404,7 @@ mod tests {
                     .stat()
                     .unwrap();
 
-                assert_eq!(st1.file_type(), StatFileType { mask: $mask });
+                assert_eq!(st1.file_type(), StatFileType { mask: $mask as _ });
 
                 check_stat_eq!(st1, st2);
                 check_stat_eq!(st1, st3);
