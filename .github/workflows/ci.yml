@@ -5,6 +5,9 @@ defaults:
   run:
     shell: bash
 
+env:
+  RUST_BACKTRACE: '1'
+
 jobs:
   build:
     name: Build
