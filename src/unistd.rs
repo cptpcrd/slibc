@@ -8,6 +8,7 @@ use crate::internal_prelude::*;
 pub enum SysconfName {
     HOST_NAME_MAX = libc::_SC_HOST_NAME_MAX,
     LOGIN_NAME_MAX = libc::_SC_LOGIN_NAME_MAX,
+    TTY_NAME_MAX = libc::_SC_TTY_NAME_MAX,
     NGROUPS_MAX = libc::_SC_NGROUPS_MAX,
     PAGESIZE = libc::_SC_PAGESIZE,
 }
@@ -652,6 +653,22 @@ pub fn gethostname(buf: &mut [u8]) -> Result<&CStr> {
     }
 }
 
+#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
+#[cfg(feature = "alloc")]
+pub fn gethostname_alloc() -> Result<CString> {
+    // _SC_HOST_NAME_MAX may not take the trailing NUL byte into account
+    let maxlen = sysconf(SysconfName::HOST_NAME_MAX).unwrap_or(1024) + 1;
+
+    let mut buf = Vec::with_capacity(maxlen);
+    unsafe {
+        buf.set_len(maxlen);
+    }
+
+    Error::unpack(unsafe { libc::gethostname(buf.as_mut_ptr() as *mut _, buf.len()) })?;
+
+    util::cstring_from_buf(buf).ok_or_else(|| Error::from_code(libc::ENAMETOOLONG))
+}
+
 #[inline]
 pub fn sethostname<S: AsRef<OsStr>>(s: S) -> Result<()> {
     let buf = s.as_ref().as_bytes();
@@ -688,6 +705,27 @@ pub fn getdomainname(buf: &mut [u8]) -> Result<&CStr> {
         // The buffer was empty (!).
         Err(Error::from_code(libc::ENAMETOOLONG))
     }
+}
+
+#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
+#[cfg(feature = "alloc")]
+pub fn getdomainname_alloc() -> Result<CString> {
+    // On Linux, the maximum length of an NIS domainname (with the terminating NUL) is 64 bytes
+    #[allow(non_upper_case_globals)]
+    #[cfg(linux_like)]
+    const maxlen: usize = 64;
+    // On most other OSes, the limit is the same as for gethostname()
+    #[cfg(not(linux_like))]
+    let maxlen = sysconf(SysconfName::HOST_NAME_MAX).unwrap_or(1024) + 1;
+
+    let mut buf = Vec::with_capacity(maxlen);
+    unsafe {
+        buf.set_len(maxlen);
+    }
+
+    Error::unpack(unsafe { libc::getdomainname(buf.as_mut_ptr() as *mut _, buf.len() as _) })?;
+
+    util::cstring_from_buf(buf).ok_or_else(|| Error::from_code(libc::ENAMETOOLONG))
 }
 
 #[inline]
@@ -767,6 +805,22 @@ pub fn ttyname_r(fd: RawFd, buf: &mut [u8]) -> Result<&CStr> {
     }
 }
 
+#[cfg_attr(docsrs, doc(cfg(all(target_os = "linux", feature = "alloc"))))]
+#[cfg(all(target_os = "linux", feature = "alloc"))]
+pub fn ttyname_alloc(fd: RawFd) -> Result<CString> {
+    let maxlen = crate::sysconf(crate::SysconfName::TTY_NAME_MAX).unwrap_or(100);
+
+    let mut buf = Vec::with_capacity(maxlen);
+    unsafe {
+        buf.set_len(maxlen);
+    }
+
+    let len = ttyname_r(fd, &mut buf)?.to_bytes().len();
+
+    buf.truncate(len);
+    Ok(unsafe { CString::from_vec_unchecked(buf) })
+}
+
 /// Get the name of the user logged in on this process's controlling terminal.
 ///
 /// **WARNING**: It is **highly recommended** to use [`getlogin_r()`] instead on platforms where it
@@ -814,6 +868,43 @@ pub fn getlogin_r(buf: &mut [u8]) -> Result<&CStr> {
         0 => Ok(util::cstr_from_buf(buf).unwrap()),
         eno => Err(Error::from_code(eno)),
     }
+}
+
+#[cfg_attr(
+    docsrs,
+    doc(cfg(all(
+        feature = "alloc",
+        any(
+            target_os = "linux",
+            target_os = "freebsd",
+            target_os = "openbsd",
+            target_os = "netbsd",
+            target_os = "dragonfly",
+        )
+    )))
+)]
+#[cfg(all(
+    feature = "alloc",
+    any(
+        target_os = "linux",
+        target_os = "freebsd",
+        target_os = "openbsd",
+        target_os = "netbsd",
+        target_os = "dragonfly",
+    )
+))]
+pub fn getlogin_alloc() -> Result<CString> {
+    let maxlen = crate::sysconf(crate::SysconfName::LOGIN_NAME_MAX).unwrap_or(100);
+
+    let mut buf = Vec::with_capacity(maxlen);
+    unsafe {
+        buf.set_len(maxlen);
+    }
+
+    let len = getlogin_r(&mut buf)?.to_bytes().len();
+
+    buf.truncate(len);
+    Ok(unsafe { CString::from_vec_unchecked(buf) })
 }
 
 /// Set the name of the user logged in on this process's controlling terminal.

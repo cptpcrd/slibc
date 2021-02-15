@@ -3,6 +3,9 @@ use slibc::{
     Winsize,
 };
 
+#[cfg(feature = "alloc")]
+use slibc::{ptsname_alloc, ttyname_alloc};
+
 #[test]
 fn test_tty() {
     let r = pipe().unwrap().0;
@@ -36,15 +39,24 @@ fn test_tty() {
         assert_eq!(ttyname(r.fd()).unwrap_err().code(), libc::ENOTTY);
     }
 
+    #[cfg(feature = "alloc")]
+    assert_eq!(ttyname_alloc(r.fd()).unwrap_err().code(), libc::ENOTTY);
+
     let master_name = ttyname_r(master.fd(), &mut buf1).unwrap();
     unsafe {
         assert_eq!(ttyname(master.fd()).unwrap(), master_name);
     }
 
+    #[cfg(feature = "alloc")]
+    assert_eq!(ttyname_alloc(master.fd()).unwrap().as_c_str(), master_name);
+
     let slave_name = ttyname_r(slave.fd(), &mut buf1).unwrap();
     unsafe {
         assert_eq!(ttyname(slave.fd()).unwrap(), slave_name);
     }
+
+    #[cfg(feature = "alloc")]
+    assert_eq!(ttyname_alloc(slave.fd()).unwrap().as_c_str(), slave_name);
 
     // ptsname(master) should match ttyname(slave)
 
@@ -61,6 +73,9 @@ fn test_tty() {
         assert_eq!(ptsname(master.fd()).unwrap(), slave_name);
     }
 
+    #[cfg(all(target_os = "linux", feature = "alloc"))]
+    assert_eq!(ptsname_alloc(master.fd()).unwrap().as_c_str(), slave_name);
+
     // ptsname() should fail on the pipe, and on bad file descriptors
     #[cfg(target_os = "linux")]
     assert_eq!(
@@ -74,6 +89,9 @@ fn test_tty() {
             libc::ENOTTY | libc::EINVAL
         ));
     }
+
+    #[cfg(all(target_os = "linux", feature = "alloc"))]
+    assert_eq!(ptsname_alloc(r.fd()).unwrap_err().code(), libc::ENOTTY);
 
     // Now change the sizes
 

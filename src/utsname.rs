@@ -48,12 +48,24 @@ mod tests {
         let hostname = crate::gethostname(&mut buf).unwrap();
         assert_eq!(utsname.nodename(), OsStr::from_bytes(hostname.to_bytes()));
 
+        #[cfg(feature = "alloc")]
+        assert_eq!(
+            utsname.nodename(),
+            OsStr::from_bytes(crate::gethostname_alloc().unwrap().to_bytes())
+        );
+
         #[cfg(target_os = "linux")]
         {
             let domainname = crate::getdomainname(&mut buf).unwrap();
             assert_eq!(
                 utsname.domainname(),
                 OsStr::from_bytes(domainname.to_bytes())
+            );
+
+            #[cfg(feature = "alloc")]
+            assert_eq!(
+                utsname.domainname(),
+                OsStr::from_bytes(crate::getdomainname_alloc().unwrap().to_bytes())
             );
         }
     }

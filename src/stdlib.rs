@@ -36,6 +36,22 @@ pub fn ptsname_r(fd: RawFd, buf: &mut [u8]) -> Result<&CStr> {
     }
 }
 
+#[cfg_attr(docsrs, doc(cfg(all(target_os = "linux", feature = "alloc"))))]
+#[cfg(all(target_os = "linux", feature = "alloc"))]
+pub fn ptsname_alloc(fd: RawFd) -> Result<CString> {
+    let maxlen = crate::sysconf(crate::SysconfName::TTY_NAME_MAX).unwrap_or(100);
+
+    let mut buf = Vec::with_capacity(maxlen);
+    unsafe {
+        buf.set_len(maxlen);
+    }
+
+    let len = ptsname_r(fd, &mut buf)?.to_bytes().len();
+
+    buf.truncate(len);
+    Ok(unsafe { CString::from_vec_unchecked(buf) })
+}
+
 #[cfg(target_os = "linux")]
 bitflags::bitflags! {
     /// Flags for [`getrandom()`].
