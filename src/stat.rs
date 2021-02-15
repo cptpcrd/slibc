@@ -353,4 +353,70 @@ mod tests {
         check!(libc::S_IFSOCK, "Socket");
         check!(u32::MAX, "Unknown");
     }
+
+    #[test]
+    fn test_stats_same() {
+        macro_rules! check_stat_eq {
+            ($st1:expr, $st2:expr) => {
+                check_stat_eq!(
+                    $st1,
+                    $st2,
+                    @,
+                    dev,
+                    ino,
+                    mode,
+                    file_type,
+                    is_suid,
+                    is_sgid,
+                    is_sticky,
+                    access_mode,
+                    nlink,
+                    uid,
+                    gid,
+                    rdev,
+                    size,
+                    atime,
+                    ctime,
+                    mtime,
+                    birthtime,
+                )
+            };
+
+            ($st1:expr, $st2:expr, @, $($name:ident),+ $(,)?) => {{
+                $(
+                    assert_eq!(
+                        $st1.$name(), $st2.$name(), concat!(stringify!($name), " mismatch")
+                    );
+                )+
+            }};
+        }
+
+        macro_rules! check_same_stats {
+            ($path:expr, $mask:expr $(,)?) => {{
+                let path = $path;
+
+                let st1 = crate::stat(path.clone()).unwrap();
+                let st2 = crate::lstat(path.clone()).unwrap();
+                let st3 =
+                    crate::fstatat(crate::AT_FDCWD, path.clone(), crate::AtFlag::empty()).unwrap();
+                let st4 = crate::open(path.clone(), crate::OFlag::O_RDONLY, 0)
+                    .unwrap()
+                    .stat()
+                    .unwrap();
+
+                assert_eq!(st1.file_type(), StatFileType { mask: $mask });
+
+                check_stat_eq!(st1, st2);
+                check_stat_eq!(st1, st3);
+                check_stat_eq!(st1, st4);
+            }};
+        }
+
+        check_same_stats!(CStr::from_bytes_with_nul(b"/\0").unwrap(), libc::S_IFDIR);
+        check_same_stats!(CStr::from_bytes_with_nul(b".\0").unwrap(), libc::S_IFDIR);
+        check_same_stats!(CStr::from_bytes_with_nul(b"/tmp\0").unwrap(), libc::S_IFDIR);
+
+        #[cfg(feature = "std")]
+        check_same_stats!(std::env::current_exe().unwrap(), libc::S_IFREG);
+    }
 }
