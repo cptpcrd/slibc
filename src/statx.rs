@@ -203,7 +203,8 @@ pub struct Statx {
     /// The file's mode.
     ///
     /// This embeds the file type and the access mode (see [`Statx::file_type()`] and
-    /// [`Statx::access_mode()`]).
+    /// [`Statx::access_mode()`]). It also embeds several "flags" (see [`Statx::is_suid()`],
+    /// [`Statx::is_sgid()`], and [`Statx::is_sticky()`]).
     pub mode: u16,
     __spare0: [u16; 1],
     /// The file's inode number.
