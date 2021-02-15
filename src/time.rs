@@ -108,7 +108,7 @@ impl ClockId {
         clock_settime(self, t)
     }
 
-    /// Get the clock ID for this process using `clock_getcpuclockid()`.
+    /// Get the clock ID for the specified process using [`clock_getcpuclockid()`].
     #[cfg_attr(
         docsrs,
         doc(cfg(any(
@@ -125,7 +125,7 @@ impl ClockId {
         clock_getcpuclockid(pid)
     }
 
-    /// Get the clock ID for the given thread using `pthread_getcpuclockid()`.
+    /// Get the clock ID for the specified thread using [`pthread_getcpuclockid()`].
     #[cfg_attr(
         docsrs,
         doc(cfg(any(target_os = "freebsd", target_os = "dragonfly", target_os = "openbsd")))
@@ -156,6 +156,22 @@ pub fn clock_settime(clock: ClockId, t: TimeSpec) -> Result<()> {
     Error::unpack_nz(unsafe { sys::clock_settime(clock.0, &t as *const _ as *const _) })
 }
 
+/// Get the clock ID of the specified process's CPU-time clock.
+///
+/// Specifying 0 for `pid` is equivalent to specifying the current process's PID.
+///
+/// If `pid` is 0 or the current process's PID, the returned clock ID may be a "magic" value that
+/// always refers to the process that checks it with [`clock_gettime()`] (even in, say, a
+/// `fork()`ed child).
+///
+/// Additionally, some OSes (for example, OpenBSD) may not accept `pid` values other than 0 or the
+/// current process's PID.
+///
+/// # Returned errors
+///
+/// The error codes returned vary wildly across platforms. For example, on Linux, musl libc doesn't
+/// properly return `ESRCH` for nonexistant processes (it instead returns `EINVAL`). It may be
+/// useful to simply ignore the error code and check if the process exists.
 #[cfg_attr(
     docsrs,
     doc(cfg(any(
@@ -170,10 +186,16 @@ pub fn clock_settime(clock: ClockId, t: TimeSpec) -> Result<()> {
 #[inline]
 pub fn clock_getcpuclockid(pid: libc::pid_t) -> Result<ClockId> {
     let mut clockid = MaybeUninit::uninit();
-    Error::unpack_nz(unsafe { sys::clock_getcpuclockid(pid, clockid.as_mut_ptr()) })?;
-    Ok(ClockId(unsafe { clockid.assume_init() }))
+
+    match unsafe { sys::clock_getcpuclockid(pid, clockid.as_mut_ptr()) } {
+        0 => Ok(ClockId(unsafe { clockid.assume_init() })),
+        eno => Err(Error::from_code(eno)),
+    }
 }
 
+/// Get the clock ID of the specified thread's CPU-time clock.
+///
+/// The warnings regarding errors returned from [`clock_getcpuclockid()`] apply.
 #[cfg_attr(
     docsrs,
     doc(cfg(any(target_os = "freebsd", target_os = "dragonfly", target_os = "openbsd")))
@@ -182,6 +204,68 @@ pub fn clock_getcpuclockid(pid: libc::pid_t) -> Result<ClockId> {
 #[inline]
 pub fn pthread_getcpuclockid(thread: libc::pthread_t) -> Result<ClockId> {
     let mut clockid = MaybeUninit::uninit();
-    Error::unpack_nz(unsafe { sys::pthread_getcpuclockid(thread, clockid.as_mut_ptr()) })?;
-    Ok(ClockId(unsafe { clockid.assume_init() }))
+
+    match unsafe { sys::pthread_getcpuclockid(thread, clockid.as_mut_ptr()) } {
+        0 => Ok(ClockId(unsafe { clockid.assume_init() })),
+        eno => Err(Error::from_code(eno)),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn isclose(t1: TimeSpec, t2: TimeSpec, nsec: u32) -> bool {
+        if t1.tv_sec == t2.tv_sec {
+            (t1.tv_sec - t2.tv_sec).abs() < nsec as _
+        } else if t1.tv_sec == t2.tv_sec - 1 {
+            1000000 - (t1.tv_sec - t2.tv_sec) < nsec as _
+        } else if t2.tv_sec == t1.tv_sec - 1 {
+            1000000 - (t2.tv_sec - t1.tv_sec) < nsec as _
+        } else {
+            false
+        }
+    }
+
+    macro_rules! assert_close {
+        ($left:expr, $right:expr $(,)?) => {{
+            let left = $left;
+            let right = $right;
+
+            if !isclose(left, right, 100_000) {
+                panic!("assertion failed: {:?} !~ {:?}", left, right);
+            }
+        }};
+    }
+
+    #[cfg(any(freebsdlike, netbsdlike, linux_like))]
+    #[test]
+    fn test_clock_getcpuclockid() {
+        assert_close!(
+            ClockId::get_for_process(0).unwrap().gettime().unwrap(),
+            ClockId::PROCESS_CPUTIME_ID.gettime().unwrap(),
+        );
+
+        assert_close!(
+            ClockId::get_for_process(crate::getpid())
+                .unwrap()
+                .gettime()
+                .unwrap(),
+            ClockId::PROCESS_CPUTIME_ID.gettime().unwrap(),
+        );
+
+        match unsafe { crate::fork() }.unwrap() {
+            None => unsafe { crate::_exit(1) },
+
+            Some(pid) => {
+                assert!(unsafe { libc::waitpid(pid, core::ptr::null_mut(), 0) } > 0);
+
+                let eno = ClockId::get_for_process(pid).unwrap_err().code();
+                assert!(matches!(
+                    eno,
+                    libc::ESRCH | libc::EINVAL | libc::EPERM | libc::ENOSYS
+                ));
+            }
+        }
+    }
 }
