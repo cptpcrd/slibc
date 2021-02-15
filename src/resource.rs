@@ -151,8 +151,16 @@ impl Iterator for ResourceIter {
 
     #[inline]
     fn nth(&mut self, n: usize) -> Option<Resource> {
-        self.0 = self.0.get(n..)?;
-        self.next()
+        match self.0.get(n..) {
+            Some(rest) => {
+                self.0 = rest;
+                self.next()
+            }
+            None => {
+                self.0 = &[];
+                None
+            }
+        }
     }
 
     #[inline]
@@ -182,7 +190,7 @@ impl DoubleEndedIterator for ResourceIter {
 
     #[inline]
     fn nth_back(&mut self, n: usize) -> Option<Resource> {
-        self.0 = self.0.get(..self.0.len() - n)?;
+        self.0 = &self.0[..self.0.len().saturating_sub(n)];
         self.next_back()
     }
 }
