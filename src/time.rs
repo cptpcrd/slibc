@@ -215,7 +215,6 @@ pub fn pthread_getcpuclockid(thread: libc::pthread_t) -> Result<ClockId> {
 mod tests {
     use super::*;
 
-    #[cfg(any(freebsdlike, netbsdlike, linux_like))]
     fn isclose(t1: TimeSpec, t2: TimeSpec, nsec: u32) -> bool {
         if t1.tv_sec == t2.tv_sec {
             (t1.tv_sec - t2.tv_sec).abs() < nsec as _
@@ -228,7 +227,6 @@ mod tests {
         }
     }
 
-    #[cfg(any(freebsdlike, netbsdlike, linux_like))]
     macro_rules! assert_close {
         ($left:expr, $right:expr $(,)?) => {{
             let left = $left;
@@ -238,6 +236,13 @@ mod tests {
                 panic!("assertion failed: {:?} !~ {:?}", left, right);
             }
         }};
+    }
+
+    #[test]
+    fn test_consistent_clocks() {
+        for clock in &[ClockId::REALTIME, ClockId::MONOTONIC] {
+            assert_close!(clock.gettime().unwrap(), clock.gettime().unwrap());
+        }
     }
 
     #[cfg(any(freebsdlike, netbsdlike, linux_like))]
