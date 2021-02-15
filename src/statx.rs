@@ -388,55 +388,50 @@ pub fn statx<P: AsPath>(
 mod tests {
     use super::*;
 
-    macro_rules! check_same_statx_stat {
-        ($path:expr $(,)?) => {{
-            let path = $path;
+    fn check_same_statx_stat<P: AsPath + Clone>(path: P) {
+        let st = crate::stat(path.clone()).unwrap();
+        let stx = crate::statx(
+            crate::AT_FDCWD,
+            path,
+            crate::AtFlag::empty(),
+            StatxMask::BASIC_STATS,
+        )
+        .unwrap();
 
-            let st = crate::stat(path).unwrap();
-            let stx = crate::statx(
-                crate::AT_FDCWD,
-                path,
-                crate::AtFlag::empty(),
-                StatxMask::BASIC_STATS,
-            )
-            .unwrap();
+        assert!(stx.mask.contains(StatxMask::BASIC_STATS));
 
-            assert!(stx.mask.contains(StatxMask::BASIC_STATS));
+        assert_eq!(st.dev(), stx.dev());
+        assert_eq!(st.ino(), stx.ino);
+        assert_eq!(st.mode(), stx.mode as u32);
+        assert_eq!(st.nlink(), stx.nlink as u64);
+        assert_eq!(st.uid(), stx.uid);
+        assert_eq!(st.gid(), stx.gid);
+        assert_eq!(st.rdev(), stx.rdev());
+        assert_eq!(st.size(), stx.size);
+        assert_eq!(st.atime(), crate::TimeSpec::from(stx.atime));
+        assert_eq!(st.ctime(), crate::TimeSpec::from(stx.ctime));
+        assert_eq!(st.mtime(), crate::TimeSpec::from(stx.mtime));
 
-            assert_eq!(st.dev(), stx.dev());
-            assert_eq!(st.ino(), stx.ino);
-            assert_eq!(st.mode(), stx.mode as u32);
-            assert_eq!(st.nlink(), stx.nlink as u64);
-            assert_eq!(st.uid(), stx.uid);
-            assert_eq!(st.gid(), stx.gid);
-            assert_eq!(st.rdev(), stx.rdev());
-            assert_eq!(st.size(), stx.size);
-            assert_eq!(st.atime(), crate::TimeSpec::from(stx.atime));
-            assert_eq!(st.ctime(), crate::TimeSpec::from(stx.ctime));
-            assert_eq!(st.mtime(), crate::TimeSpec::from(stx.mtime));
-
-            assert_eq!(st.file_type(), stx.file_type());
-            assert_eq!(st.access_mode(), stx.access_mode());
-            assert_eq!(st.is_suid(), stx.is_suid());
-            assert_eq!(st.is_sgid(), stx.is_sgid());
-            assert_eq!(st.is_sticky(), stx.is_sticky());
-        }};
+        assert_eq!(st.file_type(), stx.file_type());
+        assert_eq!(st.access_mode(), stx.access_mode());
+        assert_eq!(st.is_suid(), stx.is_suid());
+        assert_eq!(st.is_sgid(), stx.is_sgid());
+        assert_eq!(st.is_sticky(), stx.is_sticky());
     }
 
     #[test]
     fn test_same_statx_stat() {
-        check_same_statx_stat!(CStr::from_bytes_with_nul(b"/\0").unwrap());
-        check_same_statx_stat!(CStr::from_bytes_with_nul(b".\0").unwrap());
-        check_same_statx_stat!(CStr::from_bytes_with_nul(b"/tmp\0").unwrap());
+        check_same_statx_stat(CStr::from_bytes_with_nul(b"/\0").unwrap());
+        check_same_statx_stat(CStr::from_bytes_with_nul(b".\0").unwrap());
+        check_same_statx_stat(CStr::from_bytes_with_nul(b"/tmp\0").unwrap());
     }
 
     #[cfg(feature = "std")]
     #[test]
     fn test_same_statx_stat_current_exe() {
-        check_same_statx_stat!(&CString::new(
-            std::env::current_exe().unwrap().into_os_string().into_vec()
-        )
-        .unwrap());
+        check_same_statx_stat(
+            &CString::new(std::env::current_exe().unwrap().into_os_string().into_vec()).unwrap(),
+        );
     }
 
     #[test]

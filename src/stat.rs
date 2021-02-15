@@ -391,32 +391,28 @@ mod tests {
             }};
         }
 
-        macro_rules! check_same_stats {
-            ($path:expr, $mask:expr $(,)?) => {{
-                let path = $path;
+        fn check_same_stats<P: AsPath + Clone>(path: P, mask: libc::mode_t) {
+            let st1 = crate::stat(path.clone()).unwrap();
+            let st2 = crate::lstat(path.clone()).unwrap();
+            let st3 =
+                crate::fstatat(crate::AT_FDCWD, path.clone(), crate::AtFlag::empty()).unwrap();
+            let st4 = crate::open(path, crate::OFlag::O_RDONLY, 0)
+                .unwrap()
+                .stat()
+                .unwrap();
 
-                let st1 = crate::stat(path.clone()).unwrap();
-                let st2 = crate::lstat(path.clone()).unwrap();
-                let st3 =
-                    crate::fstatat(crate::AT_FDCWD, path.clone(), crate::AtFlag::empty()).unwrap();
-                let st4 = crate::open(path.clone(), crate::OFlag::O_RDONLY, 0)
-                    .unwrap()
-                    .stat()
-                    .unwrap();
+            assert_eq!(st1.file_type(), StatFileType { mask: mask as _ });
 
-                assert_eq!(st1.file_type(), StatFileType { mask: $mask as _ });
-
-                check_stat_eq!(st1, st2);
-                check_stat_eq!(st1, st3);
-                check_stat_eq!(st1, st4);
-            }};
+            check_stat_eq!(st1, st2);
+            check_stat_eq!(st1, st3);
+            check_stat_eq!(st1, st4);
         }
 
-        check_same_stats!(CStr::from_bytes_with_nul(b"/\0").unwrap(), libc::S_IFDIR);
-        check_same_stats!(CStr::from_bytes_with_nul(b".\0").unwrap(), libc::S_IFDIR);
-        check_same_stats!(CStr::from_bytes_with_nul(b"/tmp\0").unwrap(), libc::S_IFDIR);
+        check_same_stats(CStr::from_bytes_with_nul(b"/\0").unwrap(), libc::S_IFDIR);
+        check_same_stats(CStr::from_bytes_with_nul(b".\0").unwrap(), libc::S_IFDIR);
+        check_same_stats(CStr::from_bytes_with_nul(b"/tmp\0").unwrap(), libc::S_IFDIR);
 
         #[cfg(feature = "std")]
-        check_same_stats!(std::env::current_exe().unwrap(), libc::S_IFREG);
+        check_same_stats(std::env::current_exe().unwrap(), libc::S_IFREG);
     }
 }
