@@ -537,4 +537,34 @@ mod tests {
             }
         }
     }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn test_resourceiter() {
+        let resources: Vec<Resource> = Resource::iter().collect();
+        let len = resources.len();
+
+        assert_eq!(Resource::iter().len(), len);
+        assert_eq!(Resource::iter().count(), len);
+        assert_eq!(Resource::iter().size_hint(), (len, Some(len)));
+
+        for (i, &resource) in resources.iter().enumerate() {
+            assert_eq!(Resource::iter().nth(i), Some(resource));
+            assert_eq!(Resource::iter().nth_back(len - i - 1), Some(resource));
+        }
+
+        assert_eq!(Resource::iter().nth(len), None);
+        assert_eq!(Resource::iter().nth(len + 1), None);
+        assert_eq!(Resource::iter().nth_back(len), None);
+        assert_eq!(Resource::iter().nth_back(len + 1), None);
+
+        assert_eq!(Resource::iter().last(), resources.last().cloned());
+
+        let mut it = Resource::iter();
+        // Exhaust
+        it.by_ref().count();
+        assert_eq!(it.len(), 0);
+        assert_eq!(it.clone().count(), 0);
+        assert_eq!(it.last(), None);
+    }
 }
