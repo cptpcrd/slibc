@@ -3,10 +3,10 @@ use slibc::{
     Winsize,
 };
 
-#[cfg(feature = "alloc")]
-use slibc::ttyname_alloc;
 #[cfg(all(target_os = "linux", feature = "alloc"))]
 use slibc::ptsname_alloc;
+#[cfg(feature = "alloc")]
+use slibc::ttyname_alloc;
 
 #[test]
 fn test_tty() {
