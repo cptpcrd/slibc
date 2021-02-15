@@ -4,7 +4,9 @@ use slibc::{
 };
 
 #[cfg(feature = "alloc")]
-use slibc::{ptsname_alloc, ttyname_alloc};
+use slibc::ttyname_alloc;
+#[cfg(all(target_os = "linux", feature = "alloc"))]
+use slibc::ptsname_alloc;
 
 #[test]
 fn test_tty() {

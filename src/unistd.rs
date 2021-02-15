@@ -805,8 +805,8 @@ pub fn ttyname_r(fd: RawFd, buf: &mut [u8]) -> Result<&CStr> {
     }
 }
 
-#[cfg_attr(docsrs, doc(cfg(all(target_os = "linux", feature = "alloc"))))]
-#[cfg(all(target_os = "linux", feature = "alloc"))]
+#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
+#[cfg(feature = "alloc")]
 pub fn ttyname_alloc(fd: RawFd) -> Result<CString> {
     let maxlen = crate::sysconf(crate::SysconfName::TTY_NAME_MAX).unwrap_or(100);
 
