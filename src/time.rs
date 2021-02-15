@@ -245,7 +245,7 @@ mod tests {
         }
     }
 
-    #[cfg(any(freebsdlike, netbsdlike, linuxlike))]
+    #[cfg(any(freebsdlike, netbsdlike, target_os = "linux"))]
     #[test]
     fn test_clock_getcpuclockid() {
         assert_close!(

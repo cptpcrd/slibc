@@ -1,10 +1,11 @@
 use slibc::ffi::CStr;
-use slibc::{open, sync, OFlag};
+use slibc::{open, OFlag};
 
+#[cfg(not(target_os = "android"))]
 #[test]
 fn test_sync() {
     // Just make sure it doesn't segfault
-    sync();
+    slibc::sync();
 }
 
 #[cfg(target_os = "linux")]
