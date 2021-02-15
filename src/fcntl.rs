@@ -137,6 +137,8 @@ bitflags::bitflags! {
         const AT_REMOVEDIR = libc::AT_REMOVEDIR;
         const AT_SYMLINK_NOFOLLOW = libc::AT_SYMLINK_NOFOLLOW;
         const AT_SYMLINK_FOLLOW = libc::AT_SYMLINK_FOLLOW;
+
+        #[cfg(not(target_os = "android"))]
         const AT_EACCESS = libc::AT_EACCESS;
 
         #[cfg(target_os = "linux")]

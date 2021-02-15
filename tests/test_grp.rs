@@ -1,4 +1,4 @@
-#![cfg(feature = "alloc")]
+#![cfg(all(feature = "alloc", not(target_os = "android")))]
 // macOS behaves strangely in situations like this
 #![cfg(not(target_os = "macos"))]
 

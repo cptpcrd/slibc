@@ -27,6 +27,8 @@ pub fn getpagesize() -> usize {
 }
 
 /// Synchronize all filesystem modifications to the underlying filesystems.
+#[cfg_attr(docsrs, doc(cfg(not(target_os = "android"))))]
+#[cfg(not(target_os = "android"))]
 #[inline]
 pub fn sync() {
     unsafe {
@@ -565,6 +567,7 @@ pub unsafe fn dup2(oldfd: RawFd, newfd: RawFd) -> Result<FileDesc> {
     docsrs,
     doc(cfg(any(
         target_os = "linux",
+        target_os = "android",
         target_os = "freebsd",
         target_os = "dragonfly",
         target_os = "openbsd",
@@ -573,6 +576,7 @@ pub unsafe fn dup2(oldfd: RawFd, newfd: RawFd) -> Result<FileDesc> {
 )]
 #[cfg(any(
     target_os = "linux",
+    target_os = "android",
     target_os = "freebsd",
     target_os = "dragonfly",
     target_os = "openbsd",
@@ -682,6 +686,7 @@ pub fn sethostname<S: AsRef<OsStr>>(s: S) -> Result<()> {
     Error::unpack_nz(unsafe { libc::sethostname(buf.as_ptr() as *const _, buf.len() as _) })
 }
 
+#[cfg(not(target_os = "android"))]
 #[inline]
 pub fn getdomainname(buf: &mut [u8]) -> Result<&CStr> {
     // FreeBSD-based systems have the length as type `int`; check for overflow on 64-bit
@@ -707,8 +712,8 @@ pub fn getdomainname(buf: &mut [u8]) -> Result<&CStr> {
     }
 }
 
-#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
-#[cfg(feature = "alloc")]
+#[cfg_attr(docsrs, doc(cfg(all(feature = "alloc", not(target_os = "android")))))]
+#[cfg(all(feature = "alloc", not(target_os = "android")))]
 pub fn getdomainname_alloc() -> Result<CString> {
     // On Linux, the maximum length of an NIS domainname (with the terminating NUL) is 64 bytes
     #[allow(non_upper_case_globals)]
@@ -728,6 +733,7 @@ pub fn getdomainname_alloc() -> Result<CString> {
     util::cstring_from_buf(buf).ok_or_else(|| Error::from_code(libc::ENAMETOOLONG))
 }
 
+#[cfg(not(target_os = "android"))]
 #[inline]
 pub fn setdomainname<S: AsRef<OsStr>>(s: S) -> Result<()> {
     let buf = s.as_ref().as_bytes();

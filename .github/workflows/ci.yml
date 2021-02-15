@@ -16,6 +16,7 @@ jobs:
         toolchain: [stable, beta, nightly]
         target:
           - x86_64-unknown-netbsd
+          - x86_64-linux-android
         os: [ubuntu-latest]
 
     # Allow nightly builds to fail

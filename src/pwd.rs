@@ -227,9 +227,11 @@ impl fmt::Debug for Passwd {
 }
 
 /// An iterator over the entries in the password database.
-#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
+#[cfg_attr(docsrs, doc(cfg(all(feature = "alloc", not(target_os = "android")))))]
+#[cfg(not(target_os = "android"))]
 pub struct PasswdIter(());
 
+#[cfg(not(target_os = "android"))]
 impl PasswdIter {
     /// Create an iterator over all the password entries in the system.
     ///
@@ -256,6 +258,7 @@ impl PasswdIter {
     }
 }
 
+#[cfg(not(target_os = "android"))]
 impl Iterator for PasswdIter {
     type Item = Result<Passwd>;
 
@@ -388,6 +391,7 @@ impl Iterator for PasswdIter {
     }
 }
 
+#[cfg(not(target_os = "android"))]
 impl Drop for PasswdIter {
     #[inline]
     fn drop(&mut self) {

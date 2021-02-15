@@ -243,9 +243,11 @@ impl<'a> fmt::Debug for GroupMemberIter<'a> {
 }
 
 /// An iterator over the entries in the group database.
-#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
+#[cfg_attr(docsrs, doc(cfg(all(feature = "alloc", not(target_os = "android")))))]
+#[cfg(not(target_os = "android"))]
 pub struct GroupIter(());
 
+#[cfg(not(target_os = "android"))]
 impl GroupIter {
     /// Create an iterator over all the group entries in the system.
     ///
@@ -272,6 +274,7 @@ impl GroupIter {
     }
 }
 
+#[cfg(not(target_os = "android"))]
 impl Iterator for GroupIter {
     type Item = Result<Group>;
 
@@ -392,6 +395,7 @@ impl Iterator for GroupIter {
     }
 }
 
+#[cfg(not(target_os = "android"))]
 impl Drop for GroupIter {
     #[inline]
     fn drop(&mut self) {

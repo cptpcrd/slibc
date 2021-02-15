@@ -82,7 +82,7 @@ define_clockids! {
     UPTIME_RAW = CLOCK_UPTIME_RAW,
     UPTIME_RAW_APPROX = CLOCK_UPTIME_RAW_APPROX,
 
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "android"))]
     REALTIME_ALARM = CLOCK_REALTIME_ALARM,
     REALTIME_COARSE = CLOCK_REALTIME_COARSE,
     TAI = CLOCK_TAI,
@@ -119,7 +119,7 @@ impl ClockId {
             target_os = "netbsd",
         )))
     )]
-    #[cfg(any(freebsdlike, netbsdlike, linuxlike))]
+    #[cfg(any(freebsdlike, netbsdlike, target_os = "linux"))]
     #[inline]
     pub fn get_for_process(pid: libc::pid_t) -> Result<Self> {
         clock_getcpuclockid(pid)
@@ -182,7 +182,7 @@ pub fn clock_settime(clock: ClockId, t: TimeSpec) -> Result<()> {
         target_os = "netbsd",
     )))
 )]
-#[cfg(any(freebsdlike, netbsdlike, linuxlike))]
+#[cfg(any(freebsdlike, netbsdlike, target_os = "linux"))]
 #[inline]
 pub fn clock_getcpuclockid(pid: libc::pid_t) -> Result<ClockId> {
     let mut clockid = MaybeUninit::uninit();
