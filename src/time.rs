@@ -215,6 +215,7 @@ pub fn pthread_getcpuclockid(thread: libc::pthread_t) -> Result<ClockId> {
 mod tests {
     use super::*;
 
+    #[cfg(any(freebsdlike, netbsdlike, linux_like))]
     fn isclose(t1: TimeSpec, t2: TimeSpec, nsec: u32) -> bool {
         if t1.tv_sec == t2.tv_sec {
             (t1.tv_sec - t2.tv_sec).abs() < nsec as _
@@ -227,6 +228,7 @@ mod tests {
         }
     }
 
+    #[cfg(any(freebsdlike, netbsdlike, linux_like))]
     macro_rules! assert_close {
         ($left:expr, $right:expr $(,)?) => {{
             let left = $left;
