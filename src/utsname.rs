@@ -44,15 +44,18 @@ mod tests {
         #[cfg(target_os = "freebsd")]
         assert_eq!(utsname.sysname(), OsStr::new("FreeBSD"));
 
-        let mut buf = [0; 4096];
-        let hostname = crate::gethostname(&mut buf).unwrap();
-        assert_eq!(utsname.nodename(), OsStr::from_bytes(hostname.to_bytes()));
+        #[cfg(not(target_os = "freebsd"))]
+        {
+            let mut buf = [0; 4096];
+            let hostname = crate::gethostname(&mut buf).unwrap();
+            assert_eq!(utsname.nodename(), OsStr::from_bytes(hostname.to_bytes()));
 
-        #[cfg(feature = "alloc")]
-        assert_eq!(
-            utsname.nodename(),
-            OsStr::from_bytes(crate::gethostname_alloc().unwrap().to_bytes())
-        );
+            #[cfg(feature = "alloc")]
+            assert_eq!(
+                utsname.nodename(),
+                OsStr::from_bytes(crate::gethostname_alloc().unwrap().to_bytes())
+            );
+        }
 
         #[cfg(target_os = "linux")]
         {
