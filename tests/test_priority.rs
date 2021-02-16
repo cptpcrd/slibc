@@ -46,6 +46,9 @@ fn test_nice() {
     if slibc::geteuid() == 0 {
         nice(-1).unwrap();
     } else {
-        assert_eq!(nice(-1).unwrap_err().code(), libc::EPERM);
+        assert!(matches!(
+            nice(-1).unwrap_err().code(),
+            libc::EPERM | libc::EACCES
+        ));
     }
 }
