@@ -517,6 +517,12 @@ mod tests {
     #[test]
     fn test_get_set_rlimits_same() {
         for res in Resource::iter() {
+            #[cfg(apple)]
+            if res == Resource::NPROC {
+                // The kernel clamps RLIMIT_NPROC in strange ways
+                continue;
+            }
+
             let limits = getrlimit(res).unwrap();
             unsafe {
                 setrlimit(res, limits).unwrap();
