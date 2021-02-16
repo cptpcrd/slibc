@@ -275,4 +275,16 @@ mod tests {
             }
         }
     }
+
+    #[cfg(any(freebsdlike, target_os = "openbsd"))]
+    #[test]
+    fn test_pthread_getcpuclockid() {
+        assert_close!(
+            ClockId::get_for_thread(unsafe { libc::pthread_self() })
+                .unwrap()
+                .gettime()
+                .unwrap(),
+            ClockId::THREAD_CPUTIME_ID.gettime().unwrap(),
+        );
+    }
 }
