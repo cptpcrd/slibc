@@ -5,11 +5,6 @@ use crate::internal_prelude::*;
 pub type Result<T> = core::result::Result<T, Error>;
 
 /// Represents an OS error encountered when performing an operation.
-///
-/// Note: Parsing errors (i.e. errors returned by `FromStr` implementations) have their own types;
-/// for example [`ParseCapError`]).
-///
-/// [`ParseCapError`]: ./caps/struct.ParseCapError.html
 #[derive(Clone, Eq, PartialEq)]
 pub struct Error(i32);
 
