@@ -1209,7 +1209,7 @@ mod tests {
 
         assert_eq!(getgroups_alloc().unwrap(), &buf[..n]);
 
-        if n > 0 {
+        if n >= 2 {
             let mut buf = Vec::new();
             buf.resize(n - 1, 0);
             assert_eq!(getgroups(&mut buf).unwrap_err().code(), libc::EINVAL);
