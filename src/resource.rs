@@ -362,13 +362,13 @@ pub mod rlimits {
 #[repr(i32)]
 pub enum RusageWho {
     /// Return usage statistics for all threads in the current process.
-    Process = libc::RUSAGE_SELF,
+    SELF = libc::RUSAGE_SELF,
     /// Return usage statistics for all children of the current process that have terminated and
     /// been waited for.
-    Children = libc::RUSAGE_CHILDREN,
+    CHILDREN = libc::RUSAGE_CHILDREN,
     /// Return usage statistics for the current thread.
     #[cfg(any(target_os = "linux", target_os = "freebsd", target_os = "openbsd"))]
-    Thread = libc::RUSAGE_THREAD,
+    THREAD = libc::RUSAGE_THREAD,
 }
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
