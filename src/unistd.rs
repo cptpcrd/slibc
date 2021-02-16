@@ -1201,6 +1201,21 @@ mod tests {
         assert_eq!(getresgid(), (gid, gid, gid));
     }
 
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn test_getgroups() {
+        let mut buf = [0; 65536];
+        let n = getgroups(&mut buf).unwrap();
+
+        assert_eq!(getgroups_alloc().unwrap(), &buf[..n]);
+
+        if n > 0 {
+            let mut buf = Vec::new();
+            buf.resize(n - 1, 0);
+            assert_eq!(getgroups(&mut buf).unwrap_err().code(), libc::EINVAL);
+        }
+    }
+
     #[test]
     fn test_getcwd_error() {
         assert_eq!(getcwd(&mut []).unwrap_err().code(), libc::EINVAL);
