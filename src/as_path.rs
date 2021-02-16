@@ -199,4 +199,17 @@ mod tests {
             do_it(&CString::new("").unwrap());
         }
     }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn test_mid_nul() {
+        fn check<P: AsPath>(path: P) {
+            assert_eq!(path.with_cstr(|_| Ok(())).unwrap_err().code(), libc::EINVAL);
+        }
+
+        check("\0");
+        check(String::from("\0"));
+        check(OsStr::new("\0"));
+        check(OsString::from("\0"));
+    }
 }
