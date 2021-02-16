@@ -48,13 +48,15 @@ fn test_tty() {
     #[cfg(feature = "alloc")]
     assert_eq!(ttyname_alloc(r.fd()).unwrap_err().code(), libc::ENOTTY);
 
-    let master_name = ttyname_r(master.fd(), &mut buf1).unwrap();
-    unsafe {
-        assert_eq!(ttyname(master.fd()).unwrap(), master_name);
+    #[cfg(not(apple))]
+    {
+        let master_name = ttyname_r(master.fd(), &mut buf1).unwrap();
+        unsafe {
+            assert_eq!(ttyname(master.fd()).unwrap(), master_name);
+        }
+        #[cfg(feature = "alloc")]
+        assert_eq!(ttyname_alloc(master.fd()).unwrap().as_c_str(), master_name);
     }
-
-    #[cfg(feature = "alloc")]
-    assert_eq!(ttyname_alloc(master.fd()).unwrap().as_c_str(), master_name);
 
     let slave_name = ttyname_r(slave.fd(), &mut buf1).unwrap();
     unsafe {
