@@ -17,7 +17,7 @@ pub fn set_errno(eno: libc::c_int) {
 }
 
 macro_rules! define_errno {
-    ($(#[cfg($cfg:meta)] $($name:ident,)*)*) => {
+    ($(#[cfg($cfg:meta)] $($name:ident,)+ $(@$name2:ident = $val2:expr,)*)*) => {
         #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
         #[repr(i32)]
         #[non_exhaustive]
@@ -28,6 +28,11 @@ macro_rules! define_errno {
                 #[cfg_attr(docsrs, doc(cfg($cfg)))]
                 $name = libc::$name,
             )*)*
+            $($(
+                #[cfg($cfg)]
+                #[cfg_attr(docsrs, doc(cfg($cfg)))]
+                $name2 = $val2,
+            )*)*
         }
 
         #[allow(dead_code)]
@@ -35,6 +40,10 @@ macro_rules! define_errno {
             $($(
                 #[cfg($cfg)]
                 Errno::$name,
+            )*)*
+            $($(
+                #[cfg($cfg)]
+                Errno::$name2,
             )*)*
         ];
 
@@ -45,6 +54,10 @@ macro_rules! define_errno {
                     $($(
                         #[cfg($cfg)]
                         libc::$name => Self::$name,
+                    )*)*
+                    $($(
+                        #[cfg($cfg)]
+                        $val2 => Self::$name2,
                     )*)*
                     _ => Self::Unknown,
                 }
@@ -204,6 +217,7 @@ define_errno! {
     EDOOFUS,
     ENOTCAPABLE,
     ECAPMODE,
+    @EINTEGRITY = 97,
 
     #[cfg(any(target_os = "macos", target_os = "ios"))]
     ENOPOLICY,
@@ -226,7 +240,6 @@ define_errno! {
     EMEDIUMTYPE,
 
     #[cfg(any(
-        target_os = "freebsd",
         target_os = "openbsd",
         target_os = "netbsd",
         target_os = "macos",
