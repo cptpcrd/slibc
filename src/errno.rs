@@ -393,9 +393,7 @@ mod tests {
             let msg = Error::from_code(eno).strerror();
             let errno = Errno::from_code(eno);
 
-            if matches!(msg, "Unknown error" | "No error information") {
-                assert_eq!(errno, Errno::Unknown);
-            } else {
+            if !matches!(msg, "Unknown error" | "No error information") {
                 assert_ne!(errno, Errno::Unknown, "{}", eno);
                 assert_eq!(errno.desc(), msg, "{}", eno);
             }
