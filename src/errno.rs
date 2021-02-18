@@ -137,7 +137,14 @@ define_errno! {
     ENOMEM,
     ENODEV,
 
-    #[cfg(bsd)]
+    #[cfg(any(
+        target_os = "freebsd",
+        target_os = "dragonfly",
+        target_os = "openbsd",
+        target_os = "netbsd",
+        target_os = "macos",
+        target_os = "ios",
+    ))]
     ENOATTR,
     ENEEDAUTH,
     EAUTH,
@@ -217,6 +224,15 @@ define_errno! {
     #[cfg(any(target_os = "linux", target_os = "openbsd"))]
     ENOMEDIUM,
     EMEDIUMTYPE,
+
+    #[cfg(any(
+        target_os = "freebsd",
+        target_os = "openbsd",
+        target_os = "netbsd",
+        target_os = "macos",
+        target_os = "ios",
+    ))]
+    ENOTSUP,
 
     #[cfg(any(
         target_os = "linux",
