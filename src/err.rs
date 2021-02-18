@@ -63,7 +63,7 @@ impl Error {
         self.0
     }
 
-    fn strerror(&self) -> &'static str {
+    pub(crate) fn strerror(&self) -> &'static str {
         // If the given error number is invalid (negative, 0, or out of range), most OSes allocate
         // memory and prints "Unknown error %d". This means it can't be 'static.
         //
