@@ -144,8 +144,6 @@ define_errno! {
     ECANCELED,
     EILSEQ,
     EBADMSG,
-    EMULTIHOP,
-    ENOLINK,
     EPROTO,
     ENOMEM,
     ENODEV,
@@ -212,6 +210,10 @@ define_errno! {
     ENOPKG,
     ENONET,
     EREMCHG,
+
+    #[cfg(not(target_os = "openbsd"))]
+    EMULTIHOP,
+    ENOLINK,
 
     #[cfg(target_os = "freebsd")]
     EDOOFUS,
