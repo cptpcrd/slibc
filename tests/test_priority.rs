@@ -1,4 +1,4 @@
-use slibc::{getpriority, nice, setpriority, PrioWho};
+use slibc::{getpriority, nice, setpriority, Errno, PrioWho};
 
 #[test]
 fn test_get_prio() {
@@ -23,20 +23,18 @@ fn test_getset_prio_bad() {
     let bad_pid = libc::pid_t::MAX;
 
     assert_eq!(
-        getpriority(PrioWho::Process(bad_pid)).unwrap_err().code(),
-        libc::ESRCH,
+        getpriority(PrioWho::Process(bad_pid)).unwrap_err(),
+        Errno::ESRCH,
     );
     assert_eq!(
-        setpriority(PrioWho::Process(bad_pid), 0)
-            .unwrap_err()
-            .code(),
-        libc::ESRCH,
+        setpriority(PrioWho::Process(bad_pid), 0).unwrap_err(),
+        Errno::ESRCH,
     );
 
     if slibc::geteuid() != 0 {
         assert_eq!(
-            setpriority(PrioWho::Process(1), 0).unwrap_err().code(),
-            libc::EPERM,
+            setpriority(PrioWho::Process(1), 0).unwrap_err(),
+            Errno::EPERM,
         );
     }
 }

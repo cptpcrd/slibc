@@ -77,7 +77,7 @@ impl FileDesc {
                 Ok(0) => return Err(Error::from_code(libc::EIO)),
                 Ok(n) => buf = &buf[n..],
 
-                Err(e) if e.code() == libc::EINTR => (),
+                Err(e) if e == Errno::EINTR => (),
                 Err(e) => return Err(e),
             }
         }
@@ -95,7 +95,7 @@ impl FileDesc {
                 Ok(0) => return Err(Error::from_code(libc::EINVAL)),
                 Ok(n) => buf = &mut buf[n..],
 
-                Err(e) if e.code() == libc::EINTR => (),
+                Err(e) if e == Errno::EINTR => (),
                 Err(e) => return Err(e),
             }
         }

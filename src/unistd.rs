@@ -1162,9 +1162,9 @@ mod tests {
 
         assert!(matches!(getpgid(1).unwrap(), 0 | 1));
 
-        assert_eq!(getpgid(libc::pid_t::MAX).unwrap_err().code(), libc::ESRCH);
+        assert_eq!(getpgid(libc::pid_t::MAX).unwrap_err(), Errno::ESRCH);
 
-        assert_eq!(getsid(libc::pid_t::MAX).unwrap_err().code(), libc::ESRCH);
+        assert_eq!(getsid(libc::pid_t::MAX).unwrap_err(), Errno::ESRCH);
 
         if getpgrp() != getpid() {
             // Not a process group leader
@@ -1181,7 +1181,7 @@ mod tests {
         }
 
         // Now that we're a process group leader, setsid() should fail with EPERM
-        assert_eq!(setsid().unwrap_err().code(), libc::EPERM);
+        assert_eq!(setsid().unwrap_err(), Errno::EPERM);
     }
 
     #[cfg(any(
@@ -1218,8 +1218,8 @@ mod tests {
 
     #[test]
     fn test_getcwd_error() {
-        assert_eq!(getcwd(&mut []).unwrap_err().code(), libc::EINVAL);
-        assert_eq!(getcwd(&mut [0]).unwrap_err().code(), libc::ERANGE);
+        assert_eq!(getcwd(&mut []).unwrap_err(), Errno::EINVAL);
+        assert_eq!(getcwd(&mut [0]).unwrap_err(), Errno::ERANGE);
     }
 
     #[test]
@@ -1236,18 +1236,16 @@ mod tests {
                 CStr::from_bytes_with_nul(b"/NOEXIST\0").unwrap(),
                 AccessMode::F_OK
             )
-            .unwrap_err()
-            .code(),
-            libc::ENOENT
+            .unwrap_err(),
+            Errno::ENOENT
         );
         assert_eq!(
             access(
                 CStr::from_bytes_with_nul(b"/NOEXIST\0").unwrap(),
                 AccessMode::R_OK | AccessMode::W_OK | AccessMode::X_OK
             )
-            .unwrap_err()
-            .code(),
-            libc::ENOENT
+            .unwrap_err(),
+            Errno::ENOENT
         );
     }
 }

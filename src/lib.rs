@@ -74,7 +74,7 @@ pub use err::{Error, Result};
 mod internal_prelude {
     pub use core::mem::MaybeUninit;
 
-    pub(crate) use super::{sys, util, AsPath, Error, Result};
+    pub(crate) use super::{sys, util, AsPath, Errno, Error, Result};
 
     pub use super::fdesc::FileDesc;
     pub use super::ffi::prelude::*;

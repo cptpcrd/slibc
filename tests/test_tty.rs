@@ -1,6 +1,6 @@
 use slibc::{
     ioctl_getwinsz, ioctl_setwinsz, isatty, isatty_raw, isatty_simple, openpty, pipe, ptsname,
-    ttyname, ttyname_r, Winsize,
+    ttyname, ttyname_r, Errno, Winsize,
 };
 
 #[cfg(all(target_os = "linux", feature = "alloc"))]
@@ -18,7 +18,7 @@ fn test_tty() {
     // Check isatty()
 
     assert!(!r.isatty().unwrap());
-    assert_eq!(isatty_raw(r.fd()).unwrap_err().code(), libc::ENOTTY);
+    assert_eq!(isatty_raw(r.fd()).unwrap_err(), Errno::ENOTTY);
     assert!(!isatty_simple(r.fd()));
 
     assert!(master.isatty().unwrap());
@@ -28,21 +28,15 @@ fn test_tty() {
     assert!(isatty_simple(master.fd()));
     assert!(isatty_simple(slave.fd()));
 
-    assert_eq!(isatty(libc::c_int::MAX).unwrap_err().code(), libc::EBADF);
-    assert_eq!(
-        isatty_raw(libc::c_int::MAX).unwrap_err().code(),
-        libc::EBADF
-    );
+    assert_eq!(isatty(libc::c_int::MAX).unwrap_err(), Errno::EBADF);
+    assert_eq!(isatty_raw(libc::c_int::MAX).unwrap_err(), Errno::EBADF);
     assert!(!isatty_simple(libc::c_int::MAX));
 
     // Check ttyname() and ttyname_r()
 
-    assert_eq!(
-        ttyname_r(r.fd(), &mut buf1).unwrap_err().code(),
-        libc::ENOTTY
-    );
+    assert_eq!(ttyname_r(r.fd(), &mut buf1).unwrap_err(), Errno::ENOTTY);
     unsafe {
-        assert_eq!(ttyname(r.fd()).unwrap_err().code(), libc::ENOTTY);
+        assert_eq!(ttyname(r.fd()).unwrap_err(), Errno::ENOTTY);
     }
 
     #[cfg(feature = "alloc")]
@@ -87,14 +81,14 @@ fn test_tty() {
     // ptsname() should fail on the pipe, and on bad file descriptors
     #[cfg(target_os = "linux")]
     assert_eq!(
-        slibc::ptsname_r(r.fd(), &mut buf1).unwrap_err().code(),
-        libc::ENOTTY
+        slibc::ptsname_r(r.fd(), &mut buf1).unwrap_err(),
+        Errno::ENOTTY
     );
 
     unsafe {
         assert!(matches!(
-            ptsname(r.fd()).unwrap_err().code(),
-            libc::ENOTTY | libc::EINVAL
+            Errno::from_code(ptsname(r.fd()).unwrap_err().code()),
+            Errno::ENOTTY | Errno::EINVAL
         ));
     }
 

@@ -3,7 +3,7 @@ use std::fs;
 use std::os::unix::prelude::*;
 
 use slibc::ffi::CStr;
-use slibc::{open, openat, OFlag};
+use slibc::{open, openat, Errno, OFlag};
 
 #[test]
 fn test_open_openat() {
@@ -52,8 +52,5 @@ fn test_open_openat() {
     file.read_exact(&mut buf).unwrap();
     assert_eq!(&buf, b"abc");
 
-    assert_eq!(
-        file.read_exact(&mut [0; 1]).unwrap_err().code(),
-        libc::EINVAL
-    );
+    assert_eq!(file.read_exact(&mut [0; 1]).unwrap_err(), Errno::EINVAL);
 }
