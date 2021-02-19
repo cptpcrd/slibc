@@ -435,6 +435,92 @@ mod tests {
     }
 
     #[test]
+    fn test_statx_same() {
+        macro_rules! check_statx_eq {
+            ($stx1:expr, $stx2:expr) => {
+                check_statx_eq!(
+                    $stx1,
+                    $stx2,
+                    @,
+                    blksize,
+                    attributes,
+                    nlink,
+                    uid,
+                    gid,
+                    mode,
+                    ino,
+                    size,
+                    blocks,
+                    attributes_mask,
+                    atime,
+                    btime,
+                    ctime,
+                    mtime,
+                    rdev_major,
+                    rdev_minor,
+                    dev_major,
+                    dev_minor,
+                    mnt_id,
+                    @,
+                    file_type,
+                    access_mode,
+                    is_suid,
+                    is_sgid,
+                    is_sticky,
+                    rdev,
+                    dev,
+                )
+            };
+
+            ($stx1:expr, $stx2:expr, @, $($aname:ident,)+ @, $($fname:ident),+ $(,)?) => {{
+                assert!($stx1.mask.contains(StatxMask::BASIC_STATS));
+                assert!($stx2.mask.contains(StatxMask::BASIC_STATS));
+
+                $(
+                    assert_eq!(
+                        $stx1.$aname, $stx2.$aname, concat!(stringify!($aname), " mismatch")
+                    );
+                )+
+
+                $(
+                    assert_eq!(
+                        $stx1.$fname(), $stx2.$fname(), concat!(stringify!($fname), " mismatch")
+                    );
+                )+
+            }};
+        }
+
+        fn check_same_stats<P: AsPath + Clone>(path: P, mask: libc::mode_t) {
+            let stx1 = statx(
+                crate::AT_FDCWD,
+                path.clone(),
+                crate::AtFlag::empty(),
+                StatxMask::BASIC_STATS,
+            )
+            .unwrap();
+
+            let stx2 = crate::open(path, crate::OFlag::O_RDONLY, 0)
+                .unwrap()
+                .statx(crate::AtFlag::empty(), StatxMask::BASIC_STATS)
+                .unwrap();
+
+            assert_eq!(stx1.file_type(), crate::StatFileType { mask: mask as _ });
+
+            check_statx_eq!(stx1, stx2);
+        }
+
+        check_same_stats(CStr::from_bytes_with_nul(b"/\0").unwrap(), libc::S_IFDIR);
+        check_same_stats(CStr::from_bytes_with_nul(b".\0").unwrap(), libc::S_IFDIR);
+        check_same_stats(
+            CStr::from_bytes_with_nul(b"/tmp/\0").unwrap(),
+            libc::S_IFDIR,
+        );
+
+        #[cfg(feature = "std")]
+        check_same_stats(std::env::current_exe().unwrap(), libc::S_IFREG);
+    }
+
+    #[test]
     fn test_statx_error() {
         macro_rules! check_err {
             ($dirfd:expr, $name:expr, $eno:expr) => {

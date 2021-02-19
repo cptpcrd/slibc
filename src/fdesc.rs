@@ -216,6 +216,18 @@ impl FileDesc {
     pub fn stat(&self) -> Result<crate::Stat> {
         crate::fstat(self.0)
     }
+
+    #[cfg(target_os = "linux")]
+    #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
+    #[inline]
+    pub fn statx(&self, flags: crate::AtFlag, mask: crate::StatxMask) -> Result<crate::Statx> {
+        crate::statx(
+            self.0,
+            unsafe { CStr::from_bytes_with_nul_unchecked(b"\0") },
+            flags | crate::AtFlag::AT_EMPTY_PATH,
+            mask,
+        )
+    }
 }
 
 impl Drop for FileDesc {
