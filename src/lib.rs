@@ -47,9 +47,9 @@
 //! # }
 //! ```
 //!
-//! However, note that this is wasteful, since it allocates memory just to perform a single operation. If you
-//! want to avoid allocating memory (or you are in a `#![no_std]` crate without an allocator), look
-//! into [the `cstr` crate](https://crates.io/crates/cstr):
+//! However, note that this is wasteful, since it allocates memory just to perform a single
+//! operation. If you want to avoid allocating memory (or you are in a `#![no_std]` crate without
+//! an allocator), look into [the `cstr` crate](https://crates.io/crates/cstr):
 //!
 //! ```ignore
 //! use cstr::cstr;
