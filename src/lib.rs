@@ -92,7 +92,7 @@ mod internal_prelude {
     #[cfg(feature = "alloc")]
     pub use super::ffi::{CString, OsString};
 
-    pub use super::errno::{get_errno, set_errno};
+    pub use super::errno::{errno_get, errno_set};
 
     #[cfg(all(feature = "alloc", not(feature = "std")))]
     pub use alloc::{

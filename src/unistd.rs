@@ -758,7 +758,7 @@ pub fn isatty(fd: RawFd) -> Result<bool> {
     if unsafe { libc::isatty(fd) } == 1 {
         Ok(true)
     } else {
-        match get_errno() {
+        match errno_get() {
             libc::ENOTTY => Ok(false),
             eno => Err(Error::from_code(eno)),
         }

@@ -48,7 +48,7 @@ impl Error {
     /// Get the last OS error that occured (i.e. the current `errno` value).
     #[inline]
     pub fn last() -> Self {
-        Self(get_errno())
+        Self(errno_get())
     }
 
     /// Construct an `Error` from an `errno` code.
@@ -148,16 +148,16 @@ mod tests {
 
     #[test]
     fn test_last() {
-        set_errno(libc::EPERM);
+        errno_set(libc::EPERM);
         assert_eq!(Error::last().code(), libc::EPERM);
 
-        set_errno(libc::ENOENT);
+        errno_set(libc::ENOENT);
         assert_eq!(Error::last().code(), libc::ENOENT);
     }
 
     #[test]
     fn test_unpack() {
-        set_errno(libc::ENOENT);
+        errno_set(libc::ENOENT);
 
         assert_eq!(Error::unpack(0), Ok(0));
         assert_eq!(Error::unpack_size(0), Ok(0));

@@ -4,13 +4,13 @@ use crate::internal_prelude::*;
 
 /// Get the current thread's `errno` value.
 #[inline]
-pub fn get_errno() -> libc::c_int {
+pub fn errno_get() -> libc::c_int {
     unsafe { *util::errno_ptr() }
 }
 
 /// Set the current thread's `errno` value.
 #[inline]
-pub fn set_errno(eno: libc::c_int) {
+pub fn errno_set(eno: libc::c_int) {
     unsafe {
         *util::errno_ptr() = eno;
     }
@@ -277,7 +277,7 @@ impl Errno {
 
     #[inline]
     pub fn last() -> Self {
-        Self::from_code(get_errno())
+        Self::from_code(errno_get())
     }
 }
 
@@ -353,32 +353,32 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_getset_errno() {
-        set_errno(0);
-        assert_eq!(get_errno(), 0);
-        set_errno(0);
-        assert_eq!(get_errno(), 0);
+    fn test_geterrno_set() {
+        errno_set(0);
+        assert_eq!(errno_get(), 0);
+        errno_set(0);
+        assert_eq!(errno_get(), 0);
 
-        set_errno(libc::EINVAL);
-        assert_eq!(get_errno(), libc::EINVAL);
-        set_errno(libc::EINVAL);
-        assert_eq!(get_errno(), libc::EINVAL);
+        errno_set(libc::EINVAL);
+        assert_eq!(errno_get(), libc::EINVAL);
+        errno_set(libc::EINVAL);
+        assert_eq!(errno_get(), libc::EINVAL);
     }
 
     #[cfg(feature = "std")]
     #[test]
     fn test_errno_thread() {
-        set_errno(0);
-        assert_eq!(get_errno(), 0);
+        errno_set(0);
+        assert_eq!(errno_get(), 0);
 
         std::thread::spawn(|| {
-            set_errno(libc::EINVAL);
-            assert_eq!(get_errno(), libc::EINVAL);
+            errno_set(libc::EINVAL);
+            assert_eq!(errno_get(), libc::EINVAL);
         })
         .join()
         .unwrap();
 
-        assert_eq!(get_errno(), 0);
+        assert_eq!(errno_get(), 0);
     }
 
     #[test]
@@ -407,11 +407,11 @@ mod tests {
 
     #[test]
     fn test_errno_last() {
-        set_errno(0);
+        errno_set(0);
         assert_eq!(Errno::last(), Errno::Unknown);
-        set_errno(libc::ENOENT);
+        errno_set(libc::ENOENT);
         assert_eq!(Errno::last(), Errno::ENOENT);
-        set_errno(-1);
+        errno_set(-1);
         assert_eq!(Errno::last(), Errno::Unknown);
     }
 
