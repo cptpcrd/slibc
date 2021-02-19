@@ -218,6 +218,9 @@ impl Stat {
     /// - FreeBSD
     /// - OpenBSD
     /// - NetBSD
+    ///
+    /// On Linux, this can be retrieved using [`statx()`](./fn.statx.html) (see
+    /// [`Statx::btime`](./struct.Statx.html#structfield.btime)).
     #[inline]
     pub fn birthtime(&self) -> Option<TimeSpec> {
         #[cfg(any(
