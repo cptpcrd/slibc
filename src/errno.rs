@@ -18,6 +18,26 @@ pub fn errno_set(eno: libc::c_int) {
 
 macro_rules! define_errno {
     ($(#[cfg($cfg:meta)] $($name:ident,)+ $(@$name2:ident = $val2:expr,)*)*) => {
+        /// Represents an `errno` value.
+        ///
+        /// # `Errno` vs. `Error`
+        ///
+        /// `Error` wraps an error code without performing any validation of the value; you could
+        /// have an `Error` storing the code -1. `Errno`, however, translates unknown values into
+        /// `Errno::Unknown`.
+        ///
+        /// # Interaction with `Error`
+        ///
+        /// - `Errno`s can be converted `.into()` `Error`s (`Unknown` is translated to 0).
+        /// - `Errno`s can be compared to `Error`s. They will compare as equal if a) they store the
+        ///   same error code and b) the `Errno` is NOT `Errno::Unknown`. For example:
+        ///
+        /// ```
+        /// use slibc::{Errno, Error};
+        /// assert_eq!(Error::from_code(Errno::EPERM as i32), Errno::EPERM);
+        /// assert_eq!(Errno::EPERM, Error::from_code(Errno::EPERM as i32));
+        /// assert_ne!(Errno::Unknown, Error::from_code(0));
+        /// ```
         #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
         #[repr(i32)]
         #[non_exhaustive]
@@ -261,11 +281,15 @@ define_errno! {
 }
 
 impl Errno {
+    /// Get the `Errno` value corresponding to the given error code.
+    ///
+    /// Note: All values that are not in this enum will be translated to `Errno::Unknown`.
     #[inline]
     pub fn from_code(eno: i32) -> Self {
         Self::from_code_match(eno)
     }
 
+    /// Get the "description" (i.e. `strerror()`) for the given error number.
     #[inline]
     pub fn desc(self) -> &'static str {
         if self == Self::Unknown {
@@ -275,6 +299,9 @@ impl Errno {
         }
     }
 
+    /// Get the last `errno` value.
+    ///
+    /// This is equivalent to `Errno::from_code(errno_get())`.
     #[inline]
     pub fn last() -> Self {
         Self::from_code(errno_get())
