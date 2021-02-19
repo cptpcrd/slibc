@@ -407,7 +407,7 @@ pub fn getgroups_alloc() -> Result<Vec<libc::gid_t>> {
     let mut groups = Vec::new();
 
     loop {
-        let ngroups = getgroups(&mut groups)?;
+        let ngroups = getgroups(&mut [])?;
         if ngroups == 0 {
             return Ok(Vec::new());
         }
