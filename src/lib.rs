@@ -5,6 +5,12 @@
 //!    - If a terminating nul is placed in the buffer, the contents of the buffer beyond the
 //!      terminating nul are unspecified (they may have been overwritten).
 //!
+//! ## Safety
+//!
+//! Some libc functions *cannot* be made safe, often because of thread-safety issues. If a function
+//! in this crate is `unsafe`, its use should be taken seriously. Do **NOT** fall into the trap of
+//! simply adding `unsafe { }` around everything.
+//!
 //! ## File descriptor handling
 //!
 //! WARNING: Unlike with the standard library, file descriptors opened with using `slibc` do NOT
