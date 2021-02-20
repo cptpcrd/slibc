@@ -3,25 +3,32 @@ use crate::internal_prelude::*;
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub struct Utsname(libc::utsname);
 
-macro_rules! utsname_func {
-    ($name:ident) => {
-        #[inline]
-        pub fn $name(&self) -> &OsStr {
-            util::osstr_from_buf(util::cvt_char_buf(&self.0.$name))
-        }
+macro_rules! utsname_funcs {
+    ($($(#[cfg($cfg:meta)])? $name:ident,)*) => {
+        $(
+            $(
+                #[cfg($cfg)]
+                #[cfg_attr(docsrs, doc(cfg($cfg)))]
+            )?
+            #[inline]
+            pub fn $name(&self) -> &OsStr {
+                util::osstr_from_buf(util::cvt_char_buf(&self.0.$name))
+            }
+        )*
     };
 }
 
 impl Utsname {
-    utsname_func!(sysname);
-    utsname_func!(nodename);
-    utsname_func!(release);
-    utsname_func!(version);
-    utsname_func!(machine);
+    utsname_funcs! {
+        sysname,
+        nodename,
+        release,
+        version,
+        machine,
 
-    #[cfg(target_os = "linux")]
-    #[cfg_attr(docsrs, cfg(target_os = "linux"))]
-    utsname_func!(domainname);
+        #[cfg(target_os = "linux")]
+        domainname,
+    }
 }
 
 #[inline]
