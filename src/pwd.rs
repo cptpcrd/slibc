@@ -251,6 +251,18 @@ impl PasswdIter {
     ///   - `getpwuid_r()`
     ///   - `getpwnam()`
     ///   - `getpwnam_r()`
+    ///
+    /// # Recommended usage
+    ///
+    /// Since it's unsafe to perform other operations while iterating over this iterator (see
+    /// [`PasswdIter::new()`]), it's recommended to `.collect()` the items, like so:
+    ///
+    /// ```ignore
+    /// # use slibc::PasswdIter;
+    /// let groups = unsafe { PasswdIter::new().collect::<Result<Vec<_>, _>>() };
+    /// ```
+    ///
+    /// Note, however, that this does NOT solve the problem of thread-safety!
     #[inline]
     pub unsafe fn new() -> Self {
         libc::setpwent();

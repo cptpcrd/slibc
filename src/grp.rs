@@ -266,6 +266,18 @@ impl GroupIter {
     ///   - `getgrgid_r()`
     ///   - `getgrnam()`
     ///   - `getgrnam_r()`
+    ///
+    /// # Recommended usage
+    ///
+    /// Since it's unsafe to perform other operations while iterating over this iterator (see
+    /// [`GroupIter::new()`]), it's recommended to `.collect()` the items, like so:
+    ///
+    /// ```ignore
+    /// # use slibc::GroupIter;
+    /// let groups = unsafe { GroupIter::new().collect::<Result<Vec<_>, _>>() };
+    /// ```
+    ///
+    /// Note, however, that this does NOT solve the problem of thread-safety!
     #[inline]
     pub unsafe fn new() -> Self {
         libc::setgrent();
