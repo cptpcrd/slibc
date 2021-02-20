@@ -14,12 +14,15 @@ fn init_bufsize() -> usize {
 
 const MAX_BUFSIZE: usize = 32768;
 
-macro_rules! osstr_getter {
-    ($name:ident, $field_name:ident) => {
-        #[inline]
-        pub fn $name<'a>(&'a self) -> &'a OsStr {
-            OsStr::from_bytes(unsafe { util::bytes_from_ptr(self.grp.$field_name) })
-        }
+macro_rules! osstr_getters {
+    ($($(#[$attr:meta])* $name:ident, $field_name:ident)*) => {
+        $(
+            $(#[$attr])*
+            #[inline]
+            pub fn $name<'a>(&'a self) -> &'a OsStr {
+                OsStr::from_bytes(unsafe { util::bytes_from_ptr(self.grp.$field_name) })
+            }
+        )*
     };
 }
 
@@ -31,14 +34,24 @@ pub struct Group {
 }
 
 impl Group {
+    /// Get the group's GID.
     #[inline]
     pub fn gid(&self) -> libc::gid_t {
         self.grp.gr_gid
     }
 
-    osstr_getter!(name, gr_name);
-    osstr_getter!(passwd, gr_passwd);
+    osstr_getters! {
+        /// Get the group's name.
+        name, gr_name
 
+        /// Get the group's encrypted password.
+        ///
+        /// Note that a) group passwords are rarely used and b) on Linux, they are usually stored
+        /// in a separate file.
+        passwd, gr_passwd
+    }
+
+    /// Create an iterator over the names of the users who are members of the group.
     #[inline]
     pub fn members(&self) -> GroupMemberIter<'_> {
         GroupMemberIter {
@@ -87,6 +100,7 @@ impl Group {
         }
     }
 
+    /// Look up a group by its GID.
     pub fn lookup_gid(gid: libc::gid_t) -> Result<Option<Self>> {
         unsafe {
             Self::lookup(
@@ -100,6 +114,7 @@ impl Group {
         }
     }
 
+    /// Look up a group by its name.
     pub fn lookup_name<N: AsPath>(name: N) -> Result<Option<Self>> {
         name.with_cstr(|name| unsafe {
             Self::lookup(

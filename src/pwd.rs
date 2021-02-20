@@ -13,12 +13,15 @@ fn init_bufsize() -> usize {
 
 const MAX_BUFSIZE: usize = 32768;
 
-macro_rules! osstr_getter {
-    ($name:ident, $field_name:ident) => {
-        #[inline]
-        pub fn $name<'a>(&'a self) -> &'a OsStr {
-            OsStr::from_bytes(unsafe { util::bytes_from_ptr(self.pwd.$field_name) })
-        }
+macro_rules! osstr_getters {
+    ($($(#[$attr:meta])* $name:ident, $field_name:ident;)*) => {
+        $(
+            $(#[$attr])*
+            #[inline]
+            pub fn $name<'a>(&'a self) -> &'a OsStr {
+                OsStr::from_bytes(unsafe { util::bytes_from_ptr(self.pwd.$field_name) })
+            }
+        )*
     };
 }
 
@@ -30,31 +33,52 @@ pub struct Passwd {
 }
 
 impl Passwd {
+    /// Get the user's UID.
     #[inline]
     pub fn uid(&self) -> libc::uid_t {
         self.pwd.pw_uid
     }
 
+    /// Get the user's primary GID.
     #[inline]
     pub fn gid(&self) -> libc::gid_t {
         self.pwd.pw_gid
     }
 
-    osstr_getter!(name, pw_name);
-    osstr_getter!(passwd, pw_passwd);
-    osstr_getter!(gecos, pw_gecos);
-    osstr_getter!(dir, pw_dir);
-    osstr_getter!(shell, pw_shell);
+    osstr_getters! {
+        /// Get the user's username.
+        name, pw_name;
 
-    #[cfg(bsd)]
-    osstr_getter!(class, pw_class);
+        /// Get the user's encrypted password.
+        ///
+        /// Note that on most modern systems, this is stored in a separate file for security
+        /// reasons.
+        passwd, pw_passwd;
 
+        /// Get the user's "GECOS" field.
+        ///
+        /// This sometimes records information about the user.
+        gecos, pw_gecos;
+
+        /// Get the user's home directory.
+        dir, pw_dir;
+
+        /// Get the user's shell.
+        shell, pw_shell;
+
+        /// Get the user's login class (macOS/BSD-specific).
+        #[cfg(bsd)]
+        class, pw_class;
+    }
+
+    /// Get the user's last password change time (macOS/BSD-specific).
     #[cfg(bsd)]
     #[inline]
     pub fn change(&self) -> libc::time_t {
         self.pwd.pw_change
     }
 
+    /// Get the user's account expiration time (macOS/BSD-specific).
     #[cfg(bsd)]
     #[inline]
     pub fn expire(&self) -> libc::time_t {
@@ -101,6 +125,7 @@ impl Passwd {
         }
     }
 
+    /// Look up a user by UID.
     pub fn lookup_uid(uid: libc::uid_t) -> Result<Option<Self>> {
         unsafe {
             Self::lookup(
@@ -114,6 +139,7 @@ impl Passwd {
         }
     }
 
+    /// Look up a user by name.
     pub fn lookup_name<N: AsPath>(name: N) -> Result<Option<Self>> {
         name.with_cstr(|name| unsafe {
             Self::lookup(
