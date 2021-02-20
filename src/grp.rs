@@ -191,9 +191,8 @@ impl<'a> Iterator for GroupMemberIter<'a> {
             return None;
         }
 
-        let member = OsStr::from_bytes(unsafe { util::bytes_from_ptr(member) });
         self.mem_ptr = unsafe { self.mem_ptr.add(1) };
-        Some(member)
+        Some(OsStr::from_bytes(unsafe { util::bytes_from_ptr(member) }))
     }
 
     fn nth(&mut self, n: usize) -> Option<Self::Item> {
