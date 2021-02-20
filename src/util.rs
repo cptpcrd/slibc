@@ -1,5 +1,7 @@
 use crate::internal_prelude::*;
 
+use core::fmt;
+
 #[cfg(any(target_os = "linux", target_os = "dragonfly"))]
 pub use libc::__errno_location as errno_ptr;
 
@@ -46,6 +48,19 @@ pub fn cstring_from_buf(mut buf: Vec<u8>) -> Option<CString> {
 #[inline]
 pub unsafe fn bytes_from_ptr<'a>(ptr: *const libc::c_char) -> &'a [u8] {
     core::slice::from_raw_parts(ptr as *const u8, libc::strlen(ptr))
+}
+
+/// Wraps an iterator and displays it like a list.
+pub struct DebugListField<T: fmt::Debug, I: Iterator<Item = T> + Clone>(pub I);
+
+impl<T, I> fmt::Debug for DebugListField<T, I>
+where
+    T: fmt::Debug,
+    I: Iterator<Item = T> + Clone,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_list().entries(self.0.clone()).finish()
+    }
 }
 
 #[cfg(test)]
@@ -102,5 +117,18 @@ mod tests {
 
         assert_eq!(cstring_from_buf(b"".to_vec()), None);
         assert_eq!(cstring_from_buf(b"abc".to_vec()), None);
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn test_debug_list_field() {
+        assert_eq!(format!("{:?}", DebugListField([0; 0].iter())), "[]");
+
+        assert_eq!(format!("{:?}", DebugListField([0].iter())), "[0]");
+
+        assert_eq!(
+            format!("{:?}", DebugListField([0, 1, 2].iter())),
+            "[0, 1, 2]"
+        );
     }
 }

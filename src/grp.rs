@@ -167,7 +167,7 @@ impl fmt::Debug for Group {
             .field("gid", &self.gid())
             .field("name", &self.name())
             .field("passwd", &self.passwd())
-            .field("members", &self.members().collect::<Vec<_>>())
+            .field("members", &util::DebugListField(self.members().clone()))
             .finish()
     }
 }
@@ -236,7 +236,7 @@ impl<'a> core::iter::FusedIterator for GroupMemberIter<'a> {}
 impl<'a> fmt::Debug for GroupMemberIter<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_tuple("GroupMemberIter")
-            .field(&self.clone().collect::<Vec<_>>())
+            .field(&util::DebugListField(self.clone()))
             .finish()
     }
 }
