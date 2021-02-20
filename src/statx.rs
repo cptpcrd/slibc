@@ -531,17 +531,16 @@ mod tests {
                         crate::AtFlag::empty(),
                         StatxMask::BASIC_STATS,
                     )
-                    .unwrap_err()
-                    .code(),
+                    .unwrap_err(),
                     $eno,
                 );
             };
         }
 
-        check_err!(crate::AT_FDCWD, b"/NOEXIST\0", libc::ENOENT);
-        check_err!(crate::AT_FDCWD, b"/bin/sh/\0", libc::ENOTDIR);
-        check_err!(crate::AT_FDCWD, b"\0", libc::ENOENT);
-        check_err!(-1, b".\0", libc::EBADF);
+        check_err!(crate::AT_FDCWD, b"/NOEXIST\0", Errno::ENOENT);
+        check_err!(crate::AT_FDCWD, b"/bin/sh/\0", Errno::ENOTDIR);
+        check_err!(crate::AT_FDCWD, b"\0", Errno::ENOENT);
+        check_err!(-1, b".\0", Errno::EBADF);
     }
 
     /// Tests the layout of `Statx` against `libc::statx` to make sure it's correct.

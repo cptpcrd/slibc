@@ -204,7 +204,7 @@ mod tests {
     #[test]
     fn test_mid_nul() {
         fn check<P: AsPath>(path: P) {
-            assert_eq!(path.with_cstr(|_| Ok(())).unwrap_err().code(), libc::EINVAL);
+            assert_eq!(path.with_cstr(|_| Ok(())).unwrap_err(), Errno::EINVAL);
         }
 
         check("\0");

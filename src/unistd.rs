@@ -418,7 +418,7 @@ pub fn getgroups_alloc() -> Result<Vec<libc::gid_t>> {
                 groups.truncate(n);
                 return Ok(groups);
             }
-            Err(e) if e.code() == libc::EINVAL => (),
+            Err(e) if e == Errno::EINVAL => (),
             Err(e) => return Err(e),
         }
     }
@@ -1212,7 +1212,7 @@ mod tests {
         if n >= 2 {
             let mut buf = Vec::new();
             buf.resize(n - 1, 0);
-            assert_eq!(getgroups(&mut buf).unwrap_err().code(), libc::EINVAL);
+            assert_eq!(getgroups(&mut buf).unwrap_err(), Errno::EINVAL);
         }
     }
 

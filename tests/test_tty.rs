@@ -40,7 +40,7 @@ fn test_tty() {
     }
 
     #[cfg(feature = "alloc")]
-    assert_eq!(ttyname_alloc(r.fd()).unwrap_err().code(), libc::ENOTTY);
+    assert_eq!(ttyname_alloc(r.fd()).unwrap_err(), Errno::ENOTTY);
 
     #[cfg(not(apple))]
     {
@@ -93,7 +93,7 @@ fn test_tty() {
     }
 
     #[cfg(all(target_os = "linux", feature = "alloc"))]
-    assert_eq!(ptsname_alloc(r.fd()).unwrap_err().code(), libc::ENOTTY);
+    assert_eq!(ptsname_alloc(r.fd()).unwrap_err(), Errno::ENOTTY);
 
     // Now change the sizes
 
