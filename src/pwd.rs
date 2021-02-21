@@ -280,8 +280,8 @@ impl PasswdIter {
     ///
     /// # Recommended usage
     ///
-    /// Since it's unsafe to perform other operations while iterating over this iterator (see
-    /// [`PasswdIter::new()`]), it's recommended to `.collect()` the items, like so:
+    /// Since it's unsafe to perform other operations while iterating over this iterator, it's
+    /// recommended to `.collect()` the items, like so:
     ///
     /// ```ignore
     /// # use slibc::PasswdIter;
