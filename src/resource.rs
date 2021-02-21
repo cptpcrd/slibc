@@ -234,7 +234,7 @@ pub unsafe fn setrlimit(resource: Resource, new_limits: (Limit, Limit)) -> Resul
     Error::unpack_nz(libc::setrlimit(resource as _, &rlim))
 }
 
-/// Get/Set the soft and hard limits for the given resource on an arbitrary process.
+/// Get/set the soft and hard limits for the given resource on an arbitrary process.
 ///
 /// If `pid` is 0, this operates on the current process.
 ///
@@ -270,7 +270,7 @@ pub unsafe fn prlimit(
     Ok((old_rlim.rlim_cur, old_rlim.rlim_max))
 }
 
-/// Get/Set the soft and hard limits for the given resource on an arbitrary process.
+/// Get/set the soft and hard limits for the given resource on an arbitrary process.
 ///
 /// Note: Unlike `prlimit()` on Linux, if `pid` is 0, this does NOT operate on the current process.
 ///
