@@ -9,6 +9,7 @@ use crate::internal_prelude::*;
 /// A helper struct that wraps a file descriptor and provides useful methods.
 ///
 /// The file descriptor is automatically closed when the `FileDesc` struct is dropped.
+#[must_use = "either explicitly `drop()` this FileDesc to close the file descriptor or `.forget()` it to leave it open"]
 #[derive(Debug)]
 pub struct FileDesc(RawFd);
 
@@ -43,11 +44,23 @@ impl FileDesc {
     ///
     /// After this method is called, the caller is responsible for closing the file descriptor.
     /// Failing to do so may result in resource leaks.
+    #[must_use = "use `.forget()` if you don't need the inner file descriptor"]
     #[inline]
     pub fn into_fd(self) -> RawFd {
         let fd = self.0;
         core::mem::forget(self);
         fd
+    }
+
+    /// "Forget" about this file descriptor without closing it.
+    ///
+    /// WARNING: This may result in file descriptor leaks, especially since the file descriptor is
+    /// not returned as with [`FileDesc::into_fd()`].
+    ///
+    /// `fdesc.forget()` is equivalent to `std::mem::forget(file)`.
+    #[inline]
+    pub fn forget(self) {
+        core::mem::forget(self);
     }
 
     /// Read data from the file descriptor into a buffer.
@@ -329,13 +342,20 @@ mod tests {
     }
 
     #[test]
-    fn test_into_fd() {
+    fn test_into_fd_drop_forget() {
         let fdesc = get_fdesc();
         let fd = fdesc.into_fd();
         assert!(fd_valid(fd));
+
         unsafe {
-            FileDesc::new(fd);
+            FileDesc::new(fd).forget();
         }
+        assert!(fd_valid(fd));
+
+        unsafe {
+            drop(FileDesc::new(fd));
+        }
+        assert!(!fd_valid(fd));
     }
 
     #[test]
