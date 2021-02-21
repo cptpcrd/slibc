@@ -1248,4 +1248,38 @@ mod tests {
             Errno::ENOENT
         );
     }
+
+    #[test]
+    fn test_pipe() {
+        let (mut r, mut w) = pipe().unwrap();
+        assert!(!r.get_cloexec().unwrap());
+        assert!(!w.get_cloexec().unwrap());
+
+        w.write_all(b"abc").unwrap();
+        drop(w);
+
+        let mut buf = [0; 3];
+        r.read_exact(&mut buf).unwrap();
+        assert_eq!(&buf, b"abc");
+
+        assert_eq!(r.read(&mut buf).unwrap(), 0);
+    }
+
+    #[cfg(any(
+        target_os = "linux",
+        target_os = "freebsd",
+        target_os = "dragonfly",
+        target_os = "openbsd",
+        target_os = "netbsd",
+    ))]
+    #[test]
+    fn test_pipe2() {
+        let (r, w) = pipe2(OFlag::empty()).unwrap();
+        assert!(!r.get_cloexec().unwrap());
+        assert!(!w.get_cloexec().unwrap());
+
+        let (r, w) = pipe2(OFlag::O_CLOEXEC).unwrap();
+        assert!(r.get_cloexec().unwrap());
+        assert!(w.get_cloexec().unwrap());
+    }
 }
