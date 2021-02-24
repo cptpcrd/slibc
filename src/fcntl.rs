@@ -217,7 +217,7 @@ pub fn fcntl_dupfd_cloexec(fd: RawFd, minfd: RawFd) -> Result<FileDesc> {
 }
 
 #[inline]
-pub fn fcntl_getfd(fd: RawFd) -> Result<RawFd> {
+pub fn fcntl_getfd(fd: RawFd) -> Result<libc::c_int> {
     unsafe { fcntl_arg(fd, libc::F_GETFD, 0) }
 }
 
