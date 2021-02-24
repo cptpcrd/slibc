@@ -9,6 +9,7 @@ pub type Result<T> = core::result::Result<T, Error>;
 pub struct Error(i32);
 
 impl Error {
+    #[inline]
     pub(crate) fn unpack(res: i32) -> Result<i32> {
         if res == -1 {
             Err(Self::last())
@@ -17,6 +18,7 @@ impl Error {
         }
     }
 
+    #[inline]
     pub(crate) fn unpack_size(res: isize) -> Result<usize> {
         if res == -1 {
             Err(Self::last())
@@ -25,6 +27,7 @@ impl Error {
         }
     }
 
+    #[inline]
     pub(crate) fn unpack_nz(res: i32) -> Result<()> {
         if res != 0 {
             Err(Self::last())
