@@ -11,7 +11,7 @@ use crate::internal_prelude::*;
 /// The file descriptor is automatically closed when the `FileDesc` struct is dropped.
 #[must_use = "either explicitly `drop()` this FileDesc to close the file descriptor or `.forget()` it to leave it open"]
 #[derive(Debug)]
-pub struct FileDesc(RawFd);
+pub struct FileDesc(BorrowedFd);
 
 impl FileDesc {
     /// Create a new `FileDesc` wrapper around a raw file descriptor.
@@ -21,20 +21,7 @@ impl FileDesc {
     /// The given file descriptor must be valid and not in use elsewhere.
     #[inline]
     pub const unsafe fn new(fd: RawFd) -> Self {
-        Self(fd)
-    }
-
-    /// Access the inner file descriptor.
-    ///
-    /// This serves a similar purpose to `AsRawFd::as_raw_fd()` in `std`; its purpose is to
-    /// expose similar functionality in `#![no_std]` crates.
-    ///
-    /// The file descriptor is only valid as long as this object is in scope. It should NOT be
-    /// closed or "consumed" by other interfaces; use [`into_fd()`](#method.into_fd) if it is going
-    /// to be used for those purposes.
-    #[inline]
-    pub fn fd(&self) -> RawFd {
-        self.0
+        Self(BorrowedFd::new(fd))
     }
 
     /// Take ownership of the inner file descriptor.
@@ -47,7 +34,7 @@ impl FileDesc {
     #[must_use = "use `.forget()` if you don't need the inner file descriptor"]
     #[inline]
     pub fn into_fd(self) -> RawFd {
-        let fd = self.0;
+        let fd = self.fd();
         core::mem::forget(self);
         fd
     }
@@ -62,192 +49,13 @@ impl FileDesc {
     pub fn forget(self) {
         core::mem::forget(self);
     }
-
-    /// Read data from the file descriptor into a buffer.
-    ///
-    /// This is the equivalent of `io::Read::read()` for use in `#![no_std]` crates.
-    #[inline]
-    pub fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
-        crate::read(self.0, buf)
-    }
-
-    /// Write data into the file descriptor from a buffer.
-    ///
-    /// The number of bytes successfully written is returned.
-    ///
-    /// This is the equivalent of `io::Write::write()` for use in `#![no_std]` crates.
-    #[inline]
-    pub fn write(&mut self, buf: &[u8]) -> Result<usize> {
-        crate::write(self.0, buf)
-    }
-
-    /// Attempt to write an entire buffer into the file descriptor.
-    ///
-    /// This is the equivalent of `io::Write::write_all()` for use in `#![no_std]` crates.
-    pub fn write_all(&mut self, mut buf: &[u8]) -> Result<()> {
-        while !buf.is_empty() {
-            match self.write(buf) {
-                Ok(0) => return Err(Error::from_code(libc::EIO)),
-                Ok(n) => buf = &buf[n..],
-
-                Err(e) if e == Errno::EINTR => (),
-                Err(e) => return Err(e),
-            }
-        }
-
-        Ok(())
-    }
-
-    /// Read the exact amount of data required to fill the given buffer.
-    ///
-    /// This will retry on partial reads, or if `EINTR` is returned by `read()`. It will also fail
-    /// with `EINVAL` upon reaching end-of-file.
-    pub fn read_exact(&mut self, mut buf: &mut [u8]) -> Result<()> {
-        while !buf.is_empty() {
-            match self.read(buf) {
-                Ok(0) => return Err(Error::from_code(libc::EINVAL)),
-                Ok(n) => buf = &mut buf[n..],
-
-                Err(e) if e == Errno::EINTR => (),
-                Err(e) => return Err(e),
-            }
-        }
-
-        Ok(())
-    }
-
-    /// Read data from the file descriptor at a given offset into a buffer.
-    ///
-    /// This is the equivalent of `FileExt::read_at()`.
-    #[inline]
-    pub fn pread(&mut self, buf: &mut [u8], offset: u64) -> Result<usize> {
-        crate::pread(self.0, buf, offset)
-    }
-
-    /// Write data into the file descriptor at a given offset from a buffer.
-    ///
-    /// This is the equivalent of `FileExt::write_at()`.
-    #[inline]
-    pub fn pwrite(&mut self, buf: &[u8], offset: u64) -> Result<usize> {
-        crate::pwrite(self.0, buf, offset)
-    }
-
-    /// Get the close-on-exec status of the given file descriptor.
-    #[inline]
-    pub fn get_cloexec(&self) -> Result<bool> {
-        Ok(crate::fcntl_getfd(self.0)? & libc::FD_CLOEXEC != 0)
-    }
-
-    /// Set the close-on-exec status of the given file descriptor.
-    #[inline]
-    pub fn set_cloexec(&mut self, cloexec: bool) -> Result<()> {
-        let mut flags = crate::fcntl_getfd(self.0)?;
-
-        #[allow(clippy::collapsible_if)]
-        if cloexec {
-            if flags & libc::FD_CLOEXEC == 0 {
-                flags |= libc::FD_CLOEXEC;
-            } else {
-                return Ok(());
-            }
-        } else {
-            if flags & libc::FD_CLOEXEC != 0 {
-                flags &= !libc::FD_CLOEXEC;
-            } else {
-                return Ok(());
-            }
-        }
-
-        crate::fcntl_setfd(self.0, flags)
-    }
-
-    /// Check whether this file descriptor refers to a terminal.
-    #[inline]
-    pub fn isatty(&self) -> Result<bool> {
-        crate::isatty(self.0)
-    }
-
-    #[inline]
-    pub fn seek(&mut self, pos: crate::SeekPos) -> Result<u64> {
-        crate::lseek(self.0, pos)
-    }
-
-    #[inline]
-    pub fn tell(&mut self) -> Result<u64> {
-        crate::lseek(self.0, crate::SeekPos::Current(0))
-    }
-
-    /// Duplicate the file descriptor.
-    ///
-    /// The new file descriptor will *not* have its close-on-exec flag set. Use
-    /// [`dup_cloexec()`](#method.dup_cloexec).
-    #[inline]
-    pub fn dup(&self) -> Result<Self> {
-        crate::dup(self.0)
-    }
-
-    /// Duplicate the file descriptor.
-    ///
-    /// The new file descriptor will have its close-on-exec flag set.
-    #[inline]
-    pub fn dup_cloexec(&self) -> Result<Self> {
-        crate::fcntl_dupfd_cloexec(self.0, 0)
-    }
-
-    /// Sync all data and metadata associated with this file to the disk.
-    #[inline]
-    pub fn sync_all(&self) -> Result<()> {
-        crate::fsync(self.0)
-    }
-
-    /// Sync all data (not metadata, if possible) associated with this file to the disk.
-    #[inline]
-    pub fn sync_data(&self) -> Result<()> {
-        cfg_if::cfg_if! {
-            if #[cfg(any(target_os = "dragonfly", target_os = "macos", target_os = "ios"))] {
-                // No fdatasync()
-                self.sync_all()?;
-            } else {
-                crate::fdatasync(self.0)?;
-            }
-        }
-
-        Ok(())
-    }
-
-    /// Sync all modifications to the filesystem containing this file to the disk.
-    ///
-    /// See syncfs(2) for more details.
-    #[cfg(target_os = "linux")]
-    #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
-    #[inline]
-    pub fn syncfs(&self) -> Result<()> {
-        crate::syncfs(self.0)
-    }
-
-    #[inline]
-    pub fn stat(&self) -> Result<crate::Stat> {
-        crate::fstat(self.0)
-    }
-
-    #[cfg(target_os = "linux")]
-    #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
-    #[inline]
-    pub fn statx(&self, flags: crate::AtFlag, mask: crate::StatxMask) -> Result<crate::Statx> {
-        crate::statx(
-            self.0,
-            unsafe { CStr::from_bytes_with_nul_unchecked(b"\0") },
-            flags | crate::AtFlag::AT_EMPTY_PATH,
-            mask,
-        )
-    }
 }
 
 impl Drop for FileDesc {
     #[inline]
     fn drop(&mut self) {
         unsafe {
-            libc::close(self.0);
+            libc::close(self.fd());
         }
     }
 }
@@ -256,7 +64,7 @@ impl Drop for FileDesc {
 impl Read for FileDesc {
     #[inline]
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-        Ok(crate::read(self.0, buf)?)
+        Ok(crate::read(self.fd(), buf)?)
     }
 }
 
@@ -264,7 +72,7 @@ impl Read for FileDesc {
 impl Write for FileDesc {
     #[inline]
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        Ok(crate::write(self.0, buf)?)
+        Ok(crate::write(self.fd(), buf)?)
     }
 
     #[inline]
@@ -285,7 +93,7 @@ impl Seek for FileDesc {
             SeekFrom::Current(off) => SeekPos::Current(off),
         };
 
-        Ok(crate::lseek(self.0, pos)?)
+        Ok(crate::lseek(self.fd(), pos)?)
     }
 }
 
@@ -293,7 +101,7 @@ impl Seek for FileDesc {
 impl FromRawFd for FileDesc {
     #[inline]
     unsafe fn from_raw_fd(fd: RawFd) -> Self {
-        Self(fd)
+        Self::new(fd)
     }
 }
 
@@ -301,7 +109,7 @@ impl FromRawFd for FileDesc {
 impl AsRawFd for FileDesc {
     #[inline]
     fn as_raw_fd(&self) -> RawFd {
-        self.0
+        self.fd()
     }
 }
 
@@ -317,7 +125,7 @@ impl IntoRawFd for FileDesc {
 impl From<std::fs::File> for FileDesc {
     #[inline]
     fn from(f: std::fs::File) -> Self {
-        Self(f.into_raw_fd())
+        unsafe { Self::new(f.into_raw_fd()) }
     }
 }
 
@@ -326,6 +134,36 @@ impl From<FileDesc> for std::process::Stdio {
     #[inline]
     fn from(f: FileDesc) -> Self {
         unsafe { Self::from_raw_fd(f.into_raw_fd()) }
+    }
+}
+
+impl AsRef<BorrowedFd> for FileDesc {
+    #[inline]
+    fn as_ref(&self) -> &BorrowedFd {
+        self
+    }
+}
+
+impl AsMut<BorrowedFd> for FileDesc {
+    #[inline]
+    fn as_mut(&mut self) -> &mut BorrowedFd {
+        self
+    }
+}
+
+impl core::ops::Deref for FileDesc {
+    type Target = BorrowedFd;
+
+    #[inline]
+    fn deref(&self) -> &BorrowedFd {
+        &self.0
+    }
+}
+
+impl core::ops::DerefMut for FileDesc {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut BorrowedFd {
+        &mut self.0
     }
 }
 

@@ -82,9 +82,9 @@ mod internal_prelude {
 
     pub(crate) use super::{sys, util, AsPath, Errno, Error, Result};
 
-    pub use super::fdesc::FileDesc;
     pub use super::ffi::prelude::*;
     pub use super::ffi::{CStr, OsStr};
+    pub use super::{BorrowedFd, FileDesc};
 
     pub use super::fcntl::OFlag;
     pub use super::string::memchr;
@@ -106,8 +106,10 @@ mod internal_prelude {
 
 pub mod ffi;
 
+mod borrowed_fd;
 mod fdesc;
 
+pub use borrowed_fd::*;
 pub use fdesc::*;
 
 mod errno;
