@@ -1251,7 +1251,7 @@ mod tests {
 
     #[test]
     fn test_pipe() {
-        let (mut r, mut w) = pipe().unwrap();
+        let (r, w) = pipe().unwrap();
         assert!(!r.get_cloexec().unwrap());
         assert!(!w.get_cloexec().unwrap());
 

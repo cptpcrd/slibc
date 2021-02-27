@@ -41,7 +41,7 @@ impl BorrowedFd {
     ///
     /// This is the equivalent of `io::Read::read()` for use in `#![no_std]` crates.
     #[inline]
-    pub fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+    pub fn read(&self, buf: &mut [u8]) -> Result<usize> {
         crate::read(self.0, buf)
     }
 
@@ -51,14 +51,14 @@ impl BorrowedFd {
     ///
     /// This is the equivalent of `io::Write::write()` for use in `#![no_std]` crates.
     #[inline]
-    pub fn write(&mut self, buf: &[u8]) -> Result<usize> {
+    pub fn write(&self, buf: &[u8]) -> Result<usize> {
         crate::write(self.0, buf)
     }
 
     /// Attempt to write an entire buffer into the file descriptor.
     ///
     /// This is the equivalent of `io::Write::write_all()` for use in `#![no_std]` crates.
-    pub fn write_all(&mut self, mut buf: &[u8]) -> Result<()> {
+    pub fn write_all(&self, mut buf: &[u8]) -> Result<()> {
         while !buf.is_empty() {
             match self.write(buf) {
                 Ok(0) => return Err(Error::from_code(libc::EIO)),
@@ -76,7 +76,7 @@ impl BorrowedFd {
     ///
     /// This will retry on partial reads, or if `EINTR` is returned by `read()`. It will also fail
     /// with `EINVAL` upon reaching end-of-file.
-    pub fn read_exact(&mut self, mut buf: &mut [u8]) -> Result<()> {
+    pub fn read_exact(&self, mut buf: &mut [u8]) -> Result<()> {
         while !buf.is_empty() {
             match self.read(buf) {
                 Ok(0) => return Err(Error::from_code(libc::EINVAL)),
@@ -94,7 +94,7 @@ impl BorrowedFd {
     ///
     /// This is the equivalent of `FileExt::read_at()`.
     #[inline]
-    pub fn pread(&mut self, buf: &mut [u8], offset: u64) -> Result<usize> {
+    pub fn pread(&self, buf: &mut [u8], offset: u64) -> Result<usize> {
         crate::pread(self.0, buf, offset)
     }
 
@@ -102,7 +102,7 @@ impl BorrowedFd {
     ///
     /// This is the equivalent of `FileExt::write_at()`.
     #[inline]
-    pub fn pwrite(&mut self, buf: &[u8], offset: u64) -> Result<usize> {
+    pub fn pwrite(&self, buf: &[u8], offset: u64) -> Result<usize> {
         crate::pwrite(self.0, buf, offset)
     }
 
@@ -114,7 +114,7 @@ impl BorrowedFd {
 
     /// Set the close-on-exec status of the given file descriptor.
     #[inline]
-    pub fn set_cloexec(&mut self, cloexec: bool) -> Result<()> {
+    pub fn set_cloexec(&self, cloexec: bool) -> Result<()> {
         let mut flags = crate::fcntl_getfd(self.0)?;
 
         #[allow(clippy::collapsible_if)]
@@ -142,12 +142,12 @@ impl BorrowedFd {
     }
 
     #[inline]
-    pub fn seek(&mut self, pos: crate::SeekPos) -> Result<u64> {
+    pub fn seek(&self, pos: crate::SeekPos) -> Result<u64> {
         crate::lseek(self.0, pos)
     }
 
     #[inline]
-    pub fn tell(&mut self) -> Result<u64> {
+    pub fn tell(&self) -> Result<u64> {
         crate::lseek(self.0, crate::SeekPos::Current(0))
     }
 

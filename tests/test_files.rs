@@ -24,7 +24,7 @@ fn test_open_openat() {
     .unwrap();
 
     // Opn the file and write some text into it
-    let mut file = openat(
+    let file = openat(
         dir.fd(),
         CStr::from_bytes_with_nul(b"file\0").unwrap(),
         OFlag::O_WRONLY | OFlag::O_CREAT | OFlag::O_EXCL | OFlag::O_CLOEXEC,
@@ -40,7 +40,7 @@ fn test_open_openat() {
     assert_eq!(fs::read(tmpdir.join("file")).unwrap(), b"abc");
 
     // Now check that openat() confirms the contents are good
-    let mut file = openat(
+    let file = openat(
         dir.fd(),
         CStr::from_bytes_with_nul(b"file\0").unwrap(),
         OFlag::O_RDONLY | OFlag::O_CLOEXEC,

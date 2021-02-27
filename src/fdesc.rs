@@ -198,7 +198,7 @@ mod tests {
 
     #[test]
     fn test_cloexec() {
-        let mut fdesc = get_fdesc();
+        let fdesc = get_fdesc();
         assert!(!fdesc.get_cloexec().unwrap());
 
         fdesc.set_cloexec(false).unwrap();

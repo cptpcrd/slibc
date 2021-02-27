@@ -317,7 +317,7 @@ mod tests {
 
         let mut buf = [0; 1024];
 
-        let mut f = open(devnull, OFlag::O_RDWR, 0).unwrap();
+        let f = open(devnull, OFlag::O_RDWR, 0).unwrap();
 
         // Empty reads
         assert_eq!(f.read(&mut buf).unwrap(), 0);
@@ -325,7 +325,7 @@ mod tests {
         // Writes are accepted but ignored
         assert!(f.write(b"ignored").unwrap() > 0);
 
-        let mut f = open(devzero, OFlag::O_RDWR | OFlag::O_CLOEXEC, 0).unwrap();
+        let f = open(devzero, OFlag::O_RDWR | OFlag::O_CLOEXEC, 0).unwrap();
 
         // Reads all zeroes
         let n = f.read(&mut buf).unwrap();
