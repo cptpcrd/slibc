@@ -193,7 +193,6 @@ mod tests {
         unsafe {
             drop(FileDesc::new(fd));
         }
-        assert!(!fd_valid(fd));
     }
 
     #[test]
