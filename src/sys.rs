@@ -36,6 +36,7 @@ cfg_if::cfg_if! {
         pub const CLOCK_UPTIME: libc::clockid_t = 5;
         pub const CLOCK_BOOTTIME: libc::clockid_t = 6;
     } else if #[cfg(target_os = "freebsd")] {
+        #[cfg(feature = "alloc")]
         extern "C" {
             pub fn mallocx(size: usize, flags: libc::c_int) -> *mut libc::c_void;
             pub fn rallocx(
@@ -44,8 +45,10 @@ cfg_if::cfg_if! {
             pub fn sdallocx(ptr: *mut libc::c_void, size: usize, flags: libc::c_int);
         }
 
+        #[cfg(feature = "alloc")]
         pub const MALLOCX_ZERO: libc::c_int = 0x40;
 
+        #[cfg(feature = "alloc")]
         #[allow(non_snake_case)]
         #[inline]
         pub fn MALLOCX_ALIGN(a: usize) -> libc::c_int {
