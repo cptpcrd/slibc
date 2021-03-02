@@ -500,10 +500,10 @@ pub fn nice(inc: libc::c_int) -> Result<libc::c_int> {
         *eno_ptr = 0;
 
         match libc::nice(inc) {
-            -1 => match *eno_ptr {
-                0 => Ok(-1),
-                eno => Err(Error::from_code(eno)),
-            },
+            -1 => {
+                Error::unpack_eno(*eno_ptr)?;
+                Ok(-1)
+            }
 
             prio => Ok(prio),
         }
@@ -815,10 +815,8 @@ pub unsafe fn ttyname<'a>(fd: RawFd) -> Result<&'a CStr> {
 /// Get the path to the specified terminal device.
 #[inline]
 pub fn ttyname_r(fd: RawFd, buf: &mut [u8]) -> Result<&CStr> {
-    match unsafe { libc::ttyname_r(fd, buf.as_mut_ptr() as *mut _, buf.len()) } {
-        0 => Ok(util::cstr_from_buf(buf).unwrap()),
-        eno => Err(Error::from_code(eno)),
-    }
+    Error::unpack_eno(unsafe { libc::ttyname_r(fd, buf.as_mut_ptr() as *mut _, buf.len()) })?;
+    Ok(util::cstr_from_buf(buf).unwrap())
 }
 
 #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
@@ -880,10 +878,8 @@ pub unsafe fn getlogin<'a>() -> Result<&'a CStr> {
 ))]
 #[inline]
 pub fn getlogin_r(buf: &mut [u8]) -> Result<&CStr> {
-    match unsafe { sys::getlogin_r(buf.as_mut_ptr() as *mut _, buf.len()) } {
-        0 => Ok(util::cstr_from_buf(buf).unwrap()),
-        eno => Err(Error::from_code(eno)),
-    }
+    Error::unpack_eno(unsafe { sys::getlogin_r(buf.as_mut_ptr() as *mut _, buf.len()) })?;
+    Ok(util::cstr_from_buf(buf).unwrap())
 }
 
 #[cfg_attr(

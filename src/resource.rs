@@ -453,10 +453,10 @@ pub fn getpriority(who: PrioWho) -> Result<libc::c_int> {
 
         let (which, who) = who.unpack();
         match libc::getpriority(which as _, who as _) {
-            -1 => match *eno_ptr {
-                0 => Ok(-1),
-                eno => Err(Error::from_code(eno)),
-            },
+            -1 => {
+                Error::unpack_eno(*eno_ptr)?;
+                Ok(-1)
+            }
             prio => Ok(prio),
         }
     }

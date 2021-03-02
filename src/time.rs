@@ -186,11 +186,8 @@ pub fn clock_settime(clock: ClockId, t: TimeSpec) -> Result<()> {
 #[inline]
 pub fn clock_getcpuclockid(pid: libc::pid_t) -> Result<ClockId> {
     let mut clockid = MaybeUninit::uninit();
-
-    match unsafe { sys::clock_getcpuclockid(pid, clockid.as_mut_ptr()) } {
-        0 => Ok(ClockId(unsafe { clockid.assume_init() })),
-        eno => Err(Error::from_code(eno)),
-    }
+    Error::unpack_eno(unsafe { sys::clock_getcpuclockid(pid, clockid.as_mut_ptr()) })?;
+    Ok(ClockId(unsafe { clockid.assume_init() }))
 }
 
 /// Get the clock ID of the specified thread's CPU-time clock.
@@ -204,11 +201,8 @@ pub fn clock_getcpuclockid(pid: libc::pid_t) -> Result<ClockId> {
 #[inline]
 pub fn pthread_getcpuclockid(thread: libc::pthread_t) -> Result<ClockId> {
     let mut clockid = MaybeUninit::uninit();
-
-    match unsafe { sys::pthread_getcpuclockid(thread, clockid.as_mut_ptr()) } {
-        0 => Ok(ClockId(unsafe { clockid.assume_init() })),
-        eno => Err(Error::from_code(eno)),
-    }
+    Error::unpack_eno(unsafe { sys::pthread_getcpuclockid(thread, clockid.as_mut_ptr()) })?;
+    Ok(ClockId(unsafe { clockid.assume_init() }))
 }
 
 #[cfg(test)]

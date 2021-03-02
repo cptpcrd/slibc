@@ -36,6 +36,15 @@ impl Error {
         }
     }
 
+    #[inline]
+    pub(crate) fn unpack_eno(res: i32) -> Result<()> {
+        if res != 0 {
+            Err(Self(res))
+        } else {
+            Ok(())
+        }
+    }
+
     #[allow(dead_code)]
     #[inline]
     pub(crate) const fn mid_nul() -> Self {

@@ -30,10 +30,8 @@ pub unsafe fn ptsname<'a>(fd: RawFd) -> Result<&'a CStr> {
 #[cfg(target_os = "linux")]
 #[inline]
 pub fn ptsname_r(fd: RawFd, buf: &mut [u8]) -> Result<&CStr> {
-    match unsafe { libc::ptsname_r(fd, buf.as_mut_ptr() as *mut _, buf.len()) } {
-        0 => Ok(util::cstr_from_buf(buf).unwrap()),
-        eno => Err(Error::from_code(eno)),
-    }
+    Error::unpack_eno(unsafe { libc::ptsname_r(fd, buf.as_mut_ptr() as *mut _, buf.len()) })?;
+    Ok(util::cstr_from_buf(buf).unwrap())
 }
 
 #[cfg_attr(docsrs, doc(cfg(all(target_os = "linux", feature = "alloc"))))]
