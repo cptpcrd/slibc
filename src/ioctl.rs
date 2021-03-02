@@ -21,6 +21,20 @@ pub unsafe fn ioctl(fd: RawFd, req: libc::c_ulong, ptr: *mut libc::c_void) -> Re
     Error::unpack(libc::ioctl(fd, req as _, ptr))
 }
 
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(
+        target_os = "linux",
+        target_os = "android",
+        target_os = "freebsd",
+        target_os = "dragonfly",
+        target_os = "openbsd",
+        target_os = "netbsd",
+        target_os = "macos",
+        target_os = "ios",
+    )))
+)]
+#[cfg(any(linuxlike, bsd))]
 #[inline]
 pub fn ioctl_fioclex(fd: RawFd) -> Result<()> {
     unsafe {
@@ -29,6 +43,20 @@ pub fn ioctl_fioclex(fd: RawFd) -> Result<()> {
     Ok(())
 }
 
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(
+        target_os = "linux",
+        target_os = "android",
+        target_os = "freebsd",
+        target_os = "dragonfly",
+        target_os = "openbsd",
+        target_os = "netbsd",
+        target_os = "macos",
+        target_os = "ios",
+    )))
+)]
+#[cfg(any(linuxlike, bsd))]
 #[inline]
 pub fn ioctl_fionclex(fd: RawFd) -> Result<()> {
     unsafe {
@@ -58,6 +86,7 @@ pub fn ioctl_setwinsz(fd: RawFd, winsz: &Winsize) -> Result<()> {
 mod tests {
     use super::*;
 
+    #[cfg(any(linuxlike, bsd))]
     #[test]
     fn test_fioclex() {
         let (r, _) = crate::pipe().unwrap();
