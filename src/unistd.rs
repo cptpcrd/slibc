@@ -556,7 +556,8 @@ pub unsafe fn dup2(oldfd: RawFd, newfd: RawFd) -> Result<FileDesc> {
 /// A variant of [`dup2()`] with a `flags` argument.
 ///
 /// This differs from [`dup2()`] in the following ways:
-/// 1. If `oldfd == newfd`, this will fail with EINVAL.
+/// 1. If `oldfd == newfd`, this will fail with EINVAL (except on NetBSD, where it becomes a
+///    no-op).
 /// 2. If `O_CLOEXEC` is specified in `flags`, the close-on-exec flag will be set for the new
 ///    file descriptor.
 ///
