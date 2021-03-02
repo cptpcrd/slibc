@@ -96,9 +96,9 @@ pub fn getrandom(buf: &mut [u8], flags: GrndFlags) -> Result<usize> {
 }
 
 #[cfg(all(feature = "alloc", not(feature = "std")))]
-pub use alloc::alloc::{GlobalAlloc, Layout};
+use alloc::alloc::{GlobalAlloc, Layout};
 #[cfg(feature = "std")]
-pub use std::alloc::{GlobalAlloc, Layout};
+use std::alloc::{GlobalAlloc, Layout};
 
 /// A memory allocator that uses the built-in `malloc()` family of functions to allocate memory.
 ///
