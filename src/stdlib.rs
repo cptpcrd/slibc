@@ -86,11 +86,12 @@ bitflags::bitflags! {
 #[inline]
 pub fn getrandom(buf: &mut [u8], flags: GrndFlags) -> Result<usize> {
     Error::unpack_size(unsafe {
-        libc::getrandom(
+        libc::syscall(
+            libc::SYS_getrandom,
             buf.as_mut_ptr() as *mut libc::c_void,
             buf.len(),
             flags.bits(),
-        )
+        ) as isize
     })
 }
 
