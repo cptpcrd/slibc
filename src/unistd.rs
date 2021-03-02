@@ -664,6 +664,7 @@ pub fn pipe() -> Result<(FileDesc, FileDesc)> {
     docsrs,
     doc(cfg(any(
         target_os = "linux",
+        target_os = "android",
         target_os = "freebsd",
         target_os = "dragonfly",
         target_os = "openbsd",
@@ -672,6 +673,7 @@ pub fn pipe() -> Result<(FileDesc, FileDesc)> {
 )]
 #[cfg(any(
     target_os = "linux",
+    target_os = "android",
     target_os = "freebsd",
     target_os = "dragonfly",
     target_os = "openbsd",
@@ -696,6 +698,7 @@ pub fn pipe_cloexec() -> Result<(FileDesc, FileDesc)> {
     cfg_if::cfg_if! {
         if #[cfg(any(
             target_os = "linux",
+            target_os = "android",
             target_os = "freebsd",
             target_os = "dragonfly",
             target_os = "openbsd",
