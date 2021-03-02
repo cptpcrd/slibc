@@ -286,7 +286,7 @@ pub unsafe fn proc_rlimit(
 ) -> Result<(Limit, Limit)> {
     let mut old_rlim = MaybeUninit::<libc::rlimit>::uninit();
 
-    let mut new_limits = new_limits.map(|(soft, hard)| libc::rlimit {
+    let new_limits = new_limits.map(|(soft, hard)| libc::rlimit {
         rlim_cur: soft,
         rlim_max: hard,
     });
@@ -300,7 +300,7 @@ pub unsafe fn proc_rlimit(
             resource as _,
         ],
         Some(core::slice::from_raw_parts_mut(old_rlim.as_mut_ptr(), 1)),
-        new_limits.as_mut().map(core::slice::from_mut),
+        new_limits.as_ref().map(core::slice::from_ref),
     )?;
 
     debug_assert_eq!(old_len, core::mem::size_of::<libc::rlimit>());

@@ -1,8 +1,21 @@
 use crate::internal_prelude::*;
 
-fn prepare_opt_slice<T>(s: Option<&mut [T]>) -> (*mut T, usize) {
+#[inline]
+fn prepare_opt_slice<T>(s: Option<&[T]>) -> (*const libc::c_void, usize) {
     if let Some(s) = s {
-        (s.as_mut_ptr(), s.len() * core::mem::size_of::<T>())
+        (s.as_ptr() as *const _, s.len() * core::mem::size_of::<T>())
+    } else {
+        (core::ptr::null(), 0)
+    }
+}
+
+#[inline]
+fn prepare_opt_slice_mut<T>(s: Option<&mut [T]>) -> (*mut libc::c_void, usize) {
+    if let Some(s) = s {
+        (
+            s.as_mut_ptr() as *mut _,
+            s.len() * core::mem::size_of::<T>(),
+        )
     } else {
         (core::ptr::null_mut(), 0)
     }
@@ -46,7 +59,7 @@ fn prepare_opt_slice<T>(s: Option<&mut [T]>) -> (*mut T, usize) {
 pub unsafe fn sysctl<T>(
     mib: &[libc::c_int],
     old_data: Option<&mut [T]>,
-    new_data: Option<&mut [T]>,
+    new_data: Option<&[T]>,
 ) -> Result<usize> {
     cfg_if::cfg_if! {
         if #[cfg(any(target_os = "macos", target_os = "ios"))] {
@@ -67,15 +80,20 @@ pub unsafe fn sysctl<T>(
         }
     }
 
-    let (old_ptr, mut old_len) = prepare_opt_slice(old_data);
+    let (old_ptr, mut old_len) = prepare_opt_slice_mut(old_data);
     let (new_ptr, new_len) = prepare_opt_slice(new_data);
+
+    // macOS also wants a mutable pointer here... but it *shouldn't* actually write to the data, so
+    // just casting it should be fine.
+    #[cfg(any(target_os = "macos", target_os = "ios"))]
+    let new_ptr = new_ptr as *mut _;
 
     Error::unpack_nz(libc::sysctl(
         mib_ptr,
         mib.len() as _,
-        old_ptr as *mut libc::c_void,
+        old_ptr,
         &mut old_len,
-        new_ptr as *mut libc::c_void,
+        new_ptr,
         new_len,
     ))?;
 
@@ -105,17 +123,20 @@ pub unsafe fn sysctl<T>(
 pub unsafe fn sysctlbyname<T, P: AsPath>(
     name: P,
     old_data: Option<&mut [T]>,
-    new_data: Option<&mut [T]>,
+    new_data: Option<&[T]>,
 ) -> Result<usize> {
-    let (old_ptr, mut old_len) = prepare_opt_slice(old_data);
+    let (old_ptr, mut old_len) = prepare_opt_slice_mut(old_data);
     let (new_ptr, new_len) = prepare_opt_slice(new_data);
+
+    #[cfg(any(target_os = "macos", target_os = "ios"))]
+    let new_ptr = new_ptr as *mut _;
 
     name.with_cstr(|name| {
         Error::unpack_nz(libc::sysctlbyname(
             name.as_ptr(),
-            old_ptr as *mut libc::c_void,
+            old_ptr,
             &mut old_len,
-            new_ptr as *mut libc::c_void,
+            new_ptr,
             new_len,
         ))
     })?;
