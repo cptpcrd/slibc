@@ -171,3 +171,26 @@ cfg_if::cfg_if! {
         pub use sysctl::*;
     }
 }
+
+/// A collection of functions that return `&'static CStr`s for various commonly used paths.
+pub mod c_paths {
+    use crate::ffi::CStr;
+
+    /// Return an `&'static CStr` containing a single dot (`.`).
+    #[inline]
+    pub fn dot() -> &'static CStr {
+        unsafe { CStr::from_bytes_with_nul_unchecked(b".\0") }
+    }
+
+    /// Return an `&'static CStr` containing two dots (`..`).
+    #[inline]
+    pub fn dotdot() -> &'static CStr {
+        unsafe { CStr::from_bytes_with_nul_unchecked(b"..\0") }
+    }
+
+    /// Return an `&'static CStr` containing a single slash (`/`).
+    #[inline]
+    pub fn slash() -> &'static CStr {
+        unsafe { CStr::from_bytes_with_nul_unchecked(b"/\0") }
+    }
+}
