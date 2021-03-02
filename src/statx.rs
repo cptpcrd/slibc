@@ -172,7 +172,7 @@ bitflags::bitflags! {
         ///
         /// Added in Linux 5.5.
         const VERITY = 0x100000;
-        /// The file is DAX (CPU direct access) state.
+        /// The file is in DAX (CPU direct access) state.
         ///
         /// Added in Linux 5.8 (and fixed in Linux 5.10; it was accidentally given the same value
         /// as `MOUNT_ROOT`).
