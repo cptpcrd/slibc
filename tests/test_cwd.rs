@@ -2,7 +2,7 @@
 
 use std::os::unix::prelude::*;
 
-use slibc::{chdir, fchdir, getcwd, open, OFlag, PATH_MAX};
+use slibc::{chdir, fchdir, getcwd, getcwd_alloc, open, OFlag, PATH_MAX};
 
 #[test]
 fn test_chdir_getcwd() {
@@ -12,10 +12,18 @@ fn test_chdir_getcwd() {
 
     chdir("/").unwrap();
     assert_eq!(getcwd(&mut buf).unwrap().to_bytes(), b"/");
+    assert_eq!(getcwd_alloc().unwrap().to_bytes(), b"/");
 
     chdir("/bin").unwrap();
     assert_eq!(
         getcwd(&mut buf).unwrap().to_bytes(),
+        std::fs::canonicalize("/bin")
+            .unwrap()
+            .as_os_str()
+            .as_bytes()
+    );
+    assert_eq!(
+        getcwd_alloc().unwrap().to_bytes(),
         std::fs::canonicalize("/bin")
             .unwrap()
             .as_os_str()
@@ -32,6 +40,7 @@ fn test_chdir_getcwd() {
     .unwrap();
     fchdir(f.fd()).unwrap();
     assert_eq!(getcwd(&mut buf).unwrap().to_bytes(), b"/");
+    assert_eq!(getcwd_alloc().unwrap().to_bytes(), b"/");
 
     let f = open(
         "/bin",
@@ -42,6 +51,13 @@ fn test_chdir_getcwd() {
     fchdir(f.fd()).unwrap();
     assert_eq!(
         getcwd(&mut buf).unwrap().to_bytes(),
+        std::fs::canonicalize("/bin")
+            .unwrap()
+            .as_os_str()
+            .as_bytes()
+    );
+    assert_eq!(
+        getcwd_alloc().unwrap().to_bytes(),
         std::fs::canonicalize("/bin")
             .unwrap()
             .as_os_str()
