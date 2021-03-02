@@ -9,6 +9,7 @@ pub type Result<T> = core::result::Result<T, Error>;
 pub struct Error(i32);
 
 impl Error {
+    /// If `res` is -1, return the last OS error. Otherwise return `Ok(res)`.
     #[inline]
     pub(crate) fn unpack(res: i32) -> Result<i32> {
         if res == -1 {
@@ -18,6 +19,7 @@ impl Error {
         }
     }
 
+    /// If `res` is -1, return the last OS error. Otherwise return `Ok(res)`.
     #[inline]
     pub(crate) fn unpack_size(res: isize) -> Result<usize> {
         if res == -1 {
@@ -27,6 +29,7 @@ impl Error {
         }
     }
 
+    /// If `res` is non-zero, return the last OS error. Otherwise return `Ok(())`.
     #[inline]
     pub(crate) fn unpack_nz(res: i32) -> Result<()> {
         if res != 0 {
@@ -36,6 +39,8 @@ impl Error {
         }
     }
 
+    /// If `res` is non-zero, interpret it as an `errno` value and return the corresponding OS
+    /// error. Otherwise return `Ok(())`.
     #[inline]
     pub(crate) fn unpack_eno(res: i32) -> Result<()> {
         if res != 0 {
