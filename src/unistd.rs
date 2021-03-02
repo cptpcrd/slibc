@@ -592,6 +592,51 @@ pub unsafe fn dup3(oldfd: RawFd, newfd: RawFd, flags: OFlag) -> Result<FileDesc>
     ))?))
 }
 
+/// Emulates `dup3(oldfd, newfd, O_CLOEXEC)`.
+///
+/// On systems with `dup3()`, this calls `dup3(oldfd, newfd, O_CLOEXEC)`. On other systems, it
+/// calls [`dup2()`] and then immediately sets the close-on-exec flag for the new file descriptor
+/// (which does create an unavoidable race condition).
+///
+/// Additionally, this function will always fail with `EINVAL` if `oldfd == newfd`; this is
+/// emulated if the OS does not check for it.
+///
+/// # Safety
+///
+/// See [`dup2()`].
+#[inline]
+pub unsafe fn dup2_cloexec(oldfd: RawFd, newfd: RawFd) -> Result<FileDesc> {
+    // OSes with a dup3() (except NetBSD) check for this already
+    #[cfg(not(any(
+        target_os = "linux",
+        target_os = "android",
+        target_os = "freebsd",
+        target_os = "dragonfly",
+        target_os = "openbsd",
+    )))]
+    if oldfd == newfd {
+        return Err(Error::from_code(libc::EINVAL));
+    }
+
+    cfg_if::cfg_if! {
+        if #[cfg(any(
+            target_os = "linux",
+            target_os = "android",
+            target_os = "freebsd",
+            target_os = "dragonfly",
+            target_os = "openbsd",
+            target_os = "netbsd",
+        ))] {
+            let fdesc = dup3(oldfd, newfd, OFlag::O_CLOEXEC)?;
+        } else {
+            let fdesc = dup2(oldfd, newfd)?;
+            fdesc.set_cloexec(true)?;
+        }
+    }
+
+    Ok(fdesc)
+}
+
 /// Create a pipe.
 ///
 /// WARNING: The new file descriptors do NOT have their close-on-exec flag set! To set the
@@ -639,6 +684,32 @@ pub fn pipe2(flags: OFlag) -> Result<(FileDesc, FileDesc)> {
         Error::unpack_nz(libc::pipe2(fds.as_mut_ptr(), flags.bits()))?;
         Ok((FileDesc::new(fds[0]), FileDesc::new(fds[1])))
     }
+}
+
+/// Create a pipe and set the close-on-exec flags on both ends.
+///
+/// On systems with `pipe2()`, this calls `pipe2(O_CLOEXEC)`. On other systems, it calls [`pipe()`]
+/// and then immediately sets the close-on-exec flag (which does create an unavoidable race
+/// condition).
+#[inline]
+pub fn pipe_cloexec() -> Result<(FileDesc, FileDesc)> {
+    cfg_if::cfg_if! {
+        if #[cfg(any(
+            target_os = "linux",
+            target_os = "freebsd",
+            target_os = "dragonfly",
+            target_os = "openbsd",
+            target_os = "netbsd",
+        ))] {
+            let (r, w) = pipe2(OFlag::O_CLOEXEC)?;
+        } else {
+            let (r, w) = pipe()?;
+            r.set_cloexec(true)?;
+            w.set_cloexec(true)?;
+        }
+    }
+
+    Ok((r, w))
 }
 
 #[inline]
@@ -1276,6 +1347,13 @@ mod tests {
         assert!(!w.get_cloexec().unwrap());
 
         let (r, w) = pipe2(OFlag::O_CLOEXEC).unwrap();
+        assert!(r.get_cloexec().unwrap());
+        assert!(w.get_cloexec().unwrap());
+    }
+
+    #[test]
+    fn test_pipe_cloexec() {
+        let (r, w) = pipe_cloexec().unwrap();
         assert!(r.get_cloexec().unwrap());
         assert!(w.get_cloexec().unwrap());
     }
