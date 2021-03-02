@@ -18,11 +18,12 @@ use crate::internal_prelude::*;
 /// 1. This function has no way to verify that a slice with elements of type
 ///    `T` is the correct format for representing the value of the given sysctl.
 /// 2. No checking is performed for partial reads that could lead to partially
-///    filled out data in the `old_data` slice.
+///    filled out data in the `old_data` slice (i.e. the returned length must be checked).
+/// 3. When running as root, `sysctl()` can be used to alter aspects of the system, possibly in
+///    unsafe ways. Read the documentation carefully.
 ///
-/// If it can be verified that neither of these is the case (the data structure
-/// is correct for the given option AND the amount of data read is correct for
-/// the given structure), then this function should be safe to use.
+/// If it can be verified that none of these is the case, then this function should be safe to
+/// use.
 #[cfg_attr(
     docsrs,
     doc(cfg(
