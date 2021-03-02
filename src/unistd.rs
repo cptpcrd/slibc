@@ -1357,4 +1357,14 @@ mod tests {
         assert!(r.get_cloexec().unwrap());
         assert!(w.get_cloexec().unwrap());
     }
+
+    #[test]
+    fn test_gethostname() {
+        assert_eq!(gethostname(&mut []).unwrap_err(), Errno::ENAMETOOLONG);
+
+        match gethostname(&mut [0]) {
+            Ok(s) => assert_eq!(s.to_bytes_with_nul(), &[0]),
+            Err(e) => assert_eq!(e, Errno::ENAMETOOLONG),
+        }
+    }
 }
