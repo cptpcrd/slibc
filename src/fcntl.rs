@@ -206,21 +206,40 @@ pub unsafe fn fcntl_ptr(
     Error::unpack(libc::fcntl(fd, cmd, arg))
 }
 
+/// Duplicate the given file descriptor.
+///
+/// `fd` specifies the file descriptor to duplicate; the new file descriptor will be the lowest
+/// available file descriptor greater than or equal to `minfd`.
+///
+/// `slibc::fcntl_dupfd(fd, 0)` is equivalent to `slibc::dup(fd)`.
 #[inline]
 pub fn fcntl_dupfd(fd: RawFd, minfd: RawFd) -> Result<FileDesc> {
     unsafe { Ok(FileDesc::new(fcntl_arg(fd, libc::F_DUPFD, minfd)?)) }
 }
 
+/// Duplicate the given file descriptor, setting the close-on-exec flag on the new file descriptor.
+///
+/// This is equivalent to [`fcntl_dupfd()`], except that the close-on-exec flag is also set.
 #[inline]
 pub fn fcntl_dupfd_cloexec(fd: RawFd, minfd: RawFd) -> Result<FileDesc> {
     unsafe { Ok(FileDesc::new(fcntl_arg(fd, libc::F_DUPFD_CLOEXEC, minfd)?)) }
 }
 
+/// Get the flags associated with the given file descriptor.
+///
+/// See [`fcntl_setfd()`].
 #[inline]
 pub fn fcntl_getfd(fd: RawFd) -> Result<libc::c_int> {
     unsafe { fcntl_arg(fd, libc::F_GETFD, 0) }
 }
 
+/// Set the flags associated with the given file descriptor.
+///
+/// Currently there is only one flag: `FD_CLOEXEC`, the close-on-exec flag. (It isn't exported by
+/// this crate, but can be accessed through `libc`.) If this flag is set on a file descriptor, the
+/// file descriptor will be closed when replacing the process via `exec()`.
+///
+/// See `fcntl(2)` for more information.
 #[inline]
 pub fn fcntl_setfd(fd: RawFd, flags: libc::c_int) -> Result<()> {
     unsafe {
@@ -242,6 +261,9 @@ pub fn fcntl_setfl(fd: RawFd, flags: libc::c_int) -> Result<()> {
     Ok(())
 }
 
+/// Get the capacity of the specified pipe.
+///
+/// See [`fcntl_setpipe_sz()`].
 #[cfg(target_os = "linux")]
 #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
 #[inline]
@@ -249,6 +271,22 @@ pub fn fcntl_getpipe_sz(fd: RawFd) -> Result<RawFd> {
     unsafe { fcntl_arg(fd, libc::F_GETPIPE_SZ, 0) }
 }
 
+/// Set the capacity of the specified pipe.
+///
+/// The minimum capacity is the system page size (see [`getpagesize()`]), and the maximum size (for
+/// unprivileged users) is defined by `/proc/sys/fs/pipe-max-size` (see `proc(5)`). A process with
+/// the CAP_SYS_RESOURCE capability can override the maximum limit.
+///
+/// - Attempts to set the capacity to a value smaller than the system page size will result in it
+///   being silently rounded up to the page size.
+/// - Attempts (by an unprivileged process) to set the capacity to a value larger than the upper
+///   limit will fail with the error EPERM.
+/// - Attempts to set the capacity to a value smaller than the amount of buffer space currently in
+///   use to store data will fail with the error EBUSY.
+///
+/// More information can be found in `fcntl(2)`.
+///
+/// [`getpagesize()`]: ./fn.getpagesize.html
 #[cfg(target_os = "linux")]
 #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
 #[inline]
