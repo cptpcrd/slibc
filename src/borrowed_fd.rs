@@ -115,24 +115,44 @@ impl BorrowedFd {
     /// Set the close-on-exec status of the given file descriptor.
     #[inline]
     pub fn set_cloexec(&self, cloexec: bool) -> Result<()> {
-        let mut flags = crate::fcntl_getfd(self.0)?;
+        // Here's how we handle this for different platforms:
+        //
+        // - On macOS/*BSD, call ioctl_fioclex()/ioctl_fionclex().
+        // - On other platforms, just call fcntl().
+        //
+        // We don't use ioctl_fioclex()/ioctl_fionclex() on Linux because they don't work on O_PATH
+        // file descriptors.
 
-        #[allow(clippy::collapsible_if)]
-        if cloexec {
-            if flags & libc::FD_CLOEXEC == 0 {
-                flags |= libc::FD_CLOEXEC;
+        cfg_if::cfg_if! {
+            if #[cfg(bsd)] {
+                if cloexec {
+                    crate::ioctl_fioclex(self.0)?;
+                } else {
+                    crate::ioctl_fionclex(self.0)?;
+                }
             } else {
-                return Ok(());
-            }
-        } else {
-            if flags & libc::FD_CLOEXEC != 0 {
-                flags &= !libc::FD_CLOEXEC;
-            } else {
-                return Ok(());
+                let mut flags = crate::fcntl_getfd(self.0)?;
+
+                #[allow(clippy::collapsible_if)]
+                if cloexec {
+                    if flags & libc::FD_CLOEXEC == 0 {
+                        flags |= libc::FD_CLOEXEC;
+                    } else {
+                        return Ok(());
+                    }
+                } else {
+                    if flags & libc::FD_CLOEXEC != 0 {
+                        flags &= !libc::FD_CLOEXEC;
+                    } else {
+                        return Ok(());
+                    }
+                }
+
+                crate::fcntl_setfd(self.0, flags)?;
             }
         }
 
-        crate::fcntl_setfd(self.0, flags)
+        Ok(())
     }
 
     /// Check whether this file descriptor refers to a terminal.
