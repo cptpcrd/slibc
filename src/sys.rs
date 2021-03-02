@@ -116,3 +116,18 @@ extern "C" {
 extern "C" {
     pub fn dup3(oldd: libc::c_int, newd: libc::c_int, flags: libc::c_int) -> libc::c_int;
 }
+
+#[cfg(any(
+    target_os = "freebsd",
+    target_os = "dragonfly",
+    target_os = "netbsd",
+    target_os = "macos",
+    target_os = "ios",
+))]
+extern "C" {
+    pub fn sysctlnametomib(
+        name: *const libc::c_char,
+        mibp: *mut libc::c_int,
+        sizep: *mut usize,
+    ) -> libc::c_int;
+}

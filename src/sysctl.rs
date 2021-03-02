@@ -81,3 +81,69 @@ pub unsafe fn sysctl<T>(
 
     Ok(old_len)
 }
+
+/// Get/set the value of the sysctl with the given name.
+///
+/// This is equivalent to looking up the MIB of the sysctl with [`sysctlnametomib()`], then
+/// calling [`sysctl()`] with the that MIB. (In fact, that may actually be preferable if repeated
+/// lookups of the same sysctl are planned.)
+///
+/// # Safety
+///
+/// See [`sysctl()`].
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(
+        target_os = "freebsd",
+        target_os = "dragonfly",
+        target_os = "netbsd",
+        target_os = "macos",
+        target_os = "ios",
+    )))
+)]
+#[cfg(not(target_os = "openbsd"))]
+pub unsafe fn sysctlbyname<T, P: AsPath>(
+    name: P,
+    old_data: Option<&mut [T]>,
+    new_data: Option<&mut [T]>,
+) -> Result<usize> {
+    let (old_ptr, mut old_len) = prepare_opt_slice(old_data);
+    let (new_ptr, new_len) = prepare_opt_slice(new_data);
+
+    name.with_cstr(|name| {
+        Error::unpack_nz(libc::sysctlbyname(
+            name.as_ptr(),
+            old_ptr as *mut libc::c_void,
+            &mut old_len,
+            new_ptr as *mut libc::c_void,
+            new_len,
+        ))
+    })?;
+
+    Ok(old_len)
+}
+
+/// Look up the MIB of the sysctl with the given name.
+///
+/// The name of the sysctl is specified by `name`, and the MIB will be copied into `mib`. The
+/// length of the MIB will be returned upon success.
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(
+        target_os = "freebsd",
+        target_os = "dragonfly",
+        target_os = "netbsd",
+        target_os = "macos",
+        target_os = "ios",
+    )))
+)]
+#[cfg(not(target_os = "openbsd"))]
+pub fn sysctlnametomib<P: AsPath>(name: P, mib: &mut [libc::c_int]) -> Result<usize> {
+    let mut size = mib.len();
+    name.with_cstr(|name| {
+        Error::unpack_nz(unsafe {
+            sys::sysctlnametomib(name.as_ptr(), mib.as_mut_ptr(), &mut size)
+        })
+    })?;
+    Ok(size)
+}
