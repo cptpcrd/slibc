@@ -1,5 +1,13 @@
 use crate::internal_prelude::*;
 
+fn prepare_opt_slice<T>(s: Option<&mut [T]>) -> (*mut T, usize) {
+    if let Some(s) = s {
+        (s.as_mut_ptr(), s.len() * core::mem::size_of::<T>())
+    } else {
+        (core::ptr::null_mut(), 0)
+    }
+}
+
 /// Get/set the value of the given sysctl.
 ///
 /// This function is a simple wrapper around `libc::sysctl()`.
@@ -59,23 +67,8 @@ pub unsafe fn sysctl<T>(
         }
     }
 
-    let (old_ptr, mut old_len) = if let Some(old_data_slice) = old_data {
-        (
-            old_data_slice.as_mut_ptr(),
-            old_data_slice.len() * core::mem::size_of::<T>(),
-        )
-    } else {
-        (core::ptr::null_mut(), 0)
-    };
-
-    let (new_ptr, new_len) = if let Some(new_data_slice) = new_data {
-        (
-            new_data_slice.as_mut_ptr(),
-            new_data_slice.len() * core::mem::size_of::<T>(),
-        )
-    } else {
-        (core::ptr::null_mut(), 0)
-    };
+    let (old_ptr, mut old_len) = prepare_opt_slice(old_data);
+    let (new_ptr, new_len) = prepare_opt_slice(new_data);
 
     Error::unpack_nz(libc::sysctl(
         mib_ptr,
