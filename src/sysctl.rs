@@ -34,14 +34,14 @@ fn prepare_opt_slice<T>(s: Option<&mut [T]>) -> (*mut T, usize) {
 /// use.
 #[cfg_attr(
     docsrs,
-    doc(cfg(
+    doc(cfg(any(
         target_os = "freebsd",
         target_os = "dragonfly",
         target_os = "openbsd",
         target_os = "netbsd",
         target_os = "macos",
         target_os = "ios",
-    ))
+    )))
 )]
 pub unsafe fn sysctl<T>(
     mib: &[libc::c_int],
