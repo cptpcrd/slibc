@@ -250,7 +250,6 @@ mod tests {
         }
 
         unsafe {
-            check_alloc_single::<bool>();
             check_alloc_single::<u8>();
             check_alloc_single::<u16>();
             check_alloc_single::<u32>();
@@ -278,7 +277,6 @@ mod tests {
         }
 
         unsafe {
-            check_alloc_array::<bool>();
             check_alloc_array::<u8>();
             check_alloc_array::<u16>();
             check_alloc_array::<u32>();
