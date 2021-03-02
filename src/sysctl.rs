@@ -83,9 +83,9 @@ pub unsafe fn sysctl<T>(
     let (old_ptr, mut old_len) = prepare_opt_slice_mut(old_data);
     let (new_ptr, new_len) = prepare_opt_slice(new_data);
 
-    // macOS also wants a mutable pointer here... but it *shouldn't* actually write to the data, so
-    // just casting it should be fine.
-    #[cfg(any(target_os = "macos", target_os = "ios"))]
+    // macOS and OpenBSD also want a mutable pointer here... but they *shouldn't* actually write to
+    // the data, so just casting it should be fine.
+    #[cfg(any(target_os = "macos", target_os = "ios", target_os = "openbsd"))]
     let new_ptr = new_ptr as *mut _;
 
     Error::unpack_nz(libc::sysctl(
