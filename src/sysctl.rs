@@ -70,7 +70,7 @@ pub unsafe fn sysctl<T>(
             }
 
             mib_buf[..mib.len()].copy_from_slice(mib);
-            let mib_ptr = mib_buf.as_ptr() as *mut _;
+            let mib_ptr = mib_buf.as_mut_ptr();
         } else {
             if mib.len() > libc::c_uint::MAX as usize {
                 return Err(Error::from_code(libc::ENOENT));
