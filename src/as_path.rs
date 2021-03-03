@@ -111,68 +111,38 @@ mod tests {
 
     #[test]
     fn test_with_cstr() {
-        let expected = CStr::from_bytes_with_nul(b"abc/def\0").unwrap();
+        fn do_it<P: AsPath>(p: P) {
+            let expected = CStr::from_bytes_with_nul(b"abc/def\0").unwrap();
 
-        #[cfg(feature = "alloc")]
-        {
-            "abc/def"
-                .with_cstr(|s| {
-                    assert_eq!(s, expected);
-                    Ok(())
-                })
-                .unwrap();
-            String::from("abc/def")
-                .with_cstr(|s| {
-                    assert_eq!(s, expected);
-                    Ok(())
-                })
-                .unwrap();
-
-            OsStr::new("abc/def")
-                .with_cstr(|s| {
-                    assert_eq!(s, expected);
-                    Ok(())
-                })
-                .unwrap();
-            OsString::from("abc/def")
-                .with_cstr(|s| {
-                    assert_eq!(s, expected);
-                    Ok(())
-                })
-                .unwrap();
-
-            CString::new("abc/def")
-                .unwrap()
-                .with_cstr(|s| {
-                    assert_eq!(s, expected);
-                    Ok(())
-                })
-                .unwrap();
-        }
-
-        #[cfg(feature = "std")]
-        {
-            Path::new("abc/def")
-                .with_cstr(|s| {
-                    assert_eq!(s, expected);
-                    Ok(())
-                })
-                .unwrap();
-            PathBuf::from("abc/def")
-                .with_cstr(|s| {
-                    assert_eq!(s, expected);
-                    Ok(())
-                })
-                .unwrap();
-        }
-
-        CStr::from_bytes_with_nul(b"abc/def\0")
-            .unwrap()
-            .with_cstr(|s| {
+            p.with_cstr(|s| {
                 assert_eq!(s, expected);
                 Ok(())
             })
             .unwrap();
+        }
+
+        #[cfg(feature = "alloc")]
+        {
+            do_it("abc/def");
+            do_it(String::from("abc/def"));
+            do_it(&String::from("abc/def"));
+
+            do_it(OsStr::new("abc/def"));
+            do_it(OsString::from("abc/def"));
+            do_it(&OsString::from("abc/def"));
+
+            do_it(CString::new("abc/def").unwrap());
+            do_it(&CString::new("abc/def").unwrap());
+        }
+
+        #[cfg(feature = "std")]
+        {
+            do_it(Path::new("abc/def"));
+            do_it(PathBuf::from("abc/def"));
+            do_it(&PathBuf::from("abc/def"));
+        }
+
+        do_it(CStr::from_bytes_with_nul(b"abc/def\0").unwrap());
     }
 
     #[test]
