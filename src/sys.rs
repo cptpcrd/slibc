@@ -19,7 +19,7 @@ cfg_if::cfg_if! {
 
         pub const MCL_ONFAULT: libc::c_int = 4;
     } else if #[cfg(any(target_os = "macos", target_os = "ios"))] {
-        pub const CTL_MAXNAME: usize = 12;
+        pub const CTL_MAXNAME: i32 = 12;
 
         pub const CLOCK_MONOTONIC_RAW: libc::clockid_t = 4;
         pub const CLOCK_MONOTONIC_RAW_APPROX: libc::clockid_t = 5;
@@ -36,6 +36,8 @@ cfg_if::cfg_if! {
         pub const CLOCK_UPTIME: libc::clockid_t = 5;
         pub const CLOCK_BOOTTIME: libc::clockid_t = 6;
     } else if #[cfg(target_os = "freebsd")] {
+        pub const CTL_MAXNAME: i32 = 24;
+
         #[cfg(feature = "alloc")]
         extern "C" {
             pub fn mallocx(size: usize, flags: libc::c_int) -> *mut libc::c_void;
@@ -54,6 +56,8 @@ cfg_if::cfg_if! {
         pub fn MALLOCX_ALIGN(a: usize) -> libc::c_int {
             a.trailing_zeros() as _
         }
+    } else if #[cfg(target_os = "dragonfly")] {
+        pub const CTL_MAXNAME: i32 = 12;
     }
 }
 
@@ -61,6 +65,9 @@ cfg_if::cfg_if! {
 pub use libc::{CLOCK_PROCESS_CPUTIME_ID, CLOCK_THREAD_CPUTIME_ID};
 #[cfg(freebsdlike)]
 pub use libc::{CLOCK_PROF, CLOCK_VIRTUAL};
+
+#[cfg(netbsdlike)]
+pub use libc::CTL_MAXNAME;
 
 #[cfg(any(
     target_os = "linux",

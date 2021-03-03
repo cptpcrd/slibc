@@ -61,21 +61,19 @@ pub unsafe fn sysctl<T>(
     old_data: Option<&mut [T]>,
     new_data: Option<&[T]>,
 ) -> Result<usize> {
+    // Do a bounds check up front so we can a) copy it into a buffer on macOS and b) cast it to an
+    // unsigned int for calling sysctl() without issues.
+    if mib.len() > sys::CTL_MAXNAME as usize {
+        return Err(Error::from_code(libc::EINVAL));
+    }
+
     cfg_if::cfg_if! {
         if #[cfg(any(target_os = "macos", target_os = "ios"))] {
             // macOS requires a non-const pointer for some reason
-            let mut mib_buf = [0; sys::CTL_MAXNAME];
-            if mib.len() > mib_buf.len() {
-                return Err(Error::from_code(libc::ENOENT));
-            }
-
+            let mut mib_buf = [0; sys::CTL_MAXNAME as usize];
             mib_buf[..mib.len()].copy_from_slice(mib);
             let mib_ptr = mib_buf.as_mut_ptr();
         } else {
-            if mib.len() > libc::c_uint::MAX as usize {
-                return Err(Error::from_code(libc::ENOENT));
-            }
-
             let mib_ptr = mib.as_ptr();
         }
     }
