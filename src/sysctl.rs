@@ -1,5 +1,11 @@
 use crate::internal_prelude::*;
 
+/// The maximum length of an MIB for [`sysctl()`] on this platform.
+///
+/// This may be useful e.g. as the length of a buffer used to store the result from
+/// `sysctlnametomib()`.
+pub const CTL_MAXNAME: usize = sys::CTL_MAXNAME as usize;
+
 #[inline]
 fn prepare_opt_slice<T>(s: Option<&[T]>) -> (*const libc::c_void, usize) {
     if let Some(s) = s {
