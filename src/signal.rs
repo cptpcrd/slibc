@@ -542,7 +542,7 @@ impl SigSet {
     #[inline]
     pub fn union(&self, other: &SigSet) -> Self {
         cfg_if::cfg_if! {
-            if #[cfg(any(linuxlike, target_os = "freebsd"))] {
+            if #[cfg(any(target_os = "linux", target_os = "freebsd"))] {
                 return unsafe {
                     let mut newset = MaybeUninit::zeroed();
                     sys::sigorset(newset.as_mut_ptr(), &self.0, &other.0);
@@ -565,7 +565,7 @@ impl SigSet {
     #[inline]
     pub fn intersection(&self, other: &SigSet) -> Self {
         cfg_if::cfg_if! {
-            if #[cfg(any(linuxlike, target_os = "freebsd"))] {
+            if #[cfg(any(target_os = "linux", target_os = "freebsd"))] {
                 return unsafe {
                     let mut newset = MaybeUninit::zeroed();
                     sys::sigandset(newset.as_mut_ptr(), &self.0, &other.0);
@@ -761,9 +761,14 @@ pub fn pause() {
 
 #[cfg_attr(
     docsrs,
-    doc(cfg(any(target_os = "macos", target_os = "ios", target_os = "openbsd")))
+    doc(cfg(any(
+        target_os = "linux",
+        target_os = "netbsd",
+        target_os = "freebsd",
+        target_os = "dragonfly"
+    )))
 )]
-#[cfg(not(any(apple, target_os = "openbsd")))]
+#[cfg(not(any(target_os = "linux", target_os = "netbsd", freebsdlike)))]
 #[inline]
 pub fn sigwaitinfo(set: &SigSet) -> Result<(Signal, SigInfo)> {
     unsafe {
