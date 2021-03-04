@@ -153,8 +153,10 @@ cfg_if::cfg_if! {
 
 cfg_if::cfg_if! {
     if #[cfg(target_os = "linux")] {
+        mod signalfd;
         mod statx;
         mod sysinfo;
+        pub use signalfd::*;
         pub use statx::*;
         pub use sysinfo::*;
     }
