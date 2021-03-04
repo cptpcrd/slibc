@@ -126,6 +126,7 @@ mod string;
 mod time;
 mod unistd;
 mod utsname;
+mod wait;
 
 pub use errno::*;
 pub use fcntl::*;
@@ -141,6 +142,7 @@ pub use string::*;
 pub use time::*;
 pub use unistd::*;
 pub use utsname::*;
+pub use wait::*;
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "alloc")] {
