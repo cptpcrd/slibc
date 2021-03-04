@@ -11,6 +11,13 @@ pub struct TimeSpec {
     pub tv_nsec: libc::c_long,
 }
 
+impl AsRef<libc::timespec> for TimeSpec {
+    #[inline]
+    fn as_ref(&self) -> &libc::timespec {
+        unsafe { &*(self as *const _ as *const _) }
+    }
+}
+
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub struct ClockId(libc::clockid_t);
 
