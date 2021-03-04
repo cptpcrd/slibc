@@ -596,6 +596,13 @@ impl Default for SigSet {
     }
 }
 
+impl AsRef<libc::sigset_t> for SigSet {
+    #[inline]
+    fn as_ref(&self) -> &libc::sigset_t {
+        &self.0
+    }
+}
+
 impl fmt::Debug for SigSet {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_set().entries(self.iter()).finish()
