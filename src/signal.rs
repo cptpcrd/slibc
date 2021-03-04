@@ -457,7 +457,7 @@ pub fn tgkill<S: Into<Option<Signal>>>(tgid: libc::pid_t, tid: libc::pid_t, sig:
     })
 }
 
-#[derive(Copy, Clone, Eq, Hash, PartialEq)]
+#[derive(Copy, Clone)]
 pub struct SigSet(libc::sigset_t);
 
 impl SigSet {
@@ -587,6 +587,35 @@ impl SigSet {
     #[inline]
     pub fn iter(&self) -> SigSetIter {
         self.into_iter()
+    }
+}
+
+impl PartialEq for SigSet {
+    fn eq(&self, other: &Self) -> bool {
+        for sig in Signal::posix_signals() {
+            if self.contains(sig) != other.contains(sig) {
+                return false;
+            }
+        }
+
+        #[cfg(any(linuxlike, target_os = "freebsd", target_os = "netbsd"))]
+        for sig in Signal::rt_signals() {
+            if self.contains(sig) != other.contains(sig) {
+                return false;
+            }
+        }
+
+        true
+    }
+}
+
+impl Eq for SigSet {}
+
+impl core::hash::Hash for SigSet {
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        for sig in self.iter() {
+            state.write_i32(sig.0);
+        }
     }
 }
 
