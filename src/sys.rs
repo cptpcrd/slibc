@@ -26,6 +26,9 @@ cfg_if::cfg_if! {
         pub const CLOCK_UPTIME_RAW: libc::clockid_t = 8;
         pub const CLOCK_UPTIME_RAW_APPROX: libc::clockid_t = 9;
     } else if #[cfg(target_os = "netbsd")] {
+        pub const SIGRTMIN: libc::c_int = 33;
+        pub const SIGRTMAX: libc::c_int = 63;
+
         pub const CLOCK_VIRTUAL: libc::clockid_t = 1;
         pub const CLOCK_PROF: libc::clockid_t = 2;
         pub const CLOCK_THREAD_CPUTIME_ID: libc::clockid_t = 0x20000000;
@@ -36,6 +39,9 @@ cfg_if::cfg_if! {
         pub const CLOCK_UPTIME: libc::clockid_t = 5;
         pub const CLOCK_BOOTTIME: libc::clockid_t = 6;
     } else if #[cfg(target_os = "freebsd")] {
+        pub const SIGRTMIN: libc::c_int = 65;
+        pub const SIGRTMAX: libc::c_int = 126;
+
         pub const CTL_MAXNAME: i32 = 24;
 
         #[cfg(feature = "alloc")]
@@ -69,6 +75,12 @@ pub use libc::{CLOCK_PROF, CLOCK_VIRTUAL};
 #[cfg(netbsdlike)]
 pub use libc::CTL_MAXNAME;
 
+#[cfg(linuxlike)]
+extern "C" {
+    pub fn __libc_current_sigrtmin() -> libc::c_int;
+    pub fn __libc_current_sigrtmax() -> libc::c_int;
+}
+
 #[cfg(any(
     target_os = "linux",
     target_os = "freebsd",
@@ -86,6 +98,20 @@ extern "C" {
         rgid: *mut libc::gid_t,
         egid: *mut libc::gid_t,
         sgid: *mut libc::gid_t,
+    ) -> libc::c_int;
+}
+
+#[cfg(any(target_os = "linux", target_os = "freebsd"))]
+extern "C" {
+    pub fn sigorset(
+        dest: *mut libc::sigset_t,
+        left: *const libc::sigset_t,
+        right: *const libc::sigset_t,
+    ) -> libc::c_int;
+    pub fn sigandset(
+        dest: *mut libc::sigset_t,
+        left: *const libc::sigset_t,
+        right: *const libc::sigset_t,
     ) -> libc::c_int;
 }
 
