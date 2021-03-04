@@ -5,8 +5,33 @@ bitflags::bitflags! {
         const WNOHANG = libc::WNOHANG;
         const WUNTRACED = libc::WUNTRACED;
         const WCONTINUED = libc::WCONTINUED;
+
+        #[cfg_attr(docsrs, doc(cfg(any(
+            target_os = "linux",
+            target_os = "android",
+            target_os = "freebsd",
+            target_os = "macos",
+            target_os = "ios",
+        ))))]
+        #[cfg(any(linuxlike, target_os = "freebsd", apple))]
         const WEXITED = libc::WEXITED;
+        #[cfg_attr(docsrs, doc(cfg(any(
+            target_os = "linux",
+            target_os = "android",
+            target_os = "freebsd",
+            target_os = "macos",
+            target_os = "ios",
+        ))))]
+        #[cfg(any(linuxlike, target_os = "freebsd", apple))]
         const WSTOPPED = libc::WSTOPPED;
+        #[cfg_attr(docsrs, doc(cfg(any(
+            target_os = "linux",
+            target_os = "android",
+            target_os = "freebsd",
+            target_os = "macos",
+            target_os = "ios",
+        ))))]
+        #[cfg(any(linuxlike, target_os = "freebsd", apple))]
         const WNOWAIT = libc::WNOWAIT;
     }
 }
@@ -74,12 +99,11 @@ pub fn waitpid(pid: libc::pid_t, options: WaitFlags) -> Result<Option<(libc::pid
 }
 
 cfg_if::cfg_if! {
-    if #[cfg(any(linuxlike, freebsdlike, apple))] {
+    if #[cfg(any(linuxlike, target_os = "freebsd", apple))] {
         #[cfg_attr(docsrs, doc(cfg(any(
             target_os = "linux",
             target_os = "android",
             target_os = "freebsd",
-            target_os = "dragonfly",
             target_os = "macos",
             target_os = "ios",
         ))))]
@@ -110,7 +134,6 @@ cfg_if::cfg_if! {
             target_os = "linux",
             target_os = "android",
             target_os = "freebsd",
-            target_os = "dragonfly",
             target_os = "macos",
             target_os = "ios",
         ))))]
