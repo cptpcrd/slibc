@@ -210,6 +210,11 @@ unsafe impl GlobalAlloc for Malloc {
     }
 }
 
+#[inline]
+pub fn abort() -> ! {
+    unsafe { libc::abort() }
+}
+
 #[cfg(test)]
 mod tests {
     #[allow(unused)]
