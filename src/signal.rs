@@ -84,7 +84,8 @@ macro_rules! define_signal {
 
             /// Create an iterator over all of the POSIX signals.
             ///
-            /// This will NOT include duplicates.
+            /// This will NOT include duplicates (i.e. aliases), but it is not guaranteed to be in
+            /// any particular order.
             #[inline]
             pub fn posix_signals() -> SignalPosixIter {
                 SignalPosixIter(Self::POSIX_SIGNALS.iter())
