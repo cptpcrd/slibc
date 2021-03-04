@@ -702,6 +702,138 @@ macro_rules! sigset {
     }};
 }
 
+#[derive(Copy, Clone)]
+#[repr(transparent)]
+pub struct SigInfo(pub(crate) libc::siginfo_t);
+
+macro_rules! si_attrs {
+    ($($(#[doc = $doc:literal])* $name:ident -> $type:ty,)*) => {
+        $(
+            $(#[doc = $doc])*
+            #[inline]
+            pub fn $name(&self) -> $type {
+                self.0.$name as _
+            }
+        )*
+    }
+}
+
+#[cfg(not(netbsdlike))]
+macro_rules! si_attrs_extra {
+    ($($(#[doc = $doc:literal])* $name:ident -> $type:ty,)*) => {
+        $(
+            $(#[doc = $doc])*
+            #[inline]
+            pub fn $name(&self) -> $type {
+                unsafe { self.0.$name() as _ }
+            }
+        )*
+    }
+}
+
+impl SigInfo {
+    si_attrs! {
+        si_signo -> i32,
+        si_errno -> i32,
+        si_code -> i32,
+    }
+
+    #[cfg(not(netbsdlike))]
+    si_attrs_extra! {
+        si_pid -> libc::pid_t,
+        si_uid -> u32,
+        si_status -> u32,
+    }
+
+    #[inline]
+    pub fn signal(&self) -> Option<Signal> {
+        Signal::from_i32(self.si_signo())
+    }
+}
+
+#[inline]
+pub fn pause() {
+    unsafe {
+        libc::pause();
+    }
+}
+
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(target_os = "macos", target_os = "ios", target_os = "openbsd")))
+)]
+#[cfg(not(any(apple, target_os = "openbsd")))]
+#[inline]
+pub fn sigwaitinfo(set: &SigSet) -> Result<(Signal, SigInfo)> {
+    unsafe {
+        let mut info = core::mem::zeroed();
+
+        let signo = Error::unpack(libc::sigwaitinfo(&set.0, &mut info))?;
+
+        Ok((Signal::from_i32(signo).unwrap(), SigInfo(info)))
+    }
+}
+
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(target_os = "macos", target_os = "ios", target_os = "openbsd")))
+)]
+#[cfg(not(any(apple, target_os = "openbsd")))]
+#[inline]
+pub fn sigtimedwait(set: &SigSet, timeout: Option<crate::TimeSpec>) -> Result<(Signal, SigInfo)> {
+    unsafe {
+        let mut info = core::mem::zeroed();
+
+        let signo = Error::unpack(libc::sigtimedwait(
+            &set.0,
+            &mut info,
+            timeout.map_or_else(|| core::ptr::null(), |t| t.as_ref()),
+        ))?;
+
+        Ok((Signal::from_i32(signo).unwrap(), SigInfo(info)))
+    }
+}
+
+#[inline]
+pub fn sigwait(set: &SigSet) -> Result<Signal> {
+    let mut sig = MaybeUninit::uninit();
+    Error::unpack_eno(unsafe { libc::sigwait(&set.0, sig.as_mut_ptr()) })?;
+    Ok(Signal::from_i32(unsafe { sig.assume_init() }).unwrap())
+}
+
+#[inline]
+pub fn sigpending() -> Result<SigSet> {
+    let mut set = unsafe { core::mem::zeroed() };
+    Error::unpack_nz(unsafe { libc::sigpending(&mut set) })?;
+    Ok(SigSet(set))
+}
+
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+#[repr(i32)]
+pub enum SigmaskHow {
+    BLOCK = libc::SIG_BLOCK,
+    UNBLOCK = libc::SIG_UNBLOCK,
+    SETMASK = libc::SIG_SETMASK,
+}
+
+#[inline]
+pub fn pthread_sigmask(how: SigmaskHow, set: Option<&SigSet>) -> Result<SigSet> {
+    let mut oldset = unsafe { core::mem::zeroed() };
+    Error::unpack_nz(unsafe {
+        libc::pthread_sigmask(
+            how as _,
+            set.map_or_else(|| core::ptr::null(), |s| s.as_ref()),
+            &mut oldset,
+        )
+    })?;
+    Ok(SigSet(oldset))
+}
+
+#[inline]
+pub fn raise(sig: Signal) -> Result<()> {
+    Error::unpack_nz(unsafe { libc::raise(sig.as_i32()) })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
