@@ -797,7 +797,7 @@ pub fn pause() {
         target_os = "dragonfly"
     )))
 )]
-#[cfg(not(any(target_os = "linux", target_os = "netbsd", freebsdlike)))]
+#[cfg(any(target_os = "linux", target_os = "netbsd", freebsdlike))]
 #[inline]
 pub fn sigwaitinfo(set: &SigSet) -> Result<(Signal, SigInfo)> {
     unsafe {
