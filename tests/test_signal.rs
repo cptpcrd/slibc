@@ -36,21 +36,19 @@ fn test_sigmask() {
 }
 
 fn test_kill() {
-    use slibc::{sigpending, _exit, fork, waitpid, WaitFlags, WaitStatus};
+    use slibc::{_exit, fork, sigpending, waitpid, WaitFlags, WaitStatus};
 
     fn run_child<F: FnOnce() -> slibc::Result<()>>(f: F) -> WaitStatus {
         match unsafe { fork().unwrap() } {
             Some(pid) => waitpid(pid, WaitFlags::empty()).unwrap().unwrap().1,
 
-            None => {
-                unsafe {
-                    if let Err(_) = f() {
-                        _exit(1);
-                    }
-
-                    _exit(0);
+            None => unsafe {
+                if let Err(_) = f() {
+                    _exit(1);
                 }
-            }
+
+                _exit(0);
+            },
         }
     }
 
@@ -58,7 +56,7 @@ fn test_kill() {
         let set = sigset!(Signal::SIGUSR1);
         set.thread_block()?;
         kill(getpid(), Signal::SIGUSR1)?;
-        
+
         let pending = sigpending()?;
         unsafe {
             _exit(pending.iter().next().map_or(0, |s| s.as_i32()));
