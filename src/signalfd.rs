@@ -42,6 +42,12 @@ impl SignalFd {
         self.0.fd()
     }
 
+    /// Create a new `SignalFd` wrapper around the given signalfd file descriptor.
+    ///
+    /// # Safety
+    ///
+    /// The given file descriptor must refer to a valid signalfd instance, and it must not be in
+    /// use by other code.
     #[inline]
     pub unsafe fn from_fd(fd: RawFd) -> Self {
         Self(FileDesc::new(fd))
