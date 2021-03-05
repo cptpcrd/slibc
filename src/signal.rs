@@ -956,8 +956,19 @@ mod tests {
 
     #[test]
     fn test_sigset_ops() {
+        #[cfg(feature = "std")]
+        fn hash_set(set: SigSet) -> u64 {
+            use std::hash::{Hash, Hasher};
+            let mut hasher = std::collections::hash_map::DefaultHasher::new();
+            set.hash(&mut hasher);
+            hasher.finish()
+        }
+
         fn check_empty(set: SigSet) {
             assert_eq!(set, SigSet::empty());
+
+            #[cfg(feature = "std")]
+            assert_eq!(hash_set(set), hash_set(SigSet::empty()));
 
             for sig in all_signals() {
                 assert!(!set.contains(sig));
@@ -966,6 +977,9 @@ mod tests {
 
         fn check_full(set: SigSet) {
             assert_eq!(set, SigSet::full());
+
+            #[cfg(feature = "std")]
+            assert_eq!(hash_set(set), hash_set(SigSet::full()));
 
             for sig in all_signals() {
                 assert!(set.contains(sig));
