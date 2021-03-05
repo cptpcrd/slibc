@@ -504,6 +504,24 @@ impl SigSet {
         debug_assert_eq!(res, 0);
     }
 
+    /// Check if this signal set is empty.
+    ///
+    /// This is equivalent to `self == SigSet::empty()`.
+    ///
+    /// On Linux and FreeBSD, this uses the `sigisemptyset()` extension function to improve
+    /// performance.
+    #[allow(clippy::needless_return)]
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        cfg_if::cfg_if! {
+            if #[cfg(any(target_os = "linux", target_os = "freebsd"))] {
+                return unsafe { sys::sigisemptyset(&self.0) != 0 };
+            } else {
+                return *self == Self::empty();
+            }
+        }
+    }
+
     /// Create a new signal set that is the union of the two provided signal sets (i.e. all signals
     /// present in either set).
     ///
@@ -956,6 +974,7 @@ mod tests {
         }
 
         fn check_empty(set: SigSet) {
+            assert!(set.is_empty());
             assert_eq!(set, SigSet::empty());
 
             #[cfg(feature = "std")]
@@ -967,6 +986,7 @@ mod tests {
         }
 
         fn check_full(set: SigSet) {
+            assert!(!set.is_empty());
             assert_eq!(set, SigSet::full());
 
             #[cfg(feature = "std")]
@@ -1018,6 +1038,7 @@ mod tests {
 
         s = SigSet::empty();
         s.add(Signal::SIGINT);
+        assert!(!s.is_empty());
         assert_ne!(s, SigSet::empty());
         assert_ne!(s, SigSet::full());
         assert_eq!(s, [Signal::SIGINT].iter().cloned().collect::<SigSet>());

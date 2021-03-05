@@ -113,6 +113,7 @@ extern "C" {
         left: *const libc::sigset_t,
         right: *const libc::sigset_t,
     ) -> libc::c_int;
+    pub fn sigisemptyset(set: *const libc::sigset_t) -> libc::c_int;
 }
 
 #[cfg(any(
