@@ -36,7 +36,7 @@ bitflags::bitflags! {
     }
 }
 
-#[derive(Copy, Clone, Eq, Hash, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub enum WaitStatus {
     Exited(i32),
     Signaled(i32, bool),
