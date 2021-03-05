@@ -111,7 +111,8 @@ macro_rules! define_signal {
             #[inline]
             pub fn rt_signals() -> SignalRtIter {
                 #[cfg(linuxlike)]
-                let (sigrtmin, sigrtmax) = unsafe { (sys::__libc_current_sigrtmin(), sys::__libc_current_sigrtmax()) };
+                let (sigrtmin, sigrtmax) =
+                    unsafe { (sys::__libc_current_sigrtmin(), sys::__libc_current_sigrtmax()) };
                 #[cfg(not(linuxlike))]
                 let (sigrtmin, sigrtmax) = (sys::SIGRTMIN, sys::SIGRTMAX);
 
@@ -151,7 +152,7 @@ macro_rules! define_signal {
 
                 #[cfg(any(linuxlike, target_os = "freebsd", target_os = "netbsd"))]
                 if let Some(s) = s.strip_prefix("SIGRTMIN+") {
-                    if s.bytes().all(|b| (b'0'..=b'9').contains(&b)) {
+                    if matches!(s.as_bytes().first(), Some(b) if (b'0'..=b'9').contains(&b)) {
                         if let Ok(i) = s.parse() {
                             if let Some(sig) = Self::rt_signals().nth(i) {
                                 return Ok(sig);
@@ -161,7 +162,7 @@ macro_rules! define_signal {
 
                     return Err(SignalParseError(()));
                 } else if let Some(s) = s.strip_prefix("SIGRTMAX-") {
-                    if s.bytes().all(|b| (b'0'..=b'9').contains(&b)) {
+                    if matches!(s.as_bytes().first(), Some(b) if (b'0'..=b'9').contains(&b)) {
                         if let Ok(i) = s.parse() {
                             if let Some(sig) = Self::rt_signals().nth_back(i) {
                                 return Ok(sig);
