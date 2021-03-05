@@ -829,9 +829,9 @@ pub fn sigwait(set: &SigSet) -> Result<Signal> {
 
 #[inline]
 pub fn sigpending() -> Result<SigSet> {
-    let mut set = unsafe { core::mem::zeroed() };
-    Error::unpack_nz(unsafe { libc::sigpending(&mut set) })?;
-    Ok(SigSet(set))
+    let mut set = MaybeUninit::uninit();
+    Error::unpack_nz(unsafe { libc::sigpending(set.as_mut_ptr()) })?;
+    Ok(SigSet(unsafe { set.assume_init() }))
 }
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
