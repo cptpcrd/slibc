@@ -308,18 +308,6 @@ impl Iterator for SignalPosixIter {
     }
 }
 
-impl DoubleEndedIterator for SignalPosixIter {
-    #[inline]
-    fn next_back(&mut self) -> Option<Signal> {
-        self.0.next_back().copied()
-    }
-
-    #[inline]
-    fn nth_back(&mut self, n: usize) -> Option<Signal> {
-        self.0.nth_back(n).copied()
-    }
-}
-
 impl ExactSizeIterator for SignalPosixIter {
     #[inline]
     fn len(&self) -> usize {
@@ -670,18 +658,6 @@ impl Iterator for SigSetIter {
 
     fn next(&mut self) -> Option<Signal> {
         while let Some(sig) = self.it.next() {
-            if self.set.contains(sig) {
-                return Some(sig);
-            }
-        }
-
-        None
-    }
-}
-
-impl DoubleEndedIterator for SigSetIter {
-    fn next_back(&mut self) -> Option<Signal> {
-        while let Some(sig) = self.it.next_back() {
             if self.set.contains(sig) {
                 return Some(sig);
             }
