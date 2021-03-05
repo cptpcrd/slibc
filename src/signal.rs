@@ -822,7 +822,7 @@ pub fn sigtimedwait(set: &SigSet, timeout: Option<crate::TimeSpec>) -> Result<(S
         let signo = Error::unpack(libc::sigtimedwait(
             &set.0,
             &mut info,
-            timeout.map_or_else(|| core::ptr::null(), |t| t.as_ref()),
+            timeout.map_or_else(core::ptr::null, |t| t.as_ref()),
         ))?;
 
         Ok((Signal::from_i32(signo).unwrap(), SigInfo(info)))
@@ -857,7 +857,7 @@ pub fn pthread_sigmask(how: SigmaskHow, set: Option<&SigSet>) -> Result<SigSet> 
     Error::unpack_nz(unsafe {
         libc::pthread_sigmask(
             how as _,
-            set.map_or_else(|| core::ptr::null(), |s| s.as_ref()),
+            set.map_or_else(core::ptr::null, |s| s.as_ref()),
             &mut oldset,
         )
     })?;
