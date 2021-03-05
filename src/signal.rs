@@ -461,29 +461,12 @@ pub fn tgkill<S: Into<Option<Signal>>>(tgid: libc::pid_t, tid: libc::pid_t, sig:
 pub struct SigSet(libc::sigset_t);
 
 impl SigSet {
-    // Why do we use use zeroed() instead of uninit() when creating the SigSet?
-    //
-    // On Linux, sigemptyset() and sigfillset() don't fill the entire structure with zeroes; they
-    // leave some of the higher bits uninitialized. This breaks the Eq derivation, so we have to
-    // zero it out before calling sigemptyset()/sigfillset(). (We do it on other platforms too just
-    // as a precaution.)
-    //
-    // Additionally, since sigemptyset() just zeroes out the structure (on Linux and the BSDs, at
-    // least), we can skip calling sigemptyset() and just zero it out ourselves.
-    //
-    // Note that clear() and fill() don't have this problem because the higher bits have already
-    // been cleared by the time they run.
-
     /// Create an empty signal set.
-    #[allow(unused_mut)]
     #[inline]
     pub fn empty() -> Self {
         unsafe {
-            let mut set = MaybeUninit::zeroed();
-
-            #[cfg(not(any(linuxlike, bsd)))]
+            let mut set = MaybeUninit::uninit();
             libc::sigemptyset(set.as_mut_ptr());
-
             Self(set.assume_init())
         }
     }
@@ -492,7 +475,7 @@ impl SigSet {
     #[inline]
     pub fn full() -> Self {
         unsafe {
-            let mut set = MaybeUninit::zeroed();
+            let mut set = MaybeUninit::uninit();
             libc::sigfillset(set.as_mut_ptr());
             Self(set.assume_init())
         }
