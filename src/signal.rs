@@ -994,6 +994,12 @@ mod tests {
 
         check_full(all_signals().collect());
 
+        check_empty(SigSet::empty().union(&SigSet::empty()));
+        check_full(SigSet::empty().union(&SigSet::full()));
+        check_full(SigSet::full().union(&SigSet::empty()));
+        check_full(SigSet::full().union(&SigSet::full()));
+
+        check_empty(SigSet::empty().intersection(&SigSet::empty()));
         check_empty(SigSet::empty().intersection(&SigSet::full()));
         check_empty(SigSet::full().intersection(&SigSet::empty()));
         check_full(SigSet::full().intersection(&SigSet::full()));
@@ -1054,6 +1060,20 @@ mod tests {
             SigSet::empty().intersection(&sigset!(Signal::SIGINT, Signal::SIGTERM)),
             SigSet::empty()
         );
+
+        #[cfg(any(linuxlike, target_os = "freebsd", target_os = "netbsd"))]
+        {
+            assert_ne!(sigset!(), sigset!(Signal::rt_signals().next().unwrap()));
+
+            assert_ne!(
+                sigset!(Signal::SIGINT, Signal::SIGTERM),
+                sigset!(
+                    Signal::SIGINT,
+                    Signal::SIGTERM,
+                    Signal::rt_signals().next().unwrap()
+                )
+            );
+        }
     }
 
     #[cfg(feature = "alloc")]
