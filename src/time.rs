@@ -1,5 +1,12 @@
 use crate::internal_prelude::*;
 
+#[cfg(feature = "std")]
+use std::time::{Duration, SystemTime};
+
+/// Represents a C `timespec` structure.
+///
+/// This can either represent a duration in time, or a timestamp. As such, if the `std` feature is
+/// enabled, this struct can be converted to and from `Duration`s and `SystemTime`s.
 #[allow(deprecated)]
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 #[repr(C)]
@@ -15,6 +22,68 @@ impl AsRef<libc::timespec> for TimeSpec {
     #[inline]
     fn as_ref(&self) -> &libc::timespec {
         unsafe { &*(self as *const _ as *const _) }
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+#[cfg(feature = "std")]
+impl From<Duration> for TimeSpec {
+    #[inline]
+    fn from(d: Duration) -> Self {
+        Self {
+            tv_sec: d.as_secs() as _,
+            tv_nsec: d.subsec_nanos() as _,
+        }
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+#[cfg(feature = "std")]
+impl From<SystemTime> for TimeSpec {
+    #[inline]
+    fn from(t: SystemTime) -> Self {
+        match t.duration_since(SystemTime::UNIX_EPOCH) {
+            Ok(d) => d.into(),
+            Err(e) => {
+                let d = e.duration();
+                Self {
+                    tv_sec: (-(d.as_secs() as i64) - 1) as _,
+                    tv_nsec: (1_000_000_000 - d.subsec_nanos()) as _,
+                }
+            }
+        }
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+#[cfg(feature = "std")]
+impl core::convert::TryFrom<TimeSpec> for Duration {
+    type Error = Duration;
+
+    #[inline]
+    fn try_from(t: TimeSpec) -> core::result::Result<Self, Self::Error> {
+        if t.tv_sec >= 0 {
+            Ok(Duration::new(t.tv_sec as _, t.tv_nsec as _))
+        } else {
+            Err(Duration::new(
+                (-(t.tv_sec as i64) - 1) as _,
+                (1_000_000_000 - t.tv_nsec) as _,
+            ))
+        }
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+#[cfg(feature = "std")]
+impl From<TimeSpec> for SystemTime {
+    #[inline]
+    fn from(t: TimeSpec) -> Self {
+        use core::convert::TryFrom;
+
+        match Duration::try_from(t) {
+            Ok(d) => SystemTime::UNIX_EPOCH + d,
+            Err(d) => SystemTime::UNIX_EPOCH - d,
+        }
     }
 }
 
@@ -286,6 +355,81 @@ mod tests {
                 .gettime()
                 .unwrap(),
             ClockId::THREAD_CPUTIME_ID.gettime().unwrap(),
+        );
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn test_std_time_timespec() {
+        use std::convert::TryFrom;
+
+        assert_eq!(
+            TimeSpec {
+                tv_sec: 100,
+                tv_nsec: 100,
+            },
+            TimeSpec::from(Duration::new(100, 100))
+        );
+
+        assert_eq!(
+            Duration::try_from(TimeSpec {
+                tv_sec: 100,
+                tv_nsec: 100,
+            }),
+            Ok(Duration::new(100, 100))
+        );
+        assert_eq!(
+            Duration::try_from(TimeSpec {
+                tv_sec: -100,
+                tv_nsec: 100,
+            }),
+            Err(Duration::new(99, 999_999_900))
+        );
+
+        assert_eq!(
+            TimeSpec {
+                tv_sec: 0,
+                tv_nsec: 0,
+            },
+            TimeSpec::from(SystemTime::UNIX_EPOCH)
+        );
+
+        assert_eq!(
+            TimeSpec {
+                tv_sec: 100,
+                tv_nsec: 100,
+            },
+            TimeSpec::from(SystemTime::UNIX_EPOCH + Duration::new(100, 100))
+        );
+        assert_eq!(
+            TimeSpec {
+                tv_sec: -101,
+                tv_nsec: 999_999_900,
+            },
+            TimeSpec::from(SystemTime::UNIX_EPOCH - Duration::new(100, 100))
+        );
+
+        assert_eq!(
+            SystemTime::from(TimeSpec {
+                tv_sec: 0,
+                tv_nsec: 0,
+            }),
+            SystemTime::UNIX_EPOCH
+        );
+
+        assert_eq!(
+            SystemTime::from(TimeSpec {
+                tv_sec: 100,
+                tv_nsec: 100,
+            }),
+            SystemTime::UNIX_EPOCH + Duration::new(100, 100)
+        );
+        assert_eq!(
+            SystemTime::from(TimeSpec {
+                tv_sec: -101,
+                tv_nsec: 999_999_900,
+            }),
+            SystemTime::UNIX_EPOCH - Duration::new(100, 100)
         );
     }
 }
