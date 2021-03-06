@@ -82,7 +82,7 @@ macro_rules! define_signal {
                 !matches!(self.0, libc::SIGKILL | libc::SIGSTOP)
             }
 
-            /// Create an iterator over all of the POSIX signals.
+            /// Create an iterator over all of the POSIX signals (i.e. `SIGINT`, `SIGTERM`, etc.).
             ///
             /// This will NOT include duplicates (i.e. aliases), but it is not guaranteed to be in
             /// any particular order.
@@ -106,7 +106,7 @@ macro_rules! define_signal {
             /// Create an iterator over all of the real-time signals supported on the current
             /// system.
             ///
-            /// This is the only way to get `Signal`s for the real time signal. If you want e.g.
+            /// This is the only way to get `Signal`s for the real time signals. If you want e.g.
             /// `SIGRTMIN+1`, use `Signal::rt_signals::nth(1).unwrap()`.
             #[inline]
             pub fn rt_signals() -> SignalRtIter {
