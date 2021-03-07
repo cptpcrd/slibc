@@ -121,6 +121,22 @@ define_resource! {
 }
 
 impl Resource {
+    /// Get the soft and hard limits for this resource.
+    #[inline]
+    pub fn get(self) -> Result<(Limit, Limit)> {
+        getrlimit(self)
+    }
+
+    /// Set the soft and hard limits for this resource.
+    ///
+    /// # Safety
+    ///
+    /// See [`setrlimit()`].
+    #[inline]
+    pub unsafe fn set(self, new_limits: (Limit, Limit)) -> Result<()> {
+        setrlimit(self, new_limits)
+    }
+
     /// Create an iterator over the `Resource`s that are available on the current platform.
     #[inline]
     pub fn iter() -> ResourceIter {
