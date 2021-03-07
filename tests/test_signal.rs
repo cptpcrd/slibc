@@ -43,7 +43,7 @@ fn test_kill() {
             Some(pid) => waitpid(pid, WaitFlags::empty()).unwrap().unwrap().1,
 
             None => unsafe {
-                if let Err(_) = f() {
+                if f().is_err() {
                     _exit(1);
                 }
 
