@@ -256,8 +256,8 @@ pub unsafe fn setrlimit(resource: Resource, new_limits: (Limit, Limit)) -> Resul
 /// # Safety
 ///
 /// See [`setrlimit()`].
-#[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
-#[cfg(target_os = "linux")]
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux"), target_os = "android")))]
+#[cfg(linuxlike)]
 #[inline]
 pub unsafe fn prlimit(
     pid: libc::pid_t,
@@ -546,7 +546,7 @@ mod tests {
         }
     }
 
-    #[cfg(target_os = "linux")]
+    #[cfg(linuxlike)]
     #[test]
     fn test_prlimit_same() {
         for res in Resource::iter() {
