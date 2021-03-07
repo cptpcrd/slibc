@@ -38,7 +38,9 @@ fn prepare_opt_slice_mut<T>(s: Option<&mut [T]>) -> (*mut libc::c_void, usize) {
 /// `newp`, respectively. Otherwise, the given slice will be passed.
 ///
 /// In all cases, the return value is the value of `oldlenp` after the `sysctl()`
-/// call.
+/// call. If `old_data` is `None`, this may be an estimate (possibly rounded up if it can change
+/// often) of the length of the currently available information. See OS-specific documentation for
+/// more details.
 ///
 /// # Safety
 ///
