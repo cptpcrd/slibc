@@ -587,21 +587,21 @@ impl SigSet {
 
     /// Set the current thread's signal mask to this set, and return the previous mask.
     #[inline]
-    pub fn thread_set_mask(&self) -> Result<SigSet> {
+    pub fn thread_set_mask(&self) -> Result<Self> {
         pthread_sigmask(SigmaskHow::SETMASK, Some(self))
     }
 
     /// Block the signals from this thread in the current thread's signal mask, and return the
     /// previous mask.
     #[inline]
-    pub fn thread_block(&self) -> Result<SigSet> {
+    pub fn thread_block(&self) -> Result<Self> {
         pthread_sigmask(SigmaskHow::BLOCK, Some(self))
     }
 
     /// Unblock the signals from this thread in the current thread's signal mask, and return the
     /// previous mask.
     #[inline]
-    pub fn thread_unblock(&self) -> Result<SigSet> {
+    pub fn thread_unblock(&self) -> Result<Self> {
         pthread_sigmask(SigmaskHow::UNBLOCK, Some(self))
     }
 
