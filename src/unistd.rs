@@ -22,6 +22,7 @@ pub fn sysconf(name: SysconfName) -> Option<usize> {
 }
 
 /// Get the number of bytes in a memory page.
+#[inline]
 pub fn getpagesize() -> usize {
     unsafe { sys::getpagesize() as usize }
 }
@@ -1155,14 +1156,17 @@ pub fn fchownat<P: AsPath>(
     })
 }
 
+#[inline]
 pub fn chmod<P: AsPath>(path: P, mode: u32) -> Result<()> {
     path.with_cstr(|path| Error::unpack_nz(unsafe { libc::chmod(path.as_ptr(), mode as _) }))
 }
 
+#[inline]
 pub fn fchmod(fd: RawFd, mode: u32) -> Result<()> {
     Error::unpack_nz(unsafe { libc::fchmod(fd, mode as _) })
 }
 
+#[inline]
 pub fn fchmodat<P: AsPath>(dirfd: RawFd, path: P, mode: u32, flags: crate::AtFlag) -> Result<()> {
     path.with_cstr(|path| {
         Error::unpack_nz(unsafe { libc::fchmodat(dirfd, path.as_ptr(), mode as _, flags.bits()) })

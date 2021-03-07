@@ -279,6 +279,7 @@ pub unsafe fn prlimit(
 /// See [`setrlimit()`].
 #[cfg_attr(docsrs, doc(cfg(target_os = "freebsd")))]
 #[cfg(target_os = "freebsd")]
+#[inline]
 pub unsafe fn proc_rlimit(
     pid: libc::pid_t,
     resource: Resource,
