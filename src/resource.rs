@@ -564,7 +564,7 @@ mod tests {
     fn test_proc_rlimit_same() {
         for res in Resource::iter() {
             unsafe {
-                let limits = proc_rlimit(0, res, None).unwrap();
+                let limits = proc_rlimit(crate::getpid(), res, None).unwrap();
                 assert_eq!(
                     proc_rlimit(crate::getpid(), res, Some(limits)).unwrap(),
                     limits
