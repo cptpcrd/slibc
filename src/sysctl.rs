@@ -213,4 +213,17 @@ mod tests {
             (core::ptr::null_mut(), 0)
         );
     }
+
+    #[test]
+    fn test_sysctl_error() {
+        assert_eq!(
+            unsafe { sysctl::<i32>(&[0; CTL_MAXNAME + 1], None, None).unwrap_err() },
+            Errno::EINVAL,
+        );
+
+        assert_eq!(
+            unsafe { sysctl::<i32>(&[], None, None).unwrap_err() },
+            Errno::EINVAL,
+        );
+    }
 }
