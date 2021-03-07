@@ -261,8 +261,7 @@ pub unsafe fn prlimit(
         resource as _,
         new_limits
             .as_ref()
-            .map(|rl| rl as *const _)
-            .unwrap_or_else(core::ptr::null),
+            .map_or_else(core::ptr::null, |rl| rl as *const _),
         old_rlim.as_mut_ptr(),
     ))?;
 
