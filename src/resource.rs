@@ -1,6 +1,5 @@
 use core::cmp::Ordering;
 use core::fmt;
-use core::time::Duration;
 
 use crate::internal_prelude::*;
 
@@ -404,19 +403,19 @@ macro_rules! rusage_getters {
 
 impl Rusage {
     #[inline]
-    pub fn utime(&self) -> Duration {
-        Duration::new(
-            self.0.ru_utime.tv_sec as u64,
-            self.0.ru_utime.tv_usec as u32 * 1000,
-        )
+    pub fn utime(&self) -> crate::Timeval {
+        crate::Timeval {
+            tv_sec: self.0.ru_utime.tv_sec,
+            tv_usec: self.0.ru_utime.tv_usec,
+        }
     }
 
     #[inline]
-    pub fn stime(&self) -> Duration {
-        Duration::new(
-            self.0.ru_stime.tv_sec as u64,
-            self.0.ru_stime.tv_usec as u32 * 1000,
-        )
+    pub fn stime(&self) -> crate::Timeval {
+        crate::Timeval {
+            tv_sec: self.0.ru_stime.tv_sec,
+            tv_usec: self.0.ru_stime.tv_usec,
+        }
     }
 
     rusage_getters! {
