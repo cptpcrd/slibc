@@ -1,12 +1,15 @@
 use crate::internal_prelude::*;
 
+use core::time::Duration;
+
 #[cfg(feature = "std")]
-use std::time::{Duration, SystemTime};
+use std::time::SystemTime;
 
 /// Represents a C `timespec` structure.
 ///
-/// This can either represent a duration in time, or a timestamp. As such, if the `std` feature is
-/// enabled, this struct can be converted to and from `Duration`s and `SystemTime`s.
+/// This can either represent a duration in time, or a timestamp. As such, this struct can be
+/// converted to and from `Duration`s. and if the `std` feature is enabled then it can also be
+/// converted to and from `SystemTime`s.
 #[allow(deprecated)]
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 #[repr(C)]
@@ -25,8 +28,6 @@ impl AsRef<libc::timespec> for TimeSpec {
     }
 }
 
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-#[cfg(feature = "std")]
 impl From<Duration> for TimeSpec {
     #[inline]
     fn from(d: Duration) -> Self {
@@ -55,8 +56,6 @@ impl From<SystemTime> for TimeSpec {
     }
 }
 
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-#[cfg(feature = "std")]
 impl core::convert::TryFrom<TimeSpec> for Duration {
     type Error = Duration;
 
