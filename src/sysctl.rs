@@ -174,3 +174,43 @@ pub fn sysctlnametomib<P: AsPath>(name: P, mib: &mut [libc::c_int]) -> Result<us
     })?;
     Ok(size)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_prepare_opt_slice() {
+        macro_rules! check_arr {
+            ($type:ty, $arr:expr $(,)?) => {{
+                let slice = &mut $arr;
+
+                assert_eq!(
+                    prepare_opt_slice::<$type>(Some(slice)),
+                    (
+                        slice.as_ptr() as *const _,
+                        slice.len() * core::mem::size_of::<$type>(),
+                    )
+                );
+
+                assert_eq!(
+                    prepare_opt_slice_mut::<$type>(Some(slice)),
+                    (
+                        slice.as_mut_ptr() as *mut _,
+                        slice.len() * core::mem::size_of::<$type>(),
+                    )
+                );
+            }};
+        }
+
+        check_arr!(i32, []);
+        check_arr!(i32, [1, 2, 3]);
+        check_arr!(usize, [1, 2, 3, 4, 5, 6]);
+
+        assert_eq!(prepare_opt_slice::<i32>(None), (core::ptr::null(), 0));
+        assert_eq!(
+            prepare_opt_slice_mut::<i32>(None),
+            (core::ptr::null_mut(), 0)
+        );
+    }
+}
