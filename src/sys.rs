@@ -2,6 +2,11 @@ extern "C" {
     pub fn setreuid(ruid: libc::uid_t, euid: libc::uid_t) -> libc::c_int;
     pub fn setregid(rgid: libc::gid_t, egid: libc::gid_t) -> libc::c_int;
 
+    pub fn gethostid() -> libc::c_long;
+
+    #[cfg(not(any(target_os = "android", all(target_os = "linux", target_env = "musl"))))]
+    pub fn sethostid(hostid: libc::c_long) -> libc::c_int;
+
     pub fn getpagesize() -> libc::c_int;
 
     pub fn clock_settime(clockid: libc::clockid_t, tp: *const libc::timespec) -> libc::c_int;

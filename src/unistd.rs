@@ -21,6 +21,21 @@ pub fn sysconf(name: SysconfName) -> Option<usize> {
     }
 }
 
+#[inline]
+pub fn gethostid() -> u32 {
+    unsafe { sys::gethostid() as u32 }
+}
+
+#[cfg_attr(
+    docsrs,
+    doc(cfg(not(any(target_os = "android", all(target_os = "linux", target_env = "musl")))))
+)]
+#[cfg(not(any(target_os = "android", all(target_os = "linux", target_env = "musl"))))]
+#[inline]
+pub fn sethostid(hostid: u32) -> Result<()> {
+    Error::unpack_nz(unsafe { sys::sethostid(hostid as _) })
+}
+
 /// Get the number of bytes in a memory page.
 #[inline]
 pub fn getpagesize() -> usize {
