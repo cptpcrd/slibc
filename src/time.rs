@@ -86,6 +86,45 @@ impl From<TimeSpec> for SystemTime {
     }
 }
 
+/// Represents a C `timeval` structure.
+///
+/// This can be converted to and from a [`TimeSpec]` (though converting a `TimeSpec` to a `Timeval`
+/// is lossy), and from there it can be converted to and from `Duration` and `SystemTime`.
+#[allow(deprecated)]
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+#[repr(C)]
+pub struct Timeval {
+    pub tv_sec: libc::time_t,
+    pub tv_usec: libc::suseconds_t,
+}
+
+impl AsRef<libc::timeval> for Timeval {
+    #[inline]
+    fn as_ref(&self) -> &libc::timeval {
+        unsafe { &*(self as *const _ as *const _) }
+    }
+}
+
+impl From<TimeSpec> for Timeval {
+    #[inline]
+    fn from(t: TimeSpec) -> Self {
+        Self {
+            tv_sec: t.tv_sec,
+            tv_usec: (t.tv_nsec / 1000) as _,
+        }
+    }
+}
+
+impl From<Timeval> for TimeSpec {
+    #[inline]
+    fn from(t: Timeval) -> Self {
+        Self {
+            tv_sec: t.tv_sec,
+            tv_nsec: (t.tv_usec * 1000) as _,
+        }
+    }
+}
+
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub struct ClockId(libc::clockid_t);
 
