@@ -214,6 +214,45 @@ mod tests {
         );
     }
 
+    #[cfg(any(freebsdlike, apple))]
+    #[test]
+    fn test_sysctlnametomib() {
+        let mut buf = [0; CTL_MAXNAME];
+
+        let n = sysctlnametomib(
+            CStr::from_bytes_with_nul(b"hw.pagesize\0").unwrap(),
+            &mut buf,
+        )
+        .unwrap();
+        assert_eq!(&buf[..n], &[libc::CTL_HW, libc::HW_PAGESIZE]);
+
+        let n = sysctlnametomib(
+            CStr::from_bytes_with_nul(b"kern.argmax\0").unwrap(),
+            &mut buf,
+        )
+        .unwrap();
+        assert_eq!(&buf[..n], &[libc::CTL_KERN, libc::KERN_ARGMAX]);
+    }
+
+    #[cfg(any(freebsdlike, apple))]
+    #[test]
+    fn test_sysctlbyname() {
+        let pagesize = crate::getpagesize();
+
+        let mut pgsz = 0i32;
+        let n = unsafe {
+            sysctlbyname(
+                CStr::from_bytes_with_nul(b"hw.pagesize\0").unwrap(),
+                Some(core::slice::from_mut(&mut pgsz)),
+                None,
+            )
+            .unwrap()
+        };
+
+        assert_eq!(n, core::mem::size_of::<i32>());
+        assert_eq!(pgsz, pagesize as i32);
+    }
+
     #[test]
     fn test_sysctl_error() {
         assert_eq!(
