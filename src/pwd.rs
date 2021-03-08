@@ -159,13 +159,16 @@ impl Clone for Passwd {
         let mut buf = self.buf.clone();
 
         macro_rules! offset {
-            ($ptr:expr) => {
-                unsafe {
-                    buf.as_mut_ptr()
-                        .offset(($ptr as *mut u8).offset_from(self.buf.as_ptr()))
-                        as *mut libc::c_char
+            ($ptr:expr) => {{
+                let ptr = $ptr as *mut u8;
+
+                if self.buf.as_ptr_range().contains(&(ptr as *const u8)) {
+                    unsafe { buf.as_mut_ptr().offset(ptr.offset_from(self.buf.as_ptr())) as *mut _ }
+                } else {
+                    // The pointer probably refers to a static string
+                    ptr as *mut _
                 }
-            };
+            }};
         }
 
         let pwd = libc::passwd {

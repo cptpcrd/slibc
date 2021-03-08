@@ -134,12 +134,16 @@ impl Clone for Group {
         let mut buf = self.buf.clone();
 
         macro_rules! offset {
-            ($ptr:expr) => {
-                unsafe {
-                    buf.as_mut_ptr()
-                        .offset(($ptr as *mut u8).offset_from(self.buf.as_ptr())) as *mut _
+            ($ptr:expr) => {{
+                let ptr = $ptr as *mut u8;
+
+                if self.buf.as_ptr_range().contains(&(ptr as *const u8)) {
+                    unsafe { buf.as_mut_ptr().offset(ptr.offset_from(self.buf.as_ptr())) as *mut _ }
+                } else {
+                    // The pointer probably refers to a static string
+                    ptr as *mut _
                 }
-            };
+            }};
         }
 
         let grp = libc::group {
@@ -148,6 +152,15 @@ impl Clone for Group {
             gr_gid: self.grp.gr_gid,
             gr_mem: offset!(self.grp.gr_mem),
         };
+
+        #[allow(unused_unsafe)]
+        unsafe {
+            let mut mem_ptr = grp.gr_mem;
+            while !(*mem_ptr).is_null() {
+                *mem_ptr = offset!(*mem_ptr);
+                mem_ptr = mem_ptr.add(1);
+            }
+        }
 
         Group { grp, buf }
     }
