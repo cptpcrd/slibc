@@ -107,7 +107,7 @@ macro_rules! define_signal {
             /// system.
             ///
             /// This is the only way to get `Signal`s for the real time signals. If you want e.g.
-            /// `SIGRTMIN+1`, use `Signal::rt_signals::nth(1).unwrap()`.
+            /// `SIGRTMIN+1`, use `Signal::rt_signals().nth(1).unwrap()`.
             #[inline]
             pub fn rt_signals() -> SignalRtIter {
                 #[cfg(linuxlike)]
