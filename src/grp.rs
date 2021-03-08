@@ -195,7 +195,7 @@ impl fmt::Debug for Group {
             .field("gid", &self.gid())
             .field("name", &self.name())
             .field("passwd", &self.passwd())
-            .field("members", &util::DebugListField(self.members().clone()))
+            .field("members", &util::DebugListField(self.members()))
             .finish()
     }
 }
