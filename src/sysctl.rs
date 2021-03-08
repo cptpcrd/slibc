@@ -219,12 +219,15 @@ mod tests {
     fn test_sysctlnametomib() {
         let mut buf = [0; CTL_MAXNAME];
 
-        let n = sysctlnametomib(
-            CStr::from_bytes_with_nul(b"hw.pagesize\0").unwrap(),
-            &mut buf,
-        )
-        .unwrap();
-        assert_eq!(&buf[..n], &[libc::CTL_HW, libc::HW_PAGESIZE]);
+        #[cfg(not(apple))]
+        {
+            let n = sysctlnametomib(
+                CStr::from_bytes_with_nul(b"hw.pagesize\0").unwrap(),
+                &mut buf,
+            )
+            .unwrap();
+            assert_eq!(&buf[..n], &[libc::CTL_HW, libc::HW_PAGESIZE]);
+        }
 
         let n = sysctlnametomib(
             CStr::from_bytes_with_nul(b"kern.argmax\0").unwrap(),
