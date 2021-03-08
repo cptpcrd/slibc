@@ -388,4 +388,22 @@ mod tests {
         fcntl_setpipe_sz(w.fd(), size).unwrap();
         assert_eq!(size, fcntl_getpipe_sz(r.fd()).unwrap());
     }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn test_getpath() {
+        fn check_path(path: &CStr) {
+            let f = open(path, OFlag::O_RDONLY, 0).unwrap();
+
+            let mut buf = [0; crate::PATH_MAX];
+            assert_eq!(fcntl_getpath(f.fd(), &mut buf).unwrap(), path);
+            assert_eq!(
+                unsafe { fcntl_getpath_unchecked(f.fd(), &mut buf[..]) }.unwrap(),
+                path,
+            );
+        }
+
+        check_path(crate::c_paths::slash());
+        check_path(CStr::from_bytes_with_nul(b"/dev/null\0").unwrap());
+    }
 }
