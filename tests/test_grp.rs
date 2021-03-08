@@ -15,7 +15,19 @@ fn hash(grp: &Group) -> u64 {
 
 #[test]
 fn test_group_iter() {
-    let groups: Vec<Group> = unsafe { GroupIter::new() }.map(|g| g.unwrap()).collect();
+    let mut groups: Vec<Group> = Vec::new();
+    let mut duplicate_gids = Vec::new();
+
+    for group in unsafe { GroupIter::new() } {
+        let group = group.unwrap();
+        if groups.iter().find(|g| g.gid() == group.gid()).is_some() {
+            duplicate_gids.push(group.gid());
+        }
+        groups.push(group);
+    }
+
+    duplicate_gids.sort_unstable();
+    duplicate_gids.dedup();
 
     for grp in groups {
         assert_eq!(format!("{:?}", grp), format!("{:?}", grp.clone()));
@@ -32,12 +44,14 @@ fn test_group_iter() {
         #[cfg(feature = "std")]
         assert_eq!(hash(&grp), hash(&grp2));
 
-        // Look up by GID and make sure we get the same result
-        let grp3 = Group::lookup_gid(grp.gid()).unwrap().unwrap();
-        assert_eq!(grp, grp3);
-        assert_eq!(format!("{:?}", grp), format!("{:?}", grp3));
+        if !duplicate_gids.contains(&grp.gid()) {
+            // Look up by GID and make sure we get the same result
+            let grp3 = Group::lookup_gid(grp.gid()).unwrap().unwrap();
+            assert_eq!(grp, grp3);
+            assert_eq!(format!("{:?}", grp), format!("{:?}", grp3));
 
-        #[cfg(feature = "std")]
-        assert_eq!(hash(&grp), hash(&grp3));
+            #[cfg(feature = "std")]
+            assert_eq!(hash(&grp), hash(&grp3));
+        }
     }
 }

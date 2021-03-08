@@ -15,7 +15,26 @@ fn hash(pwd: &Passwd) -> u64 {
 
 #[test]
 fn test_passwd_iter() {
-    let passwds: Vec<Passwd> = unsafe { PasswdIter::new() }.map(|g| g.unwrap()).collect();
+    let mut passwds: Vec<Passwd> = Vec::new();
+    let mut duplicate_uids = Vec::new();
+    let mut duplicate_names = Vec::new();
+
+    for passwd in unsafe { PasswdIter::new() } {
+        let passwd = passwd.unwrap();
+        if passwds.iter().find(|p| p.uid() == passwd.uid()).is_some() {
+            duplicate_uids.push(passwd.uid());
+        }
+        if passwds.iter().find(|p| p.name() == passwd.name()).is_some() {
+            duplicate_names.push(passwd.name().to_owned());
+        }
+        passwds.push(passwd);
+    }
+
+    duplicate_uids.sort_unstable();
+    duplicate_uids.dedup();
+
+    duplicate_names.sort_unstable();
+    duplicate_names.dedup();
 
     for pwd in passwds {
         assert_eq!(format!("{:?}", pwd), format!("{:?}", pwd.clone()));
@@ -24,27 +43,24 @@ fn test_passwd_iter() {
         #[cfg(feature = "std")]
         assert_eq!(hash(&pwd), hash(&pwd.clone()));
 
-        // Look up by name and make sure we get the same result
-        let pwd2 = Passwd::lookup_name(pwd.name()).unwrap().unwrap();
-        assert_eq!(pwd, pwd2);
-        assert_eq!(format!("{:?}", pwd), format!("{:?}", pwd2));
+        if duplicate_names.iter().find(|&p| p == pwd.name()).is_none() {
+            // Look up by name and make sure we get the same result
+            let pwd2 = Passwd::lookup_name(pwd.name()).unwrap().unwrap();
+            assert_eq!(pwd, pwd2);
+            assert_eq!(format!("{:?}", pwd), format!("{:?}", pwd2));
 
-        #[cfg(feature = "std")]
-        assert_eq!(hash(&pwd), hash(&pwd2));
-
-        // FreeBSD has a "toor" group which is also UID 0. So don't try to compare to the UID
-        // lookup if we see an entry with UID 0 that isn't "root".
-        #[cfg(target_os = "freebsd")]
-        if pwd.uid() == 0 && pwd.name() != slibc::ffi::OsStr::new("root") {
-            continue;
+            #[cfg(feature = "std")]
+            assert_eq!(hash(&pwd), hash(&pwd2));
         }
 
-        // Look up by UID and make sure we get the same result
-        let pwd3 = Passwd::lookup_uid(pwd.uid()).unwrap().unwrap();
-        assert_eq!(pwd, pwd3);
-        assert_eq!(format!("{:?}", pwd), format!("{:?}", pwd3));
+        if !duplicate_uids.contains(&pwd.uid()) {
+            // Look up by UID and make sure we get the same result
+            let pwd3 = Passwd::lookup_uid(pwd.uid()).unwrap().unwrap();
+            assert_eq!(pwd, pwd3);
+            assert_eq!(format!("{:?}", pwd), format!("{:?}", pwd3));
 
-        #[cfg(feature = "std")]
-        assert_eq!(hash(&pwd), hash(&pwd3));
+            #[cfg(feature = "std")]
+            assert_eq!(hash(&pwd), hash(&pwd3));
+        }
     }
 }
