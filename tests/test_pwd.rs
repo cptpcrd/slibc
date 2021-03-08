@@ -21,10 +21,10 @@ fn test_passwd_iter() {
 
     for passwd in unsafe { PasswdIter::new() } {
         let passwd = passwd.unwrap();
-        if passwds.iter().find(|p| p.uid() == passwd.uid()).is_some() {
+        if passwds.iter().any(|p| p.uid() == passwd.uid()) {
             duplicate_uids.push(passwd.uid());
         }
-        if passwds.iter().find(|p| p.name() == passwd.name()).is_some() {
+        if passwds.iter().any(|p| p.name() == passwd.name()) {
             duplicate_names.push(passwd.name().to_owned());
         }
         passwds.push(passwd);

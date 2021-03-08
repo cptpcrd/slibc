@@ -20,7 +20,7 @@ fn test_group_iter() {
 
     for group in unsafe { GroupIter::new() } {
         let group = group.unwrap();
-        if groups.iter().find(|g| g.gid() == group.gid()).is_some() {
+        if groups.iter().any(|g| g.gid() == group.gid()) {
             duplicate_gids.push(group.gid());
         }
         groups.push(group);
