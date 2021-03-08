@@ -150,6 +150,40 @@ impl fmt::Display for Resource {
     }
 }
 
+impl core::str::FromStr for Resource {
+    type Err = ResourceParseError;
+
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        RESOURCES
+            .iter()
+            .find(|(_, name)| s == *name)
+            .map(|(res, _)| *res)
+            .ok_or(ResourceParseError(()))
+    }
+}
+
+#[derive(Clone)]
+pub struct ResourceParseError(());
+
+impl fmt::Display for ResourceParseError {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("Unknown resource")
+    }
+}
+
+impl fmt::Debug for ResourceParseError {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("ResourceParseError")
+            .field("message", &"Unknown resource")
+            .finish()
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ResourceParseError {}
+
 /// An iterator over the `Resource`s that are available on the current platform.
 #[derive(Clone, Debug)]
 pub struct ResourceIter(&'static [(Resource, &'static str)]);
@@ -602,5 +636,21 @@ mod tests {
         assert_eq!(it.len(), 0);
         assert_eq!(it.clone().count(), 0);
         assert_eq!(it.last(), None);
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn test_resource_string() {
+        use core::str::FromStr;
+
+        assert_eq!(Resource::NOFILE.to_string(), "NOFILE");
+        assert_eq!(Resource::from_str("NOFILE").unwrap(), Resource::NOFILE);
+
+        for res in Resource::iter() {
+            assert_eq!(Resource::from_str(&res.to_string()).unwrap(), res);
+        }
+
+        Resource::from_str("").unwrap_err();
+        Resource::from_str("NOEXIST").unwrap_err();
     }
 }
