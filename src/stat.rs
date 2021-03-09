@@ -295,6 +295,52 @@ pub fn umask(mask: u32) -> u32 {
     unsafe { libc::umask(mask as _) as u32 }
 }
 
+pub const UTIMENS_NOW: TimeSpec = TimeSpec {
+    tv_sec: 0,
+    tv_nsec: libc::UTIME_NOW,
+};
+pub const UTIMENS_OMIT: TimeSpec = TimeSpec {
+    tv_sec: 0,
+    tv_nsec: libc::UTIME_OMIT,
+};
+
+/// Update the timestamps of the specified file.
+///
+/// The file is identified by the combination of `dfd`, `path`, and `flags` in the same manner as
+/// the other `*at()` syscalls.
+///
+/// The new access timestamp is specified by `atime`, and the new modification timestamp is
+/// specified by `mtime`.
+///
+/// To set either timestamp to the current time, specify [`UTIMENS_NOW`] for the corresponding
+/// argument. To leave either timestamp unchanged, specify [`UTIMENS_OMIT`].
+#[inline]
+pub fn utimensat<P: AsPath>(
+    dfd: RawFd,
+    path: P,
+    atime: TimeSpec,
+    mtime: TimeSpec,
+    flags: AtFlag,
+) -> Result<()> {
+    let times = [atime, mtime];
+
+    path.with_cstr(|path| {
+        Error::unpack_nz(unsafe {
+            libc::utimensat(dfd, path.as_ptr(), times.as_ptr() as *const _, flags.bits())
+        })
+    })
+}
+
+/// Update the timestamps of file specified by the given file descriptor
+///
+/// This is identical to [`utimensat()`], except that the file is specified by an open file
+/// descriptor.
+#[inline]
+pub fn futimens(fd: RawFd, atime: TimeSpec, mtime: TimeSpec) -> Result<()> {
+    let times = [atime, mtime];
+    Error::unpack_nz(unsafe { libc::futimens(fd, times.as_ptr() as *const _) })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
