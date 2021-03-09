@@ -23,6 +23,7 @@ impl CpuSet {
         Self(set)
     }
 
+    #[inline]
     pub fn clear(&mut self) {
         unsafe {
             libc::CPU_ZERO(&mut self.0);
