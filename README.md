@@ -13,8 +13,31 @@ Simple interfaces to low-level functions in the system libc.
 - Uses a custom error type that can be converted to an `io::Error` (so `?` works in functions that return `io::Error`)
 - Supports `#![no_std]` environments (disable the `std` feature; optionally enable the `alloc` feature)
 
-## Supported systems
+## Supported platforms
+
+### "Tier 1"
+
+Tests are run on the following platforms:
 
 - Linux (glibc and musl)
 - macOS
 - FreeBSD
+
+`slibc` should work normally on these platforms.
+
+### "Tier 2"
+
+Builds (but not tests) are run for the following platforms:
+
+- NetBSD
+
+`slibc` should build on these platforms, but there may be bugs that cause even the test cases to fail.
+
+### "Tier 3"
+
+Builds without the `std` or `alloc` features are run for the following platforms:
+
+- OpenBSD
+- DragonFlyBSD
+
+`slibc` may not even properly build on these platforms if the `std` or `alloc` features are enabled.
