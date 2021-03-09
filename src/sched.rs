@@ -7,12 +7,12 @@ pub fn sched_yield() {
     debug_assert_eq!(ret, 0);
 }
 
-#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
-#[cfg(linuxlike)]
+#[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
+#[cfg(target_os = "linux")]
 #[derive(Copy, Clone)]
 pub struct CpuSet(libc::cpu_set_t);
 
-#[cfg(linuxlike)]
+#[cfg(target_os = "linux")]
 impl CpuSet {
     #[inline]
     pub fn new() -> Self {
@@ -63,7 +63,7 @@ impl CpuSet {
     }
 }
 
-#[cfg(linuxlike)]
+#[cfg(target_os = "linux")]
 impl Default for CpuSet {
     #[inline]
     fn default() -> Self {
@@ -71,14 +71,14 @@ impl Default for CpuSet {
     }
 }
 
-#[cfg(linuxlike)]
+#[cfg(target_os = "linux")]
 impl core::fmt::Debug for CpuSet {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         f.debug_set().entries(self.iter()).finish()
     }
 }
 
-#[cfg(linuxlike)]
+#[cfg(target_os = "linux")]
 impl PartialEq for CpuSet {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
@@ -86,10 +86,10 @@ impl PartialEq for CpuSet {
     }
 }
 
-#[cfg(linuxlike)]
+#[cfg(target_os = "linux")]
 impl Eq for CpuSet {}
 
-#[cfg(linuxlike)]
+#[cfg(target_os = "linux")]
 impl IntoIterator for CpuSet {
     type Item = u32;
     type IntoIter = CpuSetIter;
@@ -104,7 +104,7 @@ impl IntoIterator for CpuSet {
     }
 }
 
-#[cfg(linuxlike)]
+#[cfg(target_os = "linux")]
 impl core::iter::FromIterator<u32> for CpuSet {
     #[inline]
     fn from_iter<I: IntoIterator<Item = u32>>(it: I) -> Self {
@@ -114,7 +114,7 @@ impl core::iter::FromIterator<u32> for CpuSet {
     }
 }
 
-#[cfg(linuxlike)]
+#[cfg(target_os = "linux")]
 impl Extend<u32> for CpuSet {
     #[inline]
     fn extend<I: IntoIterator<Item = u32>>(&mut self, it: I) {
@@ -124,8 +124,8 @@ impl Extend<u32> for CpuSet {
     }
 }
 
-#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
-#[cfg(linuxlike)]
+#[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
+#[cfg(target_os = "linux")]
 #[derive(Clone, Debug)]
 pub struct CpuSetIter {
     set: CpuSet,
@@ -135,7 +135,7 @@ pub struct CpuSetIter {
     i: u32,
 }
 
-#[cfg(linuxlike)]
+#[cfg(target_os = "linux")]
 impl Iterator for CpuSetIter {
     type Item = u32;
 
@@ -165,7 +165,7 @@ impl Iterator for CpuSetIter {
     }
 }
 
-#[cfg(linuxlike)]
+#[cfg(target_os = "linux")]
 impl ExactSizeIterator for CpuSetIter {
     #[inline]
     fn len(&self) -> usize {
@@ -176,8 +176,8 @@ impl ExactSizeIterator for CpuSetIter {
 /// Set the CPU affinity mask of the process specified by `pid`.
 ///
 /// If `pid` is 0, this operates on the current process.
-#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
-#[cfg(linuxlike)]
+#[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
+#[cfg(target_os = "linux")]
 #[inline]
 pub fn sched_setaffinity(pid: libc::pid_t, mask: &CpuSet) -> Result<()> {
     Error::unpack_nz(unsafe {
@@ -188,8 +188,8 @@ pub fn sched_setaffinity(pid: libc::pid_t, mask: &CpuSet) -> Result<()> {
 /// Get the CPU affinity mask of the process specified by `pid`.
 ///
 /// If `pid` is 0, this operates on the current process.
-#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
-#[cfg(linuxlike)]
+#[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
+#[cfg(target_os = "linux")]
 #[inline]
 pub fn sched_getaffinity(pid: libc::pid_t) -> Result<CpuSet> {
     let mut mask = MaybeUninit::uninit();
@@ -220,7 +220,7 @@ mod tests {
         sched_yield();
     }
 
-    #[cfg(linuxlike)]
+    #[cfg(target_os = "linux")]
     #[test]
     fn test_cpuset() {
         fn check_empty(set: &CpuSet) {
@@ -272,7 +272,7 @@ mod tests {
         check_values(&set, &[0, 1, 10]);
     }
 
-    #[cfg(all(linuxlike, feature = "alloc"))]
+    #[cfg(all(target_os = "linux", feature = "alloc"))]
     #[test]
     fn test_cpuset_debug() {
         let mut set = CpuSet::new();
@@ -283,7 +283,7 @@ mod tests {
         assert_eq!(format!("{:?}", set), "{0, 10}");
     }
 
-    #[cfg(linuxlike)]
+    #[cfg(target_os = "linux")]
     #[test]
     fn test_sched_affinity() {
         let pid = crate::getpid();
@@ -296,7 +296,7 @@ mod tests {
         assert_eq!(affinity, sched_getaffinity(0).unwrap());
     }
 
-    #[cfg(linuxlike)]
+    #[cfg(target_os = "linux")]
     #[test]
     fn test_sched_getcpu() {
         let cpu = sched_getcpu().unwrap();
