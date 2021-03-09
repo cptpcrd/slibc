@@ -30,6 +30,7 @@ Tests are run on the following platforms:
 Builds (but not tests) are run for the following platforms:
 
 - NetBSD
+- Android
 
 `slibc` should build on these platforms, but there may be bugs that cause even the test cases to fail.
 
