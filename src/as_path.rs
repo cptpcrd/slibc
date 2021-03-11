@@ -21,7 +21,7 @@ pub trait AsPath {
     ///
     /// IMPORTANT: If the string contains an interior nul byte that prevents it from being converted
     /// to a `CString`, the closure will not be called, and an error will be returned.
-    fn with_cstr<T, F: FnMut(&CStr) -> Result<T>>(&self, f: F) -> Result<T>;
+    fn with_cstr<T, F: FnMut(&CStr) -> Result<T>>(self, f: F) -> Result<T>;
 }
 
 #[cfg(feature = "alloc")]
@@ -34,8 +34,31 @@ macro_rules! osstr_ref_impl {
                     self.as_ref()
                 }
 
-                fn with_cstr<T, F: FnMut(&CStr) -> Result<T>>(&self, mut f: F) -> Result<T> {
+                fn with_cstr<T, F: FnMut(&CStr) -> Result<T>>(self, mut f: F) -> Result<T> {
                     if let Ok(s) = CString::new(self.as_os_str().as_bytes()) {
+                        f(&s)
+                    } else {
+                        Err(Error::mid_nul())
+                    }
+                }
+            }
+        )*
+    };
+}
+
+#[cfg(feature = "alloc")]
+macro_rules! into_osstring_impl {
+    ($($type:ty)*) => {
+        $(
+            impl AsPath for $type {
+                #[inline]
+                fn as_os_str(&self) -> &OsStr {
+                    self.as_ref()
+                }
+
+                fn with_cstr<T, F: FnMut(&CStr) -> Result<T>>(self, mut f: F) -> Result<T> {
+                    let buf = OsString::from(self).into_vec();
+                    if let Ok(s) = CString::new(buf) {
                         f(&s)
                     } else {
                         Err(Error::mid_nul())
@@ -56,8 +79,8 @@ macro_rules! cstr_impl {
                 }
 
                 #[inline]
-                fn with_cstr<T, F: FnMut(&CStr) -> Result<T>>(&self, mut f: F) -> Result<T> {
-                    f(self)
+                fn with_cstr<T, F: FnMut(&CStr) -> Result<T>>(self, mut f: F) -> Result<T> {
+                    f(&self)
                 }
             }
         )*
@@ -66,11 +89,13 @@ macro_rules! cstr_impl {
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "std")] {
-        osstr_ref_impl! { &Path PathBuf &PathBuf &OsStr OsString &OsString &str String &String }
+        osstr_ref_impl! { &Path &PathBuf &OsStr &OsString &str &String }
+        into_osstring_impl! { PathBuf OsString String }
         cstr_impl! { &CStr CString &CString }
     } else if #[cfg(feature =  "alloc")] {
         use alloc::string::String;
-        osstr_ref_impl! { &OsStr OsString &OsString &str String &String }
+        osstr_ref_impl! { &OsStr &OsString &str &String }
+        into_osstring_impl! { OsString String }
         cstr_impl! { &CStr CString &CString }
     } else {
         cstr_impl! { &CStr }
