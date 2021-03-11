@@ -201,7 +201,7 @@ impl From<DirFileType> for crate::StatFileType {
             DirFileType::Fifo => libc::S_IFIFO,
             DirFileType::Block => libc::S_IFCHR,
             DirFileType::Char => libc::S_IFBLK,
-        };
+        } as u32;
 
         Self { mask }
     }
