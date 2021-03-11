@@ -98,6 +98,7 @@ pub struct Dirent {
 }
 
 impl Dirent {
+    #[allow(unused_variables)]
     #[inline]
     unsafe fn new(entry: *const libc::dirent, namelen: usize) -> Self {
         Self {
@@ -214,8 +215,8 @@ unsafe fn entry_name<'a>(entry: *const libc::dirent) -> &'a [u8] {
     #[cfg(bsd)]
     let namelen = {
         // Check that the first NUL byte is where the kernel says it is
-        debug_assert_eq!(libc::strlen(d_name), entry.d_namlen as usize);
-        entry.d_namlen as usize
+        debug_assert_eq!(libc::strlen(d_name), (*entry).d_namlen as usize);
+        (*entry).d_namlen as usize
     };
 
     #[cfg(not(bsd))]
