@@ -93,6 +93,52 @@ pub fn getrandom(buf: &mut [u8], flags: GrndFlags) -> Result<usize> {
     })
 }
 
+/// Get the absolute, canonicalized version of the given `path`.
+///
+/// This corresponds to `std::fs::canonicalize()` in the standard library.
+///
+/// `buf` must be an array [`PATH_MAX`] bytes long; the resolved path will be stored in there. To
+/// use a dynamically allocated buffer, see [`realpath_unchecked()`].
+#[inline]
+pub fn realpath<'a, P: AsPath>(path: P, buf: &'a mut [u8; crate::PATH_MAX]) -> Result<&'a CStr> {
+    // SAFETY: `buf` is guaranteed to be at least PATH_MAX bytes long
+    unsafe { realpath_unchecked(path, buf) }
+}
+
+/// Get the absolute, canonicalized version of the given `path`.
+///
+/// This is identical to [`realpath()`], except that the `buf` argument takes a slice (which may be
+/// dynamically allocated) instead of an array.
+///
+/// # Safety
+///
+/// `buf` must be at least [`PATH_MAX`](../limits/constant.PATH_MAX.html) bytes long. (This is
+/// verified if debug assertions are enabled.)
+#[inline]
+pub unsafe fn realpath_unchecked<'a, P: AsPath>(path: P, buf: &'a mut [u8]) -> Result<&'a CStr> {
+    debug_assert!(buf.len() >= crate::PATH_MAX);
+    path.with_cstr(|path| {
+        Error::unpack_ptr(libc::realpath(path.as_ptr(), buf.as_mut_ptr() as *mut _))
+    })?;
+
+    Ok(util::cstr_from_buf(buf).unwrap())
+}
+
+#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
+#[cfg(feature = "alloc")]
+pub fn realpath_alloc<P: AsPath>(path: P) -> Result<CString> {
+    let mut buf = Vec::with_capacity(crate::PATH_MAX);
+    unsafe {
+        buf.set_len(crate::PATH_MAX);
+    }
+
+    let len = unsafe { realpath_unchecked(path, &mut buf)? }
+        .to_bytes()
+        .len();
+    buf.truncate(len);
+    Ok(unsafe { CString::from_vec_unchecked(buf) })
+}
+
 #[cfg(all(feature = "alloc", not(feature = "std")))]
 use alloc::alloc::{GlobalAlloc, Layout};
 #[cfg(feature = "std")]
@@ -225,6 +271,34 @@ mod tests {
     fn test_getrandom() {
         let mut buf = [0; 256];
         assert_eq!(getrandom(&mut buf, GrndFlags::default()).unwrap(), 256);
+    }
+
+    #[test]
+    fn test_realpath() {
+        let mut cwdbuf = [0; crate::PATH_MAX];
+        let cwd = crate::getcwd(&mut cwdbuf).unwrap();
+
+        let mut buf = [0; crate::PATH_MAX];
+        let path = realpath(crate::c_paths::dot(), &mut buf).unwrap();
+        assert_eq!(path, cwd);
+
+        let mut buf = [0; crate::PATH_MAX];
+        let path = realpath(crate::c_paths::slash(), &mut buf).unwrap();
+        assert_eq!(path, CStr::from_bytes_with_nul(b"/\0").unwrap());
+
+        assert_eq!(
+            realpath(CStr::from_bytes_with_nul(b"/NOEXIST\0").unwrap(), &mut buf).unwrap_err(),
+            Errno::ENOENT
+        );
+
+        #[cfg(feature = "alloc")]
+        {
+            assert_eq!(realpath_alloc(".").unwrap().as_c_str(), cwd);
+            assert_eq!(
+                realpath_alloc("/").unwrap().as_c_str(),
+                realpath("/", &mut buf).unwrap()
+            );
+        }
     }
 
     #[cfg(feature = "alloc")]
