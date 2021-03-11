@@ -146,6 +146,9 @@ pub use unistd::*;
 pub use utsname::*;
 pub use wait::*;
 
+mod dirent;
+pub use dirent::*;
+
 cfg_if::cfg_if! {
     if #[cfg(feature = "alloc")] {
         mod grp;

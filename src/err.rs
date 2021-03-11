@@ -1,4 +1,5 @@
 use core::fmt;
+use core::ptr::NonNull;
 
 use crate::internal_prelude::*;
 
@@ -48,6 +49,13 @@ impl Error {
         } else {
             Ok(())
         }
+    }
+
+    /// If `ptr` is null, return the last OS error. Otherwise return (roughly)
+    /// `Ok(NonNull::new_unchecked(ptr))`.
+    #[inline]
+    pub(crate) fn unpack_ptr<T>(ptr: *mut T) -> Result<NonNull<T>> {
+        NonNull::new(ptr).ok_or_else(Self::last)
     }
 
     #[allow(dead_code)]
