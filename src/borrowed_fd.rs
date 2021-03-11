@@ -45,6 +45,16 @@ impl BorrowedFd {
         crate::read(self.0, buf)
     }
 
+    /// Read data from the file descriptor into multiple buffers.
+    ///
+    /// See `readv(2)` and [`readv()`](./fn.readv.html) for more information.
+    ///
+    /// This is the equivalent of `io::Read::read_vectored()` for use in `#![no_std]` crates.
+    #[inline]
+    pub fn readv(&self, iov: &mut [crate::IoVecMut]) -> Result<usize> {
+        crate::readv(self.0, iov)
+    }
+
     /// Write data into the file descriptor from a buffer.
     ///
     /// The number of bytes successfully written is returned.
@@ -53,6 +63,16 @@ impl BorrowedFd {
     #[inline]
     pub fn write(&self, buf: &[u8]) -> Result<usize> {
         crate::write(self.0, buf)
+    }
+
+    /// Write data into the file descriptor from multiple buffers.
+    ///
+    /// See `writev(2)` and [`writev()`](./fn.writev.html) for more information.
+    ///
+    /// This is the equivalent of `io::Write::write_vectored()` for use in `#![no_std]` crates.
+    #[inline]
+    pub fn writev(&self, iov: &[crate::IoVec]) -> Result<usize> {
+        crate::writev(self.0, iov)
     }
 
     /// Attempt to write an entire buffer into the file descriptor.
@@ -243,6 +263,18 @@ impl Read for BorrowedFd {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         Ok(crate::read(self.0, buf)?)
     }
+
+    #[inline]
+    fn read_vectored(&mut self, bufs: &mut [std::io::IoSliceMut<'_>]) -> std::io::Result<usize> {
+        let bufs = unsafe {
+            core::slice::from_raw_parts_mut(
+                bufs.as_mut_ptr() as *mut _,
+                core::cmp::min(bufs.len(), sys::IOV_MAX),
+            )
+        };
+
+        Ok(crate::readv(self.0, bufs)?)
+    }
 }
 
 #[cfg(feature = "std")]
@@ -255,6 +287,18 @@ impl Write for BorrowedFd {
     #[inline]
     fn flush(&mut self) -> std::io::Result<()> {
         Ok(())
+    }
+
+    #[inline]
+    fn write_vectored(&mut self, bufs: &[std::io::IoSlice<'_>]) -> std::io::Result<usize> {
+        let bufs = unsafe {
+            core::slice::from_raw_parts(
+                bufs.as_ptr() as *mut _,
+                core::cmp::min(bufs.len(), sys::IOV_MAX),
+            )
+        };
+
+        Ok(crate::writev(self.0, bufs)?)
     }
 }
 

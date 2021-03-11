@@ -20,6 +20,8 @@ cfg_if::cfg_if! {
             pub fn mlock2(addr: *const libc::c_void, len: libc::size_t, flags: libc::c_int) -> libc::c_int;
         }
 
+        pub const IOV_MAX: usize = 1024;
+
         pub const MLOCK_ONFAULT: libc::c_int = 1;
 
         pub const MCL_ONFAULT: libc::c_int = 4;
@@ -79,6 +81,9 @@ pub use libc::{CLOCK_PROF, CLOCK_VIRTUAL};
 
 #[cfg(netbsdlike)]
 pub use libc::CTL_MAXNAME;
+
+#[cfg(bsd)]
+pub use libc::IOV_MAX;
 
 #[cfg(linuxlike)]
 extern "C" {
