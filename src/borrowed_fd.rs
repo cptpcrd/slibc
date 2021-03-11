@@ -269,7 +269,7 @@ impl Read for BorrowedFd {
         let bufs = unsafe {
             core::slice::from_raw_parts_mut(
                 bufs.as_mut_ptr() as *mut _,
-                core::cmp::min(bufs.len(), sys::IOV_MAX),
+                core::cmp::min(bufs.len(), crate::IOV_MAX),
             )
         };
 
@@ -294,7 +294,7 @@ impl Write for BorrowedFd {
         let bufs = unsafe {
             core::slice::from_raw_parts(
                 bufs.as_ptr() as *mut _,
-                core::cmp::min(bufs.len(), sys::IOV_MAX),
+                core::cmp::min(bufs.len(), crate::IOV_MAX),
             )
         };
 
