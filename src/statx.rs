@@ -150,7 +150,7 @@ impl Default for StatxMask {
 bitflags::bitflags! {
     #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
     #[repr(transparent)]
-    pub struct StatxAttributes: u64 {
+    pub struct StatxAttr: u64 {
         /// The file is compressed by the filesystem.
         const COMPRESSED = 0x4;
         /// The file cannot be modified, deleted, renamed, or hard-linked to.
@@ -192,8 +192,8 @@ pub struct Statx {
     pub mask: StatxMask,
     /// The "preferred" block size for file I/O.
     pub blksize: u32,
-    /// File attributes (see [`StatxAttributes`] for more information).
-    pub attributes: StatxAttributes,
+    /// File attributes (see [`StatxAttr`] for more information).
+    pub attributes: StatxAttr,
     /// The number of hard links to the file.
     pub nlink: u32,
     /// The UID of the file's owner.
@@ -214,7 +214,7 @@ pub struct Statx {
     /// The number of blocks allocated to the file (in 512-byte units).
     pub blocks: u64,
     /// The attributes supported by the kernel and the filesystem containing the file.
-    pub attributes_mask: StatxAttributes,
+    pub attributes_mask: StatxAttr,
     /// The last access time of the file.
     pub atime: StatxTstamp,
     /// The creation time ("birth time") of the file.
@@ -378,8 +378,8 @@ pub fn statx<P: AsPath>(
 
         let mut buf: Statx = unsafe { buf.assume_init() };
         buf.mask.bits &= StatxMask::all().bits;
-        buf.attributes.bits &= StatxAttributes::all().bits;
-        buf.attributes_mask.bits &= StatxAttributes::all().bits;
+        buf.attributes.bits &= StatxAttr::all().bits;
+        buf.attributes_mask.bits &= StatxAttr::all().bits;
         Ok(buf)
     })
 }
