@@ -291,6 +291,16 @@ pub fn fstatat<P: AsPath>(dfd: RawFd, path: P, flags: AtFlag) -> Result<Stat> {
 }
 
 #[inline]
+pub fn mkdir<P: AsPath>(path: P, mode: u32) -> Result<()> {
+    path.with_cstr(|path| Error::unpack_nz(unsafe { libc::mkdir(path.as_ptr(), mode as _) }))
+}
+
+#[inline]
+pub fn mkdirat<P: AsPath>(dfd: RawFd, path: P, mode: u32) -> Result<()> {
+    path.with_cstr(|path| Error::unpack_nz(unsafe { libc::mkdirat(dfd, path.as_ptr(), mode as _) }))
+}
+
+#[inline]
 pub fn umask(mask: u32) -> u32 {
     unsafe { libc::umask(mask as _) as u32 }
 }
