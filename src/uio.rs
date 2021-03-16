@@ -35,7 +35,7 @@ impl<'a> IoVecMut<'a> {
     /// vecs = IoVecMut::advance(vecs, 4);
     /// assert_eq!(vecs, [IoVecMut::new(&mut [4, 5])]);
     /// ```
-    pub fn advance<'b>(mut bufs: &'b mut [Self], mut n: usize) -> &'b mut [Self] {
+    pub fn advance(mut bufs: &mut [Self], mut n: usize) -> &mut [Self] {
         while let Some((first, _)) = bufs.split_first_mut() {
             if n < first.len() {
                 first.0.iov_base = unsafe { first.0.iov_base.add(n) };
@@ -118,7 +118,7 @@ impl<'a> IoVec<'a> {
     /// vecs = IoVec::advance(vecs, 4);
     /// assert_eq!(vecs, [IoVec::new(&mut [4, 5])]);
     /// ```
-    pub fn advance<'b>(mut bufs: &'b mut [Self], mut n: usize) -> &'b mut [Self] {
+    pub fn advance(mut bufs: &mut [Self], mut n: usize) -> &mut [Self] {
         while let Some((first, _)) = bufs.split_first_mut() {
             if n < first.len() {
                 first.0.iov_base = unsafe { first.0.iov_base.add(n) };

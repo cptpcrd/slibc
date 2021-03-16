@@ -101,7 +101,7 @@ pub fn getrandom(buf: &mut [u8], flags: GrndFlags) -> Result<usize> {
 /// path will be stored in there. To use a dynamically allocated buffer, see
 /// [`realpath_unchecked()`].
 #[inline]
-pub fn realpath<'a, P: AsPath>(path: P, buf: &'a mut [u8; crate::PATH_MAX]) -> Result<&'a CStr> {
+pub fn realpath<P: AsPath>(path: P, buf: &mut [u8; crate::PATH_MAX]) -> Result<&CStr> {
     // SAFETY: `buf` is guaranteed to be at least PATH_MAX bytes long
     unsafe { realpath_unchecked(path, buf) }
 }
@@ -116,7 +116,7 @@ pub fn realpath<'a, P: AsPath>(path: P, buf: &'a mut [u8; crate::PATH_MAX]) -> R
 /// `buf` must be at least [`PATH_MAX`](../limits/constant.PATH_MAX.html) bytes long. (This is
 /// verified if debug assertions are enabled.)
 #[inline]
-pub unsafe fn realpath_unchecked<'a, P: AsPath>(path: P, buf: &'a mut [u8]) -> Result<&'a CStr> {
+pub unsafe fn realpath_unchecked<P: AsPath>(path: P, buf: &mut [u8]) -> Result<&CStr> {
     debug_assert!(buf.len() >= crate::PATH_MAX);
     path.with_cstr(|path| {
         Error::unpack_ptr(libc::realpath(path.as_ptr(), buf.as_mut_ptr() as *mut _))
