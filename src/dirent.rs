@@ -126,8 +126,8 @@ impl Dirent {
 
     /// Get the name of this entry as a `CStr`.
     ///
-    /// [`name()`] should be preferred unless a `CStr` is specifically needed (possibly for use in
-    /// later FFI).
+    /// [`Self::name()`] should be preferred unless a `CStr` is specifically needed (possibly for
+    /// use in later FFI).
     #[inline]
     pub fn name_cstr(&self) -> &CStr {
         // SAFETY: entry_name() makes sure that this length is accurate

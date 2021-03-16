@@ -97,8 +97,9 @@ pub fn getrandom(buf: &mut [u8], flags: GrndFlags) -> Result<usize> {
 ///
 /// This corresponds to `std::fs::canonicalize()` in the standard library.
 ///
-/// `buf` must be an array [`PATH_MAX`] bytes long; the resolved path will be stored in there. To
-/// use a dynamically allocated buffer, see [`realpath_unchecked()`].
+/// `buf` must be an array [`PATH_MAX`](../limits/constant.PATH_MAX.html) bytes long; the resolved
+/// path will be stored in there. To use a dynamically allocated buffer, see
+/// [`realpath_unchecked()`].
 #[inline]
 pub fn realpath<'a, P: AsPath>(path: P, buf: &'a mut [u8; crate::PATH_MAX]) -> Result<&'a CStr> {
     // SAFETY: `buf` is guaranteed to be at least PATH_MAX bytes long
