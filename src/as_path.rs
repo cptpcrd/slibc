@@ -21,7 +21,7 @@ pub trait AsPath {
     ///
     /// IMPORTANT: If the string contains an interior nul byte that prevents it from being converted
     /// to a `CString`, the closure will not be called, and an error will be returned.
-    fn with_cstr<T, F: FnMut(&CStr) -> Result<T>>(self, f: F) -> Result<T>;
+    fn with_cstr<T, F: FnOnce(&CStr) -> Result<T>>(self, f: F) -> Result<T>;
 }
 
 #[cfg(feature = "alloc")]
@@ -34,7 +34,7 @@ macro_rules! osstr_ref_impl {
                     self.as_ref()
                 }
 
-                fn with_cstr<T, F: FnMut(&CStr) -> Result<T>>(self, mut f: F) -> Result<T> {
+                fn with_cstr<T, F: FnOnce(&CStr) -> Result<T>>(self, f: F) -> Result<T> {
                     if let Ok(s) = CString::new(self.as_os_str().as_bytes()) {
                         f(&s)
                     } else {
@@ -56,7 +56,7 @@ macro_rules! into_osstring_impl {
                     self.as_ref()
                 }
 
-                fn with_cstr<T, F: FnMut(&CStr) -> Result<T>>(self, mut f: F) -> Result<T> {
+                fn with_cstr<T, F: FnOnce(&CStr) -> Result<T>>(self, f: F) -> Result<T> {
                     let buf = OsString::from(self).into_vec();
                     if let Ok(s) = CString::new(buf) {
                         f(&s)
@@ -79,7 +79,7 @@ macro_rules! cstr_impl {
                 }
 
                 #[inline]
-                fn with_cstr<T, F: FnMut(&CStr) -> Result<T>>(self, mut f: F) -> Result<T> {
+                fn with_cstr<T, F: FnOnce(&CStr) -> Result<T>>(self, f: F) -> Result<T> {
                     f(&self)
                 }
             }
