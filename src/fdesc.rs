@@ -225,6 +225,25 @@ mod tests {
     }
 
     #[test]
+    fn test_nonblocking() {
+        let fdesc = get_fdesc();
+        assert!(!fdesc.get_nonblocking().unwrap());
+
+        fdesc.set_nonblocking(false).unwrap();
+        assert!(!fdesc.get_nonblocking().unwrap());
+        fdesc.set_nonblocking(false).unwrap();
+        assert!(!fdesc.get_nonblocking().unwrap());
+
+        fdesc.set_nonblocking(true).unwrap();
+        assert!(fdesc.get_nonblocking().unwrap());
+        fdesc.set_nonblocking(true).unwrap();
+        assert!(fdesc.get_nonblocking().unwrap());
+
+        fdesc.set_nonblocking(false).unwrap();
+        assert!(!fdesc.get_nonblocking().unwrap());
+    }
+
+    #[test]
     fn test_dup() {
         let fdesc = get_fdesc();
 

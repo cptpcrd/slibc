@@ -175,6 +175,45 @@ impl BorrowedFd {
         Ok(())
     }
 
+    /// Get whether this file descriptor is in non-blocking mode.
+    #[inline]
+    pub fn get_nonblocking(&self) -> Result<bool> {
+        Ok(crate::fcntl_getfl(self.0)? & libc::O_NONBLOCK != 0)
+    }
+
+    /// Set the non-blocking status of this file descriptor.
+    #[inline]
+    pub fn set_nonblocking(&self, nonblock: bool) -> Result<()> {
+        // We don't use ioctl_fionbio() on Linux because it doesn't work on O_PATH file descriptors
+
+        cfg_if::cfg_if! {
+            if #[cfg(bsd)] {
+                crate::ioctl_fionbio(self.0, nonblock)?;
+            } else {
+                let mut flags = crate::fcntl_getfl(self.0)?;
+
+                #[allow(clippy::collapsible_if)]
+                if nonblock {
+                    if flags & libc::O_NONBLOCK == 0 {
+                        flags |= libc::O_NONBLOCK;
+                    } else {
+                        return Ok(());
+                    }
+                } else {
+                    if flags & libc::O_NONBLOCK != 0 {
+                        flags &= !libc::O_NONBLOCK;
+                    } else {
+                        return Ok(());
+                    }
+                }
+
+                crate::fcntl_setfl(self.0, flags)?;
+            }
+        }
+
+        Ok(())
+    }
+
     /// Check whether this file descriptor refers to a terminal.
     #[inline]
     pub fn isatty(&self) -> Result<bool> {

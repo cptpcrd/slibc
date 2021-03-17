@@ -66,6 +66,17 @@ pub fn ioctl_fionclex(fd: RawFd) -> Result<()> {
 }
 
 #[inline]
+pub fn ioctl_fionbio(fd: RawFd, nonblock: bool) -> Result<()> {
+    // The size that the argument is read with isn't well-defined and seems to vary, but a `usize`
+    // should be large enough.
+    let mut nonblock = nonblock as usize;
+    unsafe {
+        ioctl(fd, libc::FIONBIO as _, &mut nonblock as *mut _ as *mut _)?;
+    }
+    Ok(())
+}
+
+#[inline]
 pub fn ioctl_getwinsz(fd: RawFd) -> Result<Winsize> {
     let mut winsize = MaybeUninit::uninit();
     unsafe {
