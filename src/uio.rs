@@ -263,4 +263,33 @@ mod tests {
             "IoVecMut([0, 1, 2])"
         );
     }
+
+    #[test]
+    fn test_readv_writev() {
+        fn writev_all(f: &FileDesc, mut iov: &mut [IoVec]) {
+            while !iov.is_empty() {
+                let n = f.writev(iov).unwrap();
+                iov = IoVec::advance(iov, n);
+            }
+        }
+
+        fn readv_exact(f: &FileDesc, mut iov: &mut [IoVecMut]) {
+            while !iov.is_empty() {
+                let n = f.readv(iov).unwrap();
+                debug_assert!(n > 0);
+                iov = IoVecMut::advance(iov, n);
+            }
+        }
+
+        let (r, w) = crate::pipe().unwrap();
+
+        writev_all(&w, &mut [IoVec::new(b"abc"), IoVec::new(b"def")]);
+        drop(w);
+
+        let mut buf = [0; 6];
+        let (buf1, buf2) = buf.split_at_mut(2);
+        readv_exact(&r, &mut [IoVecMut::new(buf1), IoVecMut::new(buf2)]);
+
+        assert_eq!(buf, *b"abcdef");
+    }
 }
