@@ -358,7 +358,8 @@ pub struct SignalRtIter(RangeInclusive<Signal>);
 impl SignalRtIter {
     #[inline]
     fn mark_exhausted(&mut self) {
-        self.0 = Signal(0)..=Signal(0);
+        self.0 = Signal(1)..=Signal(0);
+        debug_assert_eq!(self.clone().len(), 0);
     }
 
     #[inline]
@@ -968,6 +969,14 @@ mod tests {
                 Signal::rt_signals().rposition(|s| s == sig)
             );
         }
+
+        let mut it = Signal::rt_signals();
+        it.by_ref().count();
+        assert_eq!(it.next(), None);
+
+        let mut it = Signal::rt_signals();
+        it.by_ref().rev().count();
+        assert_eq!(it.next(), None);
     }
 
     #[test]
