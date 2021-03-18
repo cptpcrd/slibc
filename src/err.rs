@@ -58,6 +58,11 @@ impl Error {
         NonNull::new(ptr).ok_or_else(Self::last)
     }
 
+    #[inline]
+    pub(crate) unsafe fn unpack_fdesc(res: i32) -> Result<FileDesc> {
+        Self::unpack(res).map(|fd| FileDesc::new(fd))
+    }
+
     #[allow(dead_code)]
     #[inline]
     pub(crate) const fn mid_nul() -> Self {

@@ -17,6 +17,11 @@ pub fn cvt_char_buf(buf: &[libc::c_char]) -> &[u8] {
 }
 
 #[inline]
+pub fn cvt_u8_buf(buf: &[u8]) -> &[libc::c_char] {
+    unsafe { core::slice::from_raw_parts(buf.as_ptr() as *const _, buf.len()) }
+}
+
+#[inline]
 pub fn cstr_from_buf(buf: &[u8]) -> Option<&CStr> {
     let index = crate::memchr(buf, 0)?;
     debug_assert!(index < buf.len());
@@ -177,6 +182,13 @@ mod tests {
     fn test_cvt_char_buf() {
         assert_eq!(cvt_char_buf(&[]), &[]);
         assert_eq!(cvt_char_buf(&[0 as libc::c_char, 1, 2]), &[0u8, 1, 2]);
+    }
+
+    #[allow(clippy::unnecessary_cast)]
+    #[test]
+    fn test_cvt_u8_buf() {
+        assert_eq!(cvt_u8_buf(&[]), &[]);
+        assert_eq!(cvt_u8_buf(&[0u8, 1, 2]), &[0 as libc::c_char, 1, 2]);
     }
 
     #[test]

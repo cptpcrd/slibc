@@ -53,6 +53,22 @@ cfg_if::cfg_if! {
 
         pub const CTL_MAXNAME: i32 = 24;
 
+        extern "C" {
+            pub fn bindat(
+                fd: libc::c_int,
+                s: libc::c_int,
+                addr: *const libc::sockaddr,
+                addrlen: libc::socklen_t,
+            ) -> libc::c_int;
+
+            pub fn connectat(
+                fd: libc::c_int,
+                s: libc::c_int,
+                name: *const libc::sockaddr,
+                namelen: libc::socklen_t,
+            ) -> libc::c_int;
+        }
+
         #[cfg(feature = "alloc")]
         extern "C" {
             pub fn mallocx(size: usize, flags: libc::c_int) -> *mut libc::c_void;
