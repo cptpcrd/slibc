@@ -165,6 +165,13 @@ impl fmt::Debug for IoVec<'_> {
     }
 }
 
+impl<'a> From<IoVecMut<'a>> for IoVec<'a> {
+    #[inline]
+    fn from(i: IoVecMut<'a>) -> IoVec<'a> {
+        Self(i.0, PhantomData)
+    }
+}
+
 #[inline]
 pub fn readv(fd: RawFd, iov: &mut [IoVecMut]) -> Result<usize> {
     Error::unpack_size(unsafe {
@@ -236,6 +243,14 @@ mod tests {
         let mut vec = IoVecMut::new(&mut buf);
         vec.copy_from_slice(&[3, 4, 5]);
         assert_eq!(vec.deref(), &[3, 4, 5]);
+    }
+
+    #[test]
+    fn test_iovec_from() {
+        assert_eq!(
+            IoVec::from(IoVecMut::new(&mut [b'a', b'b', b'c'])),
+            IoVec::new(b"abc")
+        );
     }
 
     #[cfg(feature = "alloc")]
