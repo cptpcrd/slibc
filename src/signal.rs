@@ -103,6 +103,26 @@ macro_rules! define_signal {
         )]
         #[cfg(any(linuxlike, target_os = "freebsd", target_os = "netbsd"))]
         impl Signal {
+            #[inline]
+            fn sigrtmin() -> Self {
+                #[cfg(linuxlike)]
+                let sig = unsafe { sys::__libc_current_sigrtmin() };
+                #[cfg(not(linuxlike))]
+                let sig = sys::SIGRTMIN;
+
+                Self(sig)
+            }
+
+            #[inline]
+            fn sigrtmax() -> Self {
+                #[cfg(linuxlike)]
+                let sig = unsafe { sys::__libc_current_sigrtmax() };
+                #[cfg(not(linuxlike))]
+                let sig = sys::SIGRTMAX;
+
+                Self(sig)
+            }
+
             /// Create an iterator over all of the real-time signals supported on the current
             /// system.
             ///
@@ -110,13 +130,7 @@ macro_rules! define_signal {
             /// `SIGRTMIN+1`, use `Signal::rt_signals().nth(1).unwrap()`.
             #[inline]
             pub fn rt_signals() -> SignalRtIter {
-                #[cfg(linuxlike)]
-                let (sigrtmin, sigrtmax) =
-                    unsafe { (sys::__libc_current_sigrtmin(), sys::__libc_current_sigrtmax()) };
-                #[cfg(not(linuxlike))]
-                let (sigrtmin, sigrtmax) = (sys::SIGRTMIN, sys::SIGRTMAX);
-
-                SignalRtIter(Self(sigrtmin)..=Self(sigrtmax))
+                SignalRtIter(Self::sigrtmin()..=Self::sigrtmax())
             }
         }
 
