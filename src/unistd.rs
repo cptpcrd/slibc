@@ -1077,6 +1077,102 @@ pub fn unlinkat<P: AsPath>(dfd: RawFd, path: P, flags: crate::AtFlag) -> Result<
     })
 }
 
+/// Read the symbolic link specified by the given `path`.
+///
+/// The contents of the symbolic link are placed in the buffer specified by `buf`, and the number
+/// of bytes stored in there is returned.
+///
+/// # Behavior with regards to `buf`
+///
+/// Say that this function was called with some `buf`, and it succeeded and returned some value `n`.
+///
+/// Then:
+/// - `buf[..n]` represents the path of the target of the specified symbolic link.
+/// - If there was not enough space in `buf` to store the target of the symbolic link, the target
+///   will be truncated and stored in `buf`.
+/// - This function will ensure that `buf[..n]` does NOT contain a trailing NUL byte (since POSIX
+///   does not define whether the returned path contains a NUL byte).
+/// - This function does NOT ensure that `buf[..n]` contains no other NUL bytes; the OS is
+///   responsible for guaranteeing that.
+///
+/// To check if the returned path has been truncated, it's recommended to check for
+/// `n >= buf.len() - 1`; this handles the case where the OS may have placed a trailing NUL byte
+/// (which `slibc` trimmed) into `buf`.
+///
+/// This function does not return a string type (e.g. `CStr` or `OsStr`) because that would hide
+/// the fact that users need to check for truncation.
+#[inline]
+pub fn readlink<P: AsPath>(path: P, buf: &mut [u8]) -> Result<usize> {
+    path.with_cstr(|path| {
+        let mut len = Error::unpack_size(unsafe {
+            libc::readlink(path.as_ptr(), buf.as_mut_ptr() as *mut _, buf.len())
+        })?;
+
+        // POSIX doesn't specify whether or not the returned string is NUL-terminated.
+        // (On most platforms, it isn't.)
+        if buf.get(len - 1) == Some(&0) {
+            // It *is* NUL-terminated; trim off the NUL.
+            len -= 1;
+        }
+
+        debug_assert_ne!(buf[len - 1], 0);
+        Ok(len)
+    })
+}
+
+/// Read the symbolic link specified by the given `path` and directory file descriptor `dirfd`.
+///
+/// See [`readlink()`] for more information on behavior regarding `buf` and the return value, and
+/// see `readlinkat(2)` for more information on how this function handles `path` and `dirfd`.
+#[inline]
+pub fn readlinkat<P: AsPath>(dirfd: RawFd, path: P, buf: &mut [u8]) -> Result<usize> {
+    path.with_cstr(|path| {
+        let mut len = Error::unpack_size(unsafe {
+            libc::readlinkat(dirfd, path.as_ptr(), buf.as_mut_ptr() as *mut _, buf.len())
+        })?;
+
+        // POSIX doesn't specify whether or not the returned string is NUL-terminated.
+        // (On most platforms, it isn't.)
+        if buf.get(len - 1) == Some(&0) {
+            // It *is* NUL-terminated; trim off the NUL.
+            len -= 1;
+        }
+
+        debug_assert_ne!(buf[len - 1], 0);
+        Ok(len)
+    })
+}
+
+/// Equivalent to [`readlink()`], but allocates memory to store the returned path.
+#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
+#[cfg(feature = "alloc")]
+pub fn readlink_alloc<P: AsPath>(path: P) -> Result<OsString> {
+    let mut buf = Vec::with_capacity(crate::PATH_MAX);
+    unsafe {
+        buf.set_len(crate::PATH_MAX);
+    }
+
+    let n = readlink(path, &mut buf)?;
+
+    buf.truncate(n);
+    Ok(OsString::from_vec(buf))
+}
+
+/// Equivalent to [`readlinkat()`], but allocates memory to store the returned path.
+#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
+#[cfg(feature = "alloc")]
+pub fn readlinkat_alloc<P: AsPath>(dirfd: RawFd, path: P) -> Result<OsString> {
+    let mut buf = Vec::with_capacity(crate::PATH_MAX);
+    unsafe {
+        buf.set_len(crate::PATH_MAX);
+    }
+
+    let n = readlinkat(dirfd, path, &mut buf)?;
+
+    buf.truncate(n);
+    Ok(OsString::from_vec(buf))
+}
+
 bitflags::bitflags! {
     pub struct AccessMode: libc::c_int {
         const F_OK = libc::F_OK;
