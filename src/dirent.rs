@@ -239,7 +239,30 @@ mod tests {
             if entry.name() == "." {
                 assert_eq!(entry.ino(), stat.ino());
                 assert_eq!(entry.ino(), dir_stat.ino());
+
+                assert_eq!(dir_stat.dev(), stat.dev());
             }
         }
+
+        assert!(dir.next().is_none());
+        dir.rewind();
+        assert!(dir.next().is_some());
+
+        let dir2 = unsafe {
+            Dir::fdopen(
+                crate::open(
+                    crate::c_paths::slash(),
+                    crate::OFlag::O_RDONLY | crate::OFlag::O_DIRECTORY | crate::OFlag::O_CLOEXEC,
+                    0,
+                )
+                .unwrap()
+                .into_fd(),
+            )
+        }
+        .unwrap();
+        let dir2_stat = dir2.stat().unwrap();
+
+        assert_eq!(dir_stat.ino(), dir2_stat.ino());
+        assert_eq!(dir_stat.dev(), dir2_stat.dev());
     }
 }
