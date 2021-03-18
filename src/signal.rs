@@ -60,15 +60,13 @@ macro_rules! define_signal {
 
             /// Construct a `Signal` from the given raw integer value (if it is valid).
             pub fn from_i32(sig: i32) -> Option<Self> {
-                let sig = Self(sig);
-
                 #[cfg(any(linuxlike, target_os = "freebsd", target_os = "netbsd"))]
-                if Self::rt_signals().contains(sig) {
-                    return Some(sig);
+                if Self::rt_signals().contains_i32(sig) {
+                    return Some(Self(sig));
                 }
 
-                if Self::POSIX_SIGNALS.contains(&sig) {
-                    Some(sig)
+                if Self::POSIX_SIGNALS.iter().any(|s| s.0 == sig) {
+                    Some(Self(sig))
                 } else {
                     None
                 }
@@ -130,7 +128,7 @@ macro_rules! define_signal {
             /// `SIGRTMIN+1`, use `Signal::rt_signals().nth(1).unwrap()`.
             #[inline]
             pub fn rt_signals() -> SignalRtIter {
-                SignalRtIter(Self::sigrtmin()..=Self::sigrtmax())
+                SignalRtIter(Self::sigrtmin().0..=Self::sigrtmax().0)
             }
         }
 
@@ -347,20 +345,19 @@ impl core::iter::FusedIterator for SignalPosixIter {}
     )))
 )]
 #[cfg(any(linuxlike, target_os = "freebsd", target_os = "netbsd"))]
-#[derive(Clone, Debug)]
-pub struct SignalRtIter(RangeInclusive<Signal>);
+#[derive(Clone)]
+pub struct SignalRtIter(RangeInclusive<i32>);
 
 #[cfg(any(linuxlike, target_os = "freebsd", target_os = "netbsd"))]
 impl SignalRtIter {
     #[inline]
-    fn mark_exhausted(&mut self) {
-        self.0 = Signal(1)..=Signal(0);
-        debug_assert_eq!(self.clone().len(), 0);
+    fn contains_i32(&self, sig: i32) -> bool {
+        sig >= *self.0.start() && sig <= *self.0.end()
     }
 
     #[inline]
     pub fn contains(&self, sig: Signal) -> bool {
-        sig.0 >= self.0.start().0 && sig.0 <= self.0.end().0
+        self.contains_i32(sig.0)
     }
 
     /// Get the position of the specified signal within this iterator.
@@ -369,7 +366,7 @@ impl SignalRtIter {
     #[inline]
     pub fn position_of(&self, sig: Signal) -> Option<usize> {
         if self.contains(sig) {
-            Some((sig.0 - self.0.start().0) as usize)
+            Some((sig.0 - self.0.start()) as usize)
         } else {
             None
         }
@@ -380,22 +377,14 @@ impl SignalRtIter {
 impl Iterator for SignalRtIter {
     type Item = Signal;
 
-    #[allow(clippy::iter_nth_zero)]
     #[inline]
     fn next(&mut self) -> Option<Signal> {
-        self.nth(0)
+        self.0.next().map(Signal)
     }
 
     #[inline]
     fn nth(&mut self, n: usize) -> Option<Signal> {
-        if n >= self.len() {
-            self.mark_exhausted();
-            None
-        } else {
-            let sig = Signal(self.0.start().0 + n as i32);
-            self.0 = Signal(sig.0 + 1)..=*self.0.end();
-            Some(sig)
-        }
+        self.0.nth(n).map(Signal)
     }
 
     #[inline]
@@ -417,22 +406,14 @@ impl Iterator for SignalRtIter {
 
 #[cfg(any(linuxlike, target_os = "freebsd", target_os = "netbsd"))]
 impl DoubleEndedIterator for SignalRtIter {
-    #[allow(clippy::iter_nth_zero)]
     #[inline]
     fn next_back(&mut self) -> Option<Signal> {
-        self.nth_back(0)
+        self.0.next_back().map(Signal)
     }
 
     #[inline]
     fn nth_back(&mut self, n: usize) -> Option<Signal> {
-        if n >= self.len() {
-            self.mark_exhausted();
-            None
-        } else {
-            let sig = Signal(self.0.end().0 - n as i32);
-            self.0 = *self.0.start()..=Signal(sig.0 - 1);
-            Some(sig)
-        }
+        self.0.nth_back(n).map(Signal)
     }
 }
 
@@ -440,12 +421,26 @@ impl DoubleEndedIterator for SignalRtIter {
 impl ExactSizeIterator for SignalRtIter {
     #[inline]
     fn len(&self) -> usize {
-        (self.0.end().0 + 1 - self.0.start().0) as usize
+        (self.0.end() + 1 - self.0.start()) as usize
     }
 }
 
 #[cfg(any(linuxlike, target_os = "freebsd", target_os = "netbsd"))]
 impl core::iter::FusedIterator for SignalRtIter {}
+
+#[cfg(any(linuxlike, target_os = "freebsd", target_os = "netbsd"))]
+impl fmt::Debug for SignalRtIter {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match (self.clone().next(), self.clone().next_back()) {
+            (Some(min), Some(max)) => f.debug_tuple("SignalRtIter").field(&(min..=max)).finish(),
+
+            _ => f
+                .debug_tuple("SignalRtIter")
+                .field(&[Signal::SIGINT; 0])
+                .finish(),
+        }
+    }
+}
 
 #[inline]
 pub fn kill<S: Into<Option<Signal>>>(pid: libc::pid_t, sig: S) -> Result<()> {
@@ -973,6 +968,21 @@ mod tests {
         let mut it = Signal::rt_signals();
         it.by_ref().rev().count();
         assert_eq!(it.next(), None);
+    }
+
+    #[cfg(all(
+        feature = "alloc",
+        any(linuxlike, target_os = "freebsd", target_os = "netbsd")
+    ))]
+    #[test]
+    fn test_signal_rt_iter_debug() {
+        let mut it = Signal::rt_signals();
+        assert_eq!(
+            format!("{:?}", it),
+            format!("SignalRtIter(SIGRTMIN+0..=SIGRTMIN+{})", it.len() - 1)
+        );
+        it.by_ref().count();
+        assert_eq!(format!("{:?}", it), "SignalRtIter([])");
     }
 
     #[test]
