@@ -148,6 +148,15 @@ macro_rules! define_signal {
                             return write!(f, "SIGRTMIN+{}", i);
                         }
 
+                        #[cfg(feature = "std")]
+                        if std::thread::panicking() {
+                            // This can happen e.g. if an assert_eq! from a test in this crate
+                            // fails and tries to format this Signal for the error message.
+                            // Don't panic while panicking (currently that causes an abort);
+                            // display something intelligible.
+                            return write!(f, "UnknownSignal({})", self.0);
+                        }
+
                         unreachable!();
                     }
                 };
