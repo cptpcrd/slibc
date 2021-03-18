@@ -66,6 +66,108 @@ where
     }
 }
 
+pub trait IntParseBytes: Default {
+    fn _parse_bytes_push_digit(self, base: u8, digit: u8) -> Option<Self>;
+
+    fn _parse_bytes_negate(self) -> Option<Self>;
+
+    #[inline]
+    fn parse_bytes(
+        bytes: &[u8],
+        allow_signs: bool,
+    ) -> core::result::Result<Self, IntParseBytesError> {
+        Self::parse_bytes_radix(bytes, 10, allow_signs)
+    }
+
+    fn parse_bytes_radix(
+        mut bytes: &[u8],
+        radix: u8,
+        allow_signs: bool,
+    ) -> core::result::Result<Self, IntParseBytesError> {
+        let mut negated = false;
+
+        match bytes.split_first() {
+            None => return Err(IntParseBytesError::Empty),
+
+            Some((&b'+', rest)) if allow_signs => bytes = rest,
+
+            Some((&b'-', rest)) if allow_signs => {
+                bytes = rest;
+                negated = true;
+            }
+
+            _ => (),
+        }
+
+        let mut res = Self::default();
+
+        for &ch in bytes {
+            let digit = if (b'0'..=b'9').contains(&ch) {
+                ch - b'0'
+            } else if (b'a'..=b'z').contains(&ch) {
+                (ch - b'a') + 10
+            } else if (b'A'..=b'Z').contains(&ch) {
+                (ch - b'A') + 10
+            } else {
+                return Err(IntParseBytesError::InvalidDigit);
+            };
+
+            if digit >= radix {
+                return Err(IntParseBytesError::InvalidDigit);
+            }
+
+            res = res
+                ._parse_bytes_push_digit(radix, digit)
+                .ok_or(IntParseBytesError::Overflow)?
+        }
+
+        if negated {
+            res = res
+                ._parse_bytes_negate()
+                .ok_or(IntParseBytesError::Overflow)?;
+        }
+
+        Ok(res)
+    }
+}
+
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+pub enum IntParseBytesError {
+    Empty,
+    InvalidDigit,
+    Overflow,
+}
+
+impl fmt::Display for IntParseBytesError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str(match self {
+            Self::Empty => "cannot parse from empty data",
+            Self::InvalidDigit => "invalid digit",
+            Self::Overflow => "numerical overflow while parsing",
+        })
+    }
+}
+
+macro_rules! parse_bytes_int_impl {
+    ($($ty:ty)*) => {
+        $(
+            impl IntParseBytes for $ty {
+                #[inline]
+                fn _parse_bytes_push_digit(self, base: u8, digit: u8) -> Option<Self> {
+                    self.checked_mul(base as _)?.checked_add(digit as _)
+                }
+
+                #[inline]
+                fn _parse_bytes_negate(self) -> Option<Self> {
+                    self.checked_neg()
+                }
+            }
+        )*
+    };
+}
+
+parse_bytes_int_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -132,6 +234,91 @@ mod tests {
         assert_eq!(
             format!("{:?}", DebugListField([0, 1, 2].iter())),
             "[0, 1, 2]"
+        );
+    }
+
+    #[test]
+    fn test_int_parse_bytes() {
+        assert_eq!(i32::parse_bytes(b"", true), Err(IntParseBytesError::Empty));
+        assert_eq!(i32::parse_bytes(b"", false), Err(IntParseBytesError::Empty));
+
+        assert_eq!(
+            i32::parse_bytes(b"d", true),
+            Err(IntParseBytesError::InvalidDigit)
+        );
+        assert_eq!(
+            i32::parse_bytes(b"-d", true),
+            Err(IntParseBytesError::InvalidDigit)
+        );
+        assert_eq!(
+            i32::parse_bytes(b"+d", true),
+            Err(IntParseBytesError::InvalidDigit)
+        );
+
+        assert_eq!(
+            u8::parse_bytes(b"256", true),
+            Err(IntParseBytesError::Overflow)
+        );
+        assert_eq!(
+            i8::parse_bytes(b"128", true),
+            Err(IntParseBytesError::Overflow)
+        );
+        assert_eq!(
+            u8::parse_bytes(b"-1", true),
+            Err(IntParseBytesError::Overflow)
+        );
+        assert_eq!(
+            i8::parse_bytes(b"-129", true),
+            Err(IntParseBytesError::Overflow)
+        );
+
+        assert_eq!(u8::parse_bytes(b"0", true), Ok(0));
+        assert_eq!(u8::parse_bytes(b"+0", true), Ok(0));
+        assert_eq!(u8::parse_bytes(b"-0", true), Ok(0));
+        assert_eq!(u8::parse_bytes(b"0", false), Ok(0));
+
+        assert_eq!(i8::parse_bytes(b"-1", true), Ok(-1));
+        assert_eq!(i8::parse_bytes(b"-127", true), Ok(-127));
+
+        assert_eq!(u8::parse_bytes(b"255", false), Ok(255));
+        assert_eq!(u8::parse_bytes(b"254", false), Ok(254));
+
+        assert_eq!(
+            u8::parse_bytes(b"+0", false),
+            Err(IntParseBytesError::InvalidDigit)
+        );
+        assert_eq!(
+            u8::parse_bytes(b"-0", false),
+            Err(IntParseBytesError::InvalidDigit)
+        );
+    }
+
+    #[test]
+    fn test_int_parse_bytes_radix() {
+        assert_eq!(u8::parse_bytes_radix(b"a1", 16, true), Ok(161));
+        assert_eq!(u16::parse_bytes_radix(b"z0", 36, true), Ok(35 * 36));
+        assert_eq!(u16::parse_bytes_radix(b"Z0", 36, true), Ok(35 * 36));
+        assert_eq!(u16::parse_bytes_radix(b"a0", 36, true), Ok(360));
+        assert_eq!(u16::parse_bytes_radix(b"A0", 36, true), Ok(360));
+
+        assert_eq!(u8::parse_bytes_radix(b"101", 2, true), Ok(5));
+        assert_eq!(i8::parse_bytes_radix(b"-101", 2, true), Ok(-5));
+        assert_eq!(
+            u8::parse_bytes_radix(b"-101", 2, false),
+            Err(IntParseBytesError::InvalidDigit)
+        );
+
+        assert_eq!(
+            u8::parse_bytes_radix(b"z0", 16, true),
+            Err(IntParseBytesError::InvalidDigit)
+        );
+        assert_eq!(
+            u8::parse_bytes_radix(b"Z0", 16, true),
+            Err(IntParseBytesError::InvalidDigit)
+        );
+        assert_eq!(
+            u8::parse_bytes_radix(b"2", 2, true),
+            Err(IntParseBytesError::InvalidDigit)
         );
     }
 }

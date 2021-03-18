@@ -175,21 +175,17 @@ macro_rules! define_signal {
 
                 #[cfg(any(linuxlike, target_os = "freebsd", target_os = "netbsd"))]
                 if let Some(s) = s.strip_prefix("SIGRTMIN+") {
-                    if matches!(s.as_bytes().first(), Some(b) if (b'0'..=b'9').contains(&b)) {
-                        if let Ok(i) = s.parse() {
-                            if let Some(sig) = Self::rt_signals().nth(i) {
-                                return Ok(sig);
-                            }
+                    if let Ok(i) = usize::parse_bytes(s.as_bytes(), false) {
+                        if let Some(sig) = Self::rt_signals().nth(i) {
+                            return Ok(sig);
                         }
                     }
 
                     return Err(SignalParseError(()));
                 } else if let Some(s) = s.strip_prefix("SIGRTMAX-") {
-                    if matches!(s.as_bytes().first(), Some(b) if (b'0'..=b'9').contains(&b)) {
-                        if let Ok(i) = s.parse() {
-                            if let Some(sig) = Self::rt_signals().nth_back(i) {
-                                return Ok(sig);
-                            }
+                    if let Ok(i) = usize::parse_bytes(s.as_bytes(), false) {
+                        if let Some(sig) = Self::rt_signals().nth_back(i) {
+                            return Ok(sig);
                         }
                     }
 

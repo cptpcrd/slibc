@@ -80,6 +80,7 @@ pub use err::{Error, Result};
 mod internal_prelude {
     pub use core::mem::MaybeUninit;
 
+    pub(crate) use super::util::IntParseBytes;
     pub(crate) use super::{sys, util, AsPath, Errno, Error, Result};
 
     pub use super::ffi::prelude::*;
