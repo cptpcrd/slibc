@@ -74,8 +74,7 @@ impl Iterator for Dir {
                 };
             }
 
-            let name = entry_name(entry);
-            Some(Ok(Dirent::new(entry, name.len())))
+            Some(Ok(Dirent::new(entry)))
         }
     }
 }
@@ -100,11 +99,16 @@ pub struct Dirent {
 impl Dirent {
     #[allow(unused_variables)]
     #[inline]
-    unsafe fn new(entry: *const libc::dirent, namelen: usize) -> Self {
+    unsafe fn new(entry: *const libc::dirent) -> Self {
+        let entry = *entry;
+
+        #[cfg(bsd)]
+        debug_assert_eq!(libc::strlen(entry.d_name.as_ptr()), entry.d_namlen as usize);
+
         Self {
-            entry: *entry,
+            entry,
             #[cfg(not(bsd))]
-            namelen,
+            namelen: libc::strlen(entry.d_name.as_ptr()),
         }
     }
 
@@ -130,7 +134,7 @@ impl Dirent {
     /// use in later FFI).
     #[inline]
     pub fn name_cstr(&self) -> &CStr {
-        // SAFETY: entry_name() makes sure that this length is accurate
+        // SAFETY: namelen() either comes from d_namelen (set by the kernel) or strlen(d_name)
         unsafe {
             CStr::from_bytes_with_nul_unchecked(util::cvt_char_buf(
                 &self.entry.d_name[..self.namelen() + 1],
@@ -206,23 +210,6 @@ impl From<DirFileType> for crate::StatFileType {
 
         Self { mask }
     }
-}
-
-#[inline]
-unsafe fn entry_name<'a>(entry: *const libc::dirent) -> &'a [u8] {
-    let d_name = (*entry).d_name.as_ptr();
-
-    #[cfg(bsd)]
-    let namelen = {
-        // Check that the first NUL byte is where the kernel says it is
-        debug_assert_eq!(libc::strlen(d_name), (*entry).d_namlen as usize);
-        (*entry).d_namlen as usize
-    };
-
-    #[cfg(not(bsd))]
-    let namelen = libc::strlen(d_name);
-
-    core::slice::from_raw_parts(d_name as *mut u8, namelen)
 }
 
 #[cfg(test)]
