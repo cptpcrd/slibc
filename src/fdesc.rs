@@ -94,16 +94,7 @@ impl Write for FileDesc {
 #[cfg(feature = "std")]
 impl Seek for FileDesc {
     fn seek(&mut self, pos: std::io::SeekFrom) -> std::io::Result<u64> {
-        use crate::SeekPos;
-        use std::io::SeekFrom;
-
-        let pos = match pos {
-            SeekFrom::Start(off) => SeekPos::Start(off),
-            SeekFrom::End(off) => SeekPos::End(off),
-            SeekFrom::Current(off) => SeekPos::Current(off),
-        };
-
-        Ok(crate::lseek(self.fd(), pos)?)
+        Seek::seek(&mut self.0, pos)
     }
 }
 
