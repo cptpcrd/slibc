@@ -332,7 +332,7 @@ impl Write for BorrowedFd {
     fn write_vectored(&mut self, bufs: &[std::io::IoSlice<'_>]) -> std::io::Result<usize> {
         let bufs = unsafe {
             core::slice::from_raw_parts(
-                bufs.as_ptr() as *mut _,
+                bufs.as_ptr() as *const _,
                 core::cmp::min(bufs.len(), crate::IOV_MAX),
             )
         };
