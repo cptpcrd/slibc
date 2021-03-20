@@ -12,11 +12,7 @@ impl Dir {
     /// Create a new directory stream for the directory with the given `path`.
     #[inline]
     pub fn open<P: AsPath>(path: P) -> Result<Self> {
-        path.with_cstr(|path| {
-            Ok(Self(Error::unpack_ptr(unsafe {
-                libc::opendir(path.as_ptr())
-            })?))
-        })
+        path.with_cstr(|path| Error::unpack_ptr(unsafe { libc::opendir(path.as_ptr()) }).map(Self))
     }
 
     /// Create a new directory stream for the directory referred to by the open file descriptor
@@ -27,7 +23,7 @@ impl Dir {
     /// `fd` will be consumed by the new directory stream.
     #[inline]
     pub unsafe fn fdopen(fd: RawFd) -> Result<Self> {
-        Ok(Self(Error::unpack_ptr(libc::fdopendir(fd))?))
+        Error::unpack_ptr(libc::fdopendir(fd)).map(Self)
     }
 
     /// Rewind to the start of this directory.
