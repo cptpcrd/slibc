@@ -254,6 +254,13 @@ impl From<Stat> for libc::stat {
     }
 }
 
+impl AsRef<libc::stat> for Stat {
+    #[inline]
+    fn as_ref(&self) -> &libc::stat {
+        &self.0
+    }
+}
+
 #[inline]
 pub fn stat<P: AsPath>(path: P) -> Result<Stat> {
     let mut buf = MaybeUninit::uninit();
