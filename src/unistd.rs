@@ -1183,6 +1183,38 @@ bitflags::bitflags! {
 }
 
 #[inline]
+pub fn link<O: AsPath, N: AsPath>(oldpath: O, newpath: N) -> Result<()> {
+    oldpath.with_cstr(|oldpath| {
+        newpath.with_cstr(|newpath| {
+            Error::unpack_nz(unsafe { libc::link(oldpath.as_ptr(), newpath.as_ptr()) })
+        })
+    })
+}
+
+#[inline]
+pub fn linkat<O: AsPath, N: AsPath>(
+    olddirfd: RawFd,
+    oldpath: O,
+    newdirfd: RawFd,
+    newpath: N,
+    flags: crate::AtFlag,
+) -> Result<()> {
+    oldpath.with_cstr(|oldpath| {
+        newpath.with_cstr(|newpath| {
+            Error::unpack_nz(unsafe {
+                libc::linkat(
+                    olddirfd,
+                    oldpath.as_ptr(),
+                    newdirfd,
+                    newpath.as_ptr(),
+                    flags.bits(),
+                )
+            })
+        })
+    })
+}
+
+#[inline]
 pub fn access<P: AsPath>(path: P, mode: AccessMode) -> Result<()> {
     path.with_cstr(|path| Error::unpack_nz(unsafe { libc::access(path.as_ptr(), mode.bits()) }))
 }
