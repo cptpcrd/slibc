@@ -1,7 +1,23 @@
 use crate::internal_prelude::*;
 
-mod addr;
-pub use addr::*;
+use core::fmt;
+
+mod inaddr;
+mod sockaddr;
+pub use inaddr::*;
+pub use sockaddr::*;
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AddrParseError(());
+
+impl fmt::Display for AddrParseError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("invalid address")
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for AddrParseError {}
 
 macro_rules! define_enum {
     (
