@@ -119,7 +119,7 @@ define_resource! {
     SIGPENDING = RLIMIT_SIGPENDING,
     /// (From Linux 2.4.0 to 2.4.24) The maximum number of `flock(2)` locks and `fcntl(2)` leases
     /// that this process may hold.
-    LOCKS = RLIMT_LOCKS,
+    LOCKS = RLIMIT_LOCKS,
 }
 
 impl Resource {
