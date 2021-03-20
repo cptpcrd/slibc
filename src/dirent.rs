@@ -56,6 +56,7 @@ impl Dir {
 impl Iterator for Dir {
     type Item = Result<Dirent>;
 
+    #[inline]
     fn next(&mut self) -> Option<Result<Dirent>> {
         unsafe {
             let eno_ptr = util::errno_ptr();

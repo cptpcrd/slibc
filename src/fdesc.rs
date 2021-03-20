@@ -93,6 +93,7 @@ impl Write for FileDesc {
 
 #[cfg(feature = "std")]
 impl Seek for FileDesc {
+    #[inline]
     fn seek(&mut self, pos: std::io::SeekFrom) -> std::io::Result<u64> {
         Seek::seek(&mut self.0, pos)
     }

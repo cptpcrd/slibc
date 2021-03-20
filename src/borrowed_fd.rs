@@ -343,6 +343,7 @@ impl Write for BorrowedFd {
 
 #[cfg(feature = "std")]
 impl Seek for BorrowedFd {
+    #[inline]
     fn seek(&mut self, pos: std::io::SeekFrom) -> std::io::Result<u64> {
         use crate::SeekPos;
         use std::io::SeekFrom;

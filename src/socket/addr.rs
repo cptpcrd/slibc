@@ -929,6 +929,7 @@ impl SockAddr {
         }
     }
 
+    #[inline]
     pub fn unwrap_inet4(self) -> Inet4Addr {
         match self {
             Self::Inet4(addr) => addr,
@@ -936,6 +937,7 @@ impl SockAddr {
         }
     }
 
+    #[inline]
     pub fn unwrap_inet6(self) -> Inet6Addr {
         match self {
             Self::Inet6(addr) => addr,
@@ -943,6 +945,7 @@ impl SockAddr {
         }
     }
 
+    #[inline]
     pub fn unwrap_unix(self) -> UnixAddr {
         match self {
             Self::Unix(addr) => addr,
