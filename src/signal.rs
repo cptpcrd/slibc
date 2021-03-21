@@ -101,8 +101,9 @@ macro_rules! define_signal {
         )]
         #[cfg(any(linuxlike, target_os = "freebsd", target_os = "netbsd"))]
         impl Signal {
+            /// Get a `Signal` representing `SIGRTMIN` on the current platform.
             #[inline]
-            fn sigrtmin() -> Self {
+            pub fn sigrtmin() -> Self {
                 #[cfg(linuxlike)]
                 let sig = unsafe { sys::__libc_current_sigrtmin() };
                 #[cfg(not(linuxlike))]
@@ -111,8 +112,9 @@ macro_rules! define_signal {
                 Self(sig)
             }
 
+            /// Get a `Signal` representing `SIGRTMAX` on the current platform.
             #[inline]
-            fn sigrtmax() -> Self {
+            pub fn sigrtmax() -> Self {
                 #[cfg(linuxlike)]
                 let sig = unsafe { sys::__libc_current_sigrtmax() };
                 #[cfg(not(linuxlike))]
@@ -124,8 +126,14 @@ macro_rules! define_signal {
             /// Create an iterator over all of the real-time signals supported on the current
             /// system.
             ///
-            /// This is the only way to get `Signal`s for the real time signals. If you want e.g.
-            /// `SIGRTMIN+1`, use `Signal::rt_signals().nth(1).unwrap()`.
+            /// If you want e.g. `SIGRTMIN+1`, use `Signal::rt_signals().nth(1).unwrap()`.
+            ///
+            /// The other ways to get values for the real-time signals are:
+            /// - `Self::sigrtmin()`/`Self::sigrtmax()` (only lets you get `SIGRTMIN`/`SIGRTMAX`)
+            /// - `Self::from_i32()` (if you know the current values of `SIGRTMIN`/`SIGRTMAX`, e.g.
+            ///   from `Self::sigrtmin()`/`Self::sigrtmax()`)
+            /// - The `FromStr` implementation for `Self`; e.g.
+            ///   `"SIGRTMIN+1".parse::<Signal>().unwrap()`.
             #[inline]
             pub fn rt_signals() -> SignalRtIter {
                 SignalRtIter(Self::sigrtmin().0..=Self::sigrtmax().0)
