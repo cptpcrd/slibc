@@ -140,10 +140,23 @@ macro_rules! define_signal {
                         #[cfg($cfg)]
                         libc::$name => stringify!($name),
                     )*)*
+
                     _ => {
                         #[cfg(any(linuxlike, target_os = "freebsd", target_os = "netbsd"))]
-                        if let Some(i) = Self::rt_signals().position_of(*self) {
-                            return write!(f, "SIGRTMIN+{}", i);
+                        {
+                            let rtsigs = Self::rt_signals();
+
+                            if let Some(i) = rtsigs.position_of(*self) {
+                                return if i == 0 {
+                                    f.write_str("SIGRTMIN")
+                                } else if i == rtsigs.len() - 1 {
+                                    f.write_str("SIGRTMAX")
+                                } else if i > rtsigs.len() / 2 {
+                                    write!(f, "SIGRTMAX-{}", rtsigs.len() - i - 1)
+                                } else {
+                                    write!(f, "SIGRTMIN+{}", i)
+                                };
+                            }
                         }
 
                         #[cfg(feature = "std")]
@@ -188,6 +201,10 @@ macro_rules! define_signal {
                     }
 
                     return Err(SignalParseError(()));
+                } else if s == "SIGRTMIN" {
+                    return Ok(Self::sigrtmin());
+                } else if s == "SIGRTMAX" {
+                    return Ok(Self::sigrtmax());
                 }
 
                 match s {
@@ -935,6 +952,23 @@ mod tests {
                     sig
                 );
             }
+
+            assert_eq!(
+                format!("{:?}", Signal::rt_signals().next().unwrap()),
+                "SIGRTMIN"
+            );
+            assert_eq!(
+                format!("{:?}", Signal::rt_signals().last().unwrap()),
+                "SIGRTMAX"
+            );
+            assert_eq!(
+                format!("{:?}", Signal::rt_signals().nth(1).unwrap()),
+                "SIGRTMIN+1"
+            );
+            assert_eq!(
+                format!("{:?}", Signal::rt_signals().nth_back(1).unwrap()),
+                "SIGRTMAX-1"
+            );
         }
     }
 
@@ -977,10 +1011,7 @@ mod tests {
     #[test]
     fn test_signal_rt_iter_debug() {
         let mut it = Signal::rt_signals();
-        assert_eq!(
-            format!("{:?}", it),
-            format!("SignalRtIter(SIGRTMIN+0..=SIGRTMIN+{})", it.len() - 1)
-        );
+        assert_eq!(format!("{:?}", it), "SignalRtIter(SIGRTMIN..=SIGRTMAX)");
         it.by_ref().count();
         assert_eq!(format!("{:?}", it), "SignalRtIter([])");
     }
