@@ -34,14 +34,14 @@ impl Inet4Addr {
     #[inline]
     pub const fn new(a: u8, b: u8, c: u8, d: u8) -> Self {
         Self(libc::in_addr {
-            s_addr: u32::from_be_bytes([a, b, c, d]),
+            s_addr: u32::from_ne_bytes([a, b, c, d]),
         })
     }
 
     /// Get the four octets that make up this address
     #[inline]
     pub fn octets(&self) -> [u8; 4] {
-        self.0.s_addr.to_be_bytes()
+        self.0.s_addr.to_ne_bytes()
     }
 
     /// Check whether the address portion of this socket address represents the "unspecified"

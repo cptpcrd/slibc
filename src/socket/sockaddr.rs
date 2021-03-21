@@ -168,7 +168,7 @@ impl Inet6SockAddr {
     #[inline]
     pub const fn new(ip: Inet6Addr, port: u16, flowinfo: u32, scope_id: u32) -> Self {
         Self(libc::sockaddr_in6 {
-            sin6_family: libc::AF_INET as _,
+            sin6_family: libc::AF_INET6 as _,
             sin6_port: port,
             sin6_flowinfo: flowinfo,
             sin6_scope_id: scope_id,
