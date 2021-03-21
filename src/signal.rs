@@ -179,13 +179,13 @@ macro_rules! define_signal {
         impl FromStr for Signal {
             type Err = SignalParseError;
 
-            fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
-                if !s.starts_with("SIG") {
-                    return Err(SignalParseError(()));
+            fn from_str(mut s: &str) -> core::result::Result<Self, Self::Err> {
+                if let Some(rest) = s.strip_prefix("SIG") {
+                    s = rest;
                 }
 
                 #[cfg(any(linuxlike, target_os = "freebsd", target_os = "netbsd"))]
-                if let Some(s) = s.strip_prefix("SIGRTMIN+") {
+                if let Some(s) = s.strip_prefix("RTMIN+") {
                     if let Ok(i) = usize::parse_bytes(s.as_bytes(), false) {
                         if let Some(sig) = Self::rt_signals().nth(i) {
                             return Ok(sig);
@@ -193,7 +193,7 @@ macro_rules! define_signal {
                     }
 
                     return Err(SignalParseError(()));
-                } else if let Some(s) = s.strip_prefix("SIGRTMAX-") {
+                } else if let Some(s) = s.strip_prefix("RTMAX-") {
                     if let Ok(i) = usize::parse_bytes(s.as_bytes(), false) {
                         if let Some(sig) = Self::rt_signals().nth_back(i) {
                             return Ok(sig);
@@ -201,23 +201,26 @@ macro_rules! define_signal {
                     }
 
                     return Err(SignalParseError(()));
-                } else if s == "SIGRTMIN" {
+                } else if s == "RTMIN" {
                     return Ok(Self::sigrtmin());
-                } else if s == "SIGRTMAX" {
+                } else if s == "RTMAX" {
                     return Ok(Self::sigrtmax());
                 }
 
-                match s {
-                    $($(
-                        #[cfg($cfg)]
-                        stringify!($name) => Ok(Self::$name),
-                    )*)*
-                    $($(
-                        #[cfg($cfg2)]
-                        stringify!($name2) => Ok(Self::$name2),
-                    )*)*
-                    _ => Err(SignalParseError(())),
-                }
+                $($(
+                    #[cfg($cfg)]
+                    if s == &stringify!($name)[3..] {
+                        return Ok(Self::$name);
+                    }
+                )*)*
+                $($(
+                    #[cfg($cfg2)]
+                    if s == &stringify!($name2)[3..] {
+                        return Ok(Self::$name2);
+                    }
+                )*)*
+
+                Err(SignalParseError(()))
             }
         }
     }
@@ -939,6 +942,7 @@ mod tests {
         for sig in all_signals() {
             let name = format!("{:?}", sig);
             assert_eq!(Signal::from_str(&name).unwrap(), sig);
+            assert_eq!(Signal::from_str(&name[3..]).unwrap(), sig);
         }
 
         #[cfg(any(linuxlike, target_os = "freebsd", target_os = "netbsd"))]
@@ -949,6 +953,12 @@ mod tests {
                 assert_eq!(Signal::from_str(&format!("SIGRTMIN+{}", i)).unwrap(), sig);
                 assert_eq!(
                     Signal::from_str(&format!("SIGRTMAX-{}", n_rtsigs - i - 1)).unwrap(),
+                    sig
+                );
+
+                assert_eq!(Signal::from_str(&format!("RTMIN+{}", i)).unwrap(), sig);
+                assert_eq!(
+                    Signal::from_str(&format!("RTMAX-{}", n_rtsigs - i - 1)).unwrap(),
                     sig
                 );
             }
