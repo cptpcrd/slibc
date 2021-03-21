@@ -100,8 +100,31 @@ pub struct Dirent {
 impl Dirent {
     #[allow(unused_variables)]
     #[inline]
-    unsafe fn new(entry: *const libc::dirent) -> Self {
-        let entry = *entry;
+    unsafe fn new(raw_entry: *const libc::dirent) -> Self {
+        // This should be whatever type `d_reclen` is on this platform
+        type ReclenType = u16;
+
+        // Get the value of `d_reclen` without dereferencing `raw_entry` or constructing a reference
+        // That wouldn't be safe because only part of `d_name` might be addressable
+        let reclen = *((raw_entry as *const u8).add(memoffset::offset_of!(libc::dirent, d_reclen))
+            as *const ReclenType);
+
+        // There should be enough space for all the fields before `d_name`, plus 2 bytes for at
+        // least one charater of the name and a terminating NUL
+        debug_assert!(reclen as usize >= memoffset::offset_of!(libc::dirent, d_name) + 2);
+
+        // Now only copy out the first `reclen` bytes of the entry
+        let mut entry = MaybeUninit::<libc::dirent>::uninit();
+        core::ptr::copy_nonoverlapping(
+            raw_entry as *const u8,
+            entry.as_mut_ptr() as *mut u8,
+            reclen as usize,
+        );
+        let entry = entry.assume_init();
+
+        // Check that a) the type for `reclen` is right and b) the value is right
+        let _: ReclenType = entry.d_reclen;
+        debug_assert_eq!(entry.d_reclen, reclen);
 
         #[cfg(bsd)]
         debug_assert_eq!(libc::strlen(entry.d_name.as_ptr()), entry.d_namlen as usize);
