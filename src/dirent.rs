@@ -18,6 +18,10 @@ impl Dir {
     /// Create a new directory stream for the directory referred to by the open file descriptor
     /// `fd`.
     ///
+    /// `fd` should be a valid file descriptor open to a directory. It should NOT be open for
+    /// "searching" (e.g. whichever of `O_SEARCH`, `O_EXEC`, or `O_PATH` the current platform might
+    /// support).
+    ///
     /// # Safety
     ///
     /// `fd` will be consumed by the new directory stream.
