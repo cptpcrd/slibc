@@ -101,13 +101,30 @@ impl Dirent {
     #[allow(unused_variables)]
     #[inline]
     unsafe fn new(raw_entry: *const libc::dirent) -> Self {
-        // This should be whatever type `d_reclen` is on this platform
-        type ReclenType = u16;
+        cfg_if::cfg_if! {
+            if #[cfg(target_os = "dragonfly")] {
+                // DragonFlyBSD doesn't have `d_reclen`, so we have to use
+                // `offsetof(dirent, d_namlen) + d_namelen + 1`.
 
-        // Get the value of `d_reclen` without dereferencing `raw_entry` or constructing a reference
-        // That wouldn't be safe because only part of `d_name` might be addressable
-        let reclen = *((raw_entry as *const u8).add(memoffset::offset_of!(libc::dirent, d_reclen))
-            as *const ReclenType);
+                // Get d_namlen using the same technique as we use for getting d_reclen on other
+                // platforms
+                let namlen = *((raw_entry as *const u8)
+                    .add(memoffset::offset_of!(libc::dirent, d_namlen))
+                    as *const u16);
+
+                let reclen = memoffset::offset_of!(libc::dirent, d_name) as u16 + namlen + 1;
+            } else {
+                // This should be whatever type `d_reclen` is on this platform
+                type ReclenType = u16;
+
+                // Get the value of `d_reclen` without dereferencing `raw_entry` or constructing a
+                // reference
+                // That wouldn't be safe because only part of `d_name` might be addressable
+                let reclen = *((raw_entry as *const u8)
+                    .add(memoffset::offset_of!(libc::dirent, d_reclen))
+                    as *const ReclenType);
+            }
+        }
 
         // There should be enough space for all the fields before `d_name`, plus 2 bytes for at
         // least one charater of the name and a terminating NUL
@@ -123,8 +140,11 @@ impl Dirent {
         let entry = entry.assume_init();
 
         // Check that a) the type for `reclen` is right and b) the value is right
-        let _: ReclenType = entry.d_reclen;
-        debug_assert_eq!(entry.d_reclen, reclen);
+        #[cfg(not(target_os = "dragonfly"))]
+        {
+            let _: ReclenType = entry.d_reclen;
+            debug_assert_eq!(entry.d_reclen, reclen);
+        }
 
         #[cfg(bsd)]
         debug_assert_eq!(libc::strlen(entry.d_name.as_ptr()), entry.d_namlen as usize);
