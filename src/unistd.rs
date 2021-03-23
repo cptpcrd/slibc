@@ -21,6 +21,42 @@ pub fn sysconf(name: SysconfName) -> Option<usize> {
     }
 }
 
+#[cfg_attr(docsrs, doc(cfg(not(target_os = "android"))))]
+#[cfg(not(target_os = "android"))]
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+#[repr(i32)]
+pub enum ConfstrName {
+    PATH = sys::_CS_PATH,
+}
+
+#[cfg_attr(docsrs, doc(cfg(not(target_os = "android"))))]
+#[cfg(not(target_os = "android"))]
+pub fn confstr(name: ConfstrName, buf: &mut [u8]) -> Option<usize> {
+    match unsafe { sys::confstr(name as i32, buf.as_mut_ptr() as *mut _, buf.len()) } {
+        // It seems macOS *may* return (size_t)-1 on certain errors
+        #[cfg(apple)]
+        usize::MAX => None,
+
+        0 => None,
+        len => Some(len),
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(all(feature = "alloc", not(target_os = "android")))))]
+#[cfg(all(feature = "alloc", not(target_os = "android")))]
+pub fn confstr_alloc(name: ConfstrName) -> Option<CString> {
+    let len = confstr(name, &mut [])?;
+    let mut buf = Vec::new();
+    buf.resize(len, 0);
+
+    let newlen = confstr(name, &mut buf)?;
+    assert_eq!(newlen, len);
+
+    buf.truncate(newlen - 1);
+    // SAFETY: confstr() should have added a terminating NUL (which we trimmed off)
+    Some(unsafe { CString::from_vec_unchecked(buf) })
+}
+
 #[inline]
 pub fn gethostid() -> u32 {
     unsafe { sys::gethostid() as u32 }
@@ -1506,5 +1542,20 @@ mod tests {
         let (r, w) = pipe_cloexec().unwrap();
         assert!(r.get_cloexec().unwrap());
         assert!(w.get_cloexec().unwrap());
+    }
+
+    #[test]
+    fn test_confstr() {
+        let mut buf = [0; crate::PATH_MAX];
+        let len = confstr(ConfstrName::PATH, &mut buf).unwrap();
+        CStr::from_bytes_with_nul(&buf[..len]).unwrap();
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn test_confstr_alloc() {
+        let s = confstr_alloc(ConfstrName::PATH).unwrap();
+        assert!(!s.to_bytes().contains(&0));
+        assert_eq!(s.to_bytes_with_nul().last(), Some(&0));
     }
 }

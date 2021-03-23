@@ -10,6 +10,9 @@ extern "C" {
     pub fn getpagesize() -> libc::c_int;
 
     pub fn clock_settime(clockid: libc::clockid_t, tp: *const libc::timespec) -> libc::c_int;
+
+    #[cfg(not(target_os = "android"))]
+    pub fn confstr(name: libc::c_int, buf: *mut libc::c_char, len: usize) -> usize;
 }
 
 cfg_if::cfg_if! {
@@ -25,6 +28,8 @@ cfg_if::cfg_if! {
         pub const MLOCK_ONFAULT: libc::c_int = 1;
 
         pub const MCL_ONFAULT: libc::c_int = 4;
+
+        pub const _CS_PATH: libc::c_int = 0;
     } else if #[cfg(target_os = "android")] {
         pub const IOV_MAX: usize = 1024;
     } else if #[cfg(any(target_os = "macos", target_os = "ios"))] {
@@ -34,6 +39,8 @@ cfg_if::cfg_if! {
         pub const CLOCK_MONOTONIC_RAW_APPROX: libc::clockid_t = 5;
         pub const CLOCK_UPTIME_RAW: libc::clockid_t = 8;
         pub const CLOCK_UPTIME_RAW_APPROX: libc::clockid_t = 9;
+
+        pub const _CS_PATH: libc::c_int = 1;
     } else if #[cfg(target_os = "netbsd")] {
         pub const SIGRTMIN: libc::c_int = 33;
         pub const SIGRTMAX: libc::c_int = 63;
@@ -42,11 +49,15 @@ cfg_if::cfg_if! {
         pub const CLOCK_PROF: libc::clockid_t = 2;
         pub const CLOCK_THREAD_CPUTIME_ID: libc::clockid_t = 0x20000000;
         pub const CLOCK_PROCESS_CPUTIME_ID: libc::clockid_t = 0x40000000;
+
+        pub const _CS_PATH: libc::c_int = 1;
     } else if #[cfg(target_os = "openbsd")] {
         pub const CLOCK_PROCESS_CPUTIME_ID: libc::clockid_t = 2;
         pub const CLOCK_THREAD_CPUTIME_ID: libc::clockid_t = 4;
         pub const CLOCK_UPTIME: libc::clockid_t = 5;
         pub const CLOCK_BOOTTIME: libc::clockid_t = 6;
+
+        pub const _CS_PATH: libc::c_int = 1;
     } else if #[cfg(target_os = "freebsd")] {
         pub const SIGRTMIN: libc::c_int = 65;
         pub const SIGRTMAX: libc::c_int = 126;
@@ -87,8 +98,12 @@ cfg_if::cfg_if! {
         pub fn MALLOCX_ALIGN(a: usize) -> libc::c_int {
             a.trailing_zeros() as _
         }
+
+        pub const _CS_PATH: libc::c_int = 1;
     } else if #[cfg(target_os = "dragonfly")] {
         pub const CTL_MAXNAME: i32 = 12;
+
+        pub const _CS_PATH: libc::c_int = 1;
     }
 }
 
