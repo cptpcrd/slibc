@@ -245,4 +245,27 @@ mod tests {
         let fdesc3 = fdesc.dup_cloexec().unwrap();
         assert!(fdesc3.get_cloexec().unwrap());
     }
+
+    #[test]
+    fn test_ebadf() {
+        let fdesc = unsafe { FileDesc::new(-1) };
+
+        assert_eq!(
+            fdesc.as_ref().read_exact(&mut [0]).unwrap_err(),
+            Errno::EBADF
+        );
+        assert_eq!(fdesc.as_ref().write_all(&[0]).unwrap_err(), Errno::EBADF);
+        assert_eq!(fdesc.sync_all().unwrap_err(), Errno::EBADF);
+        assert_eq!(fdesc.sync_data().unwrap_err(), Errno::EBADF);
+        assert_eq!(fdesc.stat().unwrap_err(), Errno::EBADF);
+        assert_eq!(
+            fdesc
+                .statx(crate::AtFlag::empty(), crate::StatxMask::BASIC_STATS)
+                .unwrap_err(),
+            Errno::EBADF
+        );
+
+        #[cfg(target_os = "linux")]
+        assert_eq!(fdesc.syncfs().unwrap_err(), Errno::EBADF);
+    }
 }
