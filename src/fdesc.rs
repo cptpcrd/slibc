@@ -258,14 +258,16 @@ mod tests {
         assert_eq!(fdesc.sync_all().unwrap_err(), Errno::EBADF);
         assert_eq!(fdesc.sync_data().unwrap_err(), Errno::EBADF);
         assert_eq!(fdesc.stat().unwrap_err(), Errno::EBADF);
-        assert_eq!(
-            fdesc
-                .statx(crate::AtFlag::empty(), crate::StatxMask::BASIC_STATS)
-                .unwrap_err(),
-            Errno::EBADF
-        );
 
         #[cfg(target_os = "linux")]
-        assert_eq!(fdesc.syncfs().unwrap_err(), Errno::EBADF);
+        {
+            assert_eq!(
+                fdesc
+                    .statx(crate::AtFlag::empty(), crate::StatxMask::BASIC_STATS)
+                    .unwrap_err(),
+                Errno::EBADF
+            );
+            assert_eq!(fdesc.syncfs().unwrap_err(), Errno::EBADF);
+        }
     }
 }
