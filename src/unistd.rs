@@ -1251,6 +1251,26 @@ pub fn linkat<O: AsPath, N: AsPath>(
 }
 
 #[inline]
+pub fn symlink<T: AsPath, L: AsPath>(target: T, linkpath: L) -> Result<()> {
+    target.with_cstr(|target| {
+        linkpath.with_cstr(|linkpath| {
+            Error::unpack_nz(unsafe { libc::symlink(target.as_ptr(), linkpath.as_ptr()) })
+        })
+    })
+}
+
+#[inline]
+pub fn symlinkat<T: AsPath, L: AsPath>(target: T, newdirfd: RawFd, linkpath: L) -> Result<()> {
+    target.with_cstr(|target| {
+        linkpath.with_cstr(|linkpath| {
+            Error::unpack_nz(unsafe {
+                libc::symlinkat(target.as_ptr(), newdirfd, linkpath.as_ptr())
+            })
+        })
+    })
+}
+
+#[inline]
 pub fn access<P: AsPath>(path: P, mode: AccessMode) -> Result<()> {
     path.with_cstr(|path| Error::unpack_nz(unsafe { libc::access(path.as_ptr(), mode.bits()) }))
 }
