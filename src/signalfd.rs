@@ -129,6 +129,14 @@ macro_rules! ssi_attrs {
 }
 
 impl SigFdSigInfo {
+    /// Return a new `SigFdSigInfo` struct with all fields zeroed.
+    #[inline]
+    pub fn zeroed() -> Self {
+        // SAFETY: signalfd_siginfo is entirely integer fields; zeroing it out is valid
+        // initialization
+        Self(unsafe { core::mem::zeroed() })
+    }
+
     ssi_attrs! {
         ssi_signo -> i32,
         ssi_code -> i32,
