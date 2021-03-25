@@ -21,6 +21,11 @@ pub struct TimeSpec {
     pub tv_nsec: libc::c_long,
 }
 
+/// This ensures that `TimeSpec` is the same size as `libc::timespec`. The layout is verified in a
+/// test.
+const _TIMESPEC_SIZE_CHECK: TimeSpec =
+    unsafe { core::mem::transmute([0u8; core::mem::size_of::<libc::timespec>()]) };
+
 impl AsRef<libc::timespec> for TimeSpec {
     #[inline]
     fn as_ref(&self) -> &libc::timespec {
@@ -97,6 +102,11 @@ pub struct Timeval {
     pub tv_sec: libc::time_t,
     pub tv_usec: libc::suseconds_t,
 }
+
+/// This ensures that `Timeval` is the same size as `libc::timeval`. The layout is verified in a
+/// test.
+const _TIMEVAL_SIZE_CHECK: Timeval =
+    unsafe { core::mem::transmute([0u8; core::mem::size_of::<libc::timeval>()]) };
 
 impl AsRef<libc::timeval> for Timeval {
     #[inline]
@@ -322,6 +332,37 @@ pub fn pthread_getcpuclockid(thread: libc::pthread_t) -> Result<ClockId> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_timespec_timeval_layout() {
+        let ts1 = TimeSpec {
+            tv_sec: 123,
+            tv_nsec: 456,
+        };
+        let ts2 = libc::timespec {
+            tv_sec: 123,
+            tv_nsec: 456,
+        };
+        assert_eq!(ts1.as_ref(), &ts2);
+        assert_eq!(
+            unsafe { core::mem::transmute::<_, libc::timespec>(ts1) },
+            ts2
+        );
+
+        let tv1 = Timeval {
+            tv_sec: 123,
+            tv_usec: 456,
+        };
+        let tv2 = libc::timeval {
+            tv_sec: 123,
+            tv_usec: 456,
+        };
+        assert_eq!(tv1.as_ref(), &tv2);
+        assert_eq!(
+            unsafe { core::mem::transmute::<_, libc::timeval>(tv1) },
+            tv2
+        );
+    }
 
     fn isclose(t1: TimeSpec, t2: TimeSpec, nsec: u32) -> bool {
         if t1.tv_sec == t2.tv_sec {
