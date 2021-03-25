@@ -5,27 +5,39 @@ use crate::{SigSet, Signal};
 use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd};
 
 bitflags::bitflags! {
+    /// Flags to [`signalfd()`].
+    ///
+    /// See `signalfd(2)` for more information.
     pub struct SigFdFlags: libc::c_int {
         const NONBLOCK = libc::SFD_NONBLOCK;
         const CLOEXEC = libc::SFD_CLOEXEC;
     }
 }
 
+/// Create or modify a signal file descriptor.
+///
+/// For a high-level interface, see [`SignalFd`].
 #[inline]
 pub fn signalfd<F: Into<Option<RawFd>>>(fd: F, mask: &SigSet, flags: SigFdFlags) -> Result<RawFd> {
     Error::unpack(unsafe { libc::signalfd(fd.into().unwrap_or(-1), mask.as_ref(), flags.bits()) })
 }
 
+/// A wrapper around a signal file descriptor.
 #[derive(Debug)]
 pub struct SignalFd(FileDesc);
 
 impl SignalFd {
+    /// Create a new signal file descriptor.
+    ///
+    /// `mask` specifies the signals that should be monitored, and `flags` specifies creation
+    /// flags.
     #[inline]
     pub fn new(mask: &SigSet, flags: SigFdFlags) -> Result<Self> {
         let fd = signalfd(None, mask, flags)?;
         Ok(unsafe { Self::from_fd(fd) })
     }
 
+    /// Replace this signal file descriptor's mask.
     #[inline]
     pub fn set_mask(&self, mask: &SigSet) -> Result<()> {
         signalfd(self.0.fd(), mask, SigFdFlags::empty())?;
@@ -53,6 +65,9 @@ impl SignalFd {
         Self(FileDesc::new(fd))
     }
 
+    /// Read one or more [`SigFdSigInfo`] structures from this file descriptor's queue.
+    ///
+    /// This function will return the number of structures that were read.
     #[inline]
     pub fn read_siginfos(&self, buf: &mut [SigFdSigInfo]) -> Result<usize> {
         let n = self.0.read(unsafe {
