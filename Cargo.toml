@@ -26,3 +26,12 @@ nix = { version = "0.20", optional = true }
 [dev-dependencies]
 tempfile = "3.2"
 getrandom = "0.2"
+
+[package.metadata.docs.rs]
+targets = [
+    "x86_64-unknown-linux-gnu",
+    "x86_64-unknown-linux-musl",
+    "x86_64-apple-darwin",
+    "x86_64-unknown-freebsd",
+    "x86_64-unknown-netbsd",
+]
