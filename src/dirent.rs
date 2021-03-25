@@ -129,6 +129,7 @@ impl Dirent {
         // There should be enough space for all the fields before `d_name`, plus 2 bytes for at
         // least one charater of the name and a terminating NUL
         debug_assert!(reclen as usize >= memoffset::offset_of!(libc::dirent, d_name) + 2);
+        debug_assert!(reclen as usize <= core::mem::size_of::<libc::dirent>());
 
         // Now only copy out the first `reclen` bytes of the entry
         let mut entry = MaybeUninit::<libc::dirent>::uninit();
