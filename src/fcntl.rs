@@ -223,7 +223,7 @@ pub enum PosixAdvice {
 )]
 #[cfg(any(linuxlike, freebsdlike, target_os = "netbsd"))]
 pub fn posix_fadvise(fd: RawFd, offset: u64, len: u64, advice: PosixAdvice) -> Result<()> {
-    Error::unpack_eno(unsafe { sys::posix_fadvise(fd, offset as i64, len as i64, advice as _) })
+    Error::unpack_eno(unsafe { sys::posix_fadvise(fd, offset as _, len as _, advice as _) })
 }
 
 /// Call `fcntl()` with an `int` argument.
