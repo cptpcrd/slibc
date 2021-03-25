@@ -51,6 +51,13 @@ cfg_if::cfg_if! {
         pub const CLOCK_PROCESS_CPUTIME_ID: libc::clockid_t = 0x40000000;
 
         pub const _CS_PATH: libc::c_int = 1;
+
+        pub const POSIX_FADV_NORMAL: libc::c_int = 0;
+        pub const POSIX_FADV_RANDOM: libc::c_int = 1;
+        pub const POSIX_FADV_SEQUENTIAL: libc::c_int = 2;
+        pub const POSIX_FADV_WILLNEED: libc::c_int = 3;
+        pub const POSIX_FADV_DONTNEED: libc::c_int = 4;
+        pub const POSIX_FADV_NOREUSE: libc::c_int = 5;
     } else if #[cfg(target_os = "openbsd")] {
         pub const CLOCK_PROCESS_CPUTIME_ID: libc::clockid_t = 2;
         pub const CLOCK_THREAD_CPUTIME_ID: libc::clockid_t = 4;
@@ -104,6 +111,13 @@ cfg_if::cfg_if! {
         pub const CTL_MAXNAME: i32 = 12;
 
         pub const _CS_PATH: libc::c_int = 1;
+
+        pub const POSIX_FADV_NORMAL: libc::c_int = 0;
+        pub const POSIX_FADV_SEQUENTIAL: libc::c_int = 1;
+        pub const POSIX_FADV_RANDOM: libc::c_int = 2;
+        pub const POSIX_FADV_WILLNEED: libc::c_int = 3;
+        pub const POSIX_FADV_DONTNEED: libc::c_int = 4;
+        pub const POSIX_FADV_NOREUSE: libc::c_int = 5;
     }
 }
 
@@ -122,6 +136,22 @@ pub use libc::IOV_MAX;
 extern "C" {
     pub fn __libc_current_sigrtmin() -> libc::c_int;
     pub fn __libc_current_sigrtmax() -> libc::c_int;
+}
+
+#[cfg(any(linuxlike, target_os = "freebsd"))]
+pub use libc::{
+    posix_fadvise, POSIX_FADV_DONTNEED, POSIX_FADV_NOREUSE, POSIX_FADV_NORMAL, POSIX_FADV_RANDOM,
+    POSIX_FADV_SEQUENTIAL, POSIX_FADV_WILLNEED,
+};
+
+#[cfg(any(target_os = "dragonfly", target_os = "netbsd"))]
+extern "C" {
+    pub fn posix_fadvise(
+        fd: libc::c_int,
+        offset: libc::off_t,
+        len: libc::off_t,
+        advice: libc::c_int,
+    ) -> libc::c_int;
 }
 
 #[cfg(any(

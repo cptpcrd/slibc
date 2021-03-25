@@ -178,6 +178,54 @@ pub fn openat<P: AsPath>(dirfd: RawFd, path: P, flags: OFlag, mode: u32) -> Resu
     })
 }
 
+#[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
+#[cfg(target_os = "linux")]
+#[inline]
+pub fn readahead(fd: RawFd, offset: u64, count: usize) -> Result<()> {
+    if unsafe { libc::readahead(fd, offset as i64, count) } < 0 {
+        Err(Error::last())
+    } else {
+        Ok(())
+    }
+}
+
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(
+        target_os = "linux",
+        target_os = "android",
+        target_os = "freebsd",
+        target_os = "dragonfly",
+        target_os = "netbsd"
+    )))
+)]
+#[cfg(any(linuxlike, freebsdlike, target_os = "netbsd"))]
+#[derive(Copy, Clone, Eq, Hash, PartialEq)]
+#[repr(i32)]
+pub enum PosixAdvice {
+    NORMAL = sys::POSIX_FADV_NORMAL,
+    SEQUENTIAL = sys::POSIX_FADV_SEQUENTIAL,
+    RANDOM = sys::POSIX_FADV_RANDOM,
+    NOREUSE = sys::POSIX_FADV_NOREUSE,
+    WILLNEED = sys::POSIX_FADV_WILLNEED,
+    DONTNEED = sys::POSIX_FADV_DONTNEED,
+}
+
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(
+        target_os = "linux",
+        target_os = "android",
+        target_os = "freebsd",
+        target_os = "dragonfly",
+        target_os = "netbsd"
+    )))
+)]
+#[cfg(any(linuxlike, freebsdlike, target_os = "netbsd"))]
+pub fn posix_fadvise(fd: RawFd, offset: u64, len: u64, advice: PosixAdvice) -> Result<()> {
+    Error::unpack_eno(unsafe { sys::posix_fadvise(fd, offset as i64, len as i64, advice as _) })
+}
+
 /// Call `fcntl()` with an `int` argument.
 ///
 /// # Safety
