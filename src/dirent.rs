@@ -101,6 +101,12 @@ impl Dirent {
     #[allow(unused_variables)]
     #[inline]
     unsafe fn new(raw_entry: *const libc::dirent) -> Self {
+        macro_rules! field_ptr {
+            ($sptr:expr , $stype:path ; $fname:ident , $ftype:ty) => {{
+                (($sptr) as *const u8).add(memoffset::offset_of!($stype, $fname)) as *const $ftype
+            }};
+        }
+
         cfg_if::cfg_if! {
             if #[cfg(target_os = "dragonfly")] {
                 // DragonFlyBSD doesn't have `d_reclen`, so we have to use
@@ -108,9 +114,7 @@ impl Dirent {
 
                 // Get d_namlen using the same technique as we use for getting d_reclen on other
                 // platforms
-                let namlen = *((raw_entry as *const u8)
-                    .add(memoffset::offset_of!(libc::dirent, d_namlen))
-                    as *const u16);
+                let namlen = *field_ptr!(raw_entry, libc::dirent; d_namlen, u16);
 
                 let reclen = memoffset::offset_of!(libc::dirent, d_name) as u16 + namlen + 1;
             } else {
@@ -120,9 +124,7 @@ impl Dirent {
                 // Get the value of `d_reclen` without dereferencing `raw_entry` or constructing a
                 // reference
                 // That wouldn't be safe because only part of `d_name` might be addressable
-                let reclen = *((raw_entry as *const u8)
-                    .add(memoffset::offset_of!(libc::dirent, d_reclen))
-                    as *const ReclenType);
+                let reclen = *field_ptr!(raw_entry, libc::dirent; d_reclen, u16);
             }
         }
 
