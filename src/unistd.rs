@@ -513,10 +513,17 @@ pub fn pwrite(fd: RawFd, buf: &[u8], offset: u64) -> Result<usize> {
 }
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
 pub enum SeekPos {
     Start(u64),
     End(i64),
     Current(i64),
+    #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
+    #[cfg(linuxlike)]
+    Data(u64),
+    #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
+    #[cfg(linuxlike)]
+    Hole(u64),
 }
 
 #[inline]
@@ -525,6 +532,10 @@ pub fn lseek(fd: RawFd, pos: SeekPos) -> Result<u64> {
         SeekPos::Start(off) => (off as i64, libc::SEEK_SET),
         SeekPos::End(off) => (off, libc::SEEK_END),
         SeekPos::Current(off) => (off, libc::SEEK_CUR),
+        #[cfg(linuxlike)]
+        SeekPos::Data(off) => (off as i64, libc::SEEK_DATA),
+        #[cfg(linuxlike)]
+        SeekPos::Hole(off) => (off as i64, libc::SEEK_HOLE),
     };
 
     match unsafe { libc::lseek(fd, off as _, whence) } {
