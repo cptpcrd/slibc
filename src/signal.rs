@@ -896,6 +896,7 @@ pub fn sigpending() -> Result<SigSet> {
     Ok(SigSet(unsafe { set.assume_init() }))
 }
 
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 #[repr(i32)]
 pub enum SigmaskHow {

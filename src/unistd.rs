@@ -2,7 +2,7 @@ use core::convert::TryInto;
 
 use crate::internal_prelude::*;
 
-#[allow(non_camel_case_types)]
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 #[repr(i32)]
 pub enum SysconfName {
@@ -21,6 +21,7 @@ pub fn sysconf(name: SysconfName) -> Option<usize> {
     }
 }
 
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 #[cfg_attr(docsrs, doc(cfg(not(target_os = "android"))))]
 #[cfg(not(target_os = "android"))]
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]

@@ -14,6 +14,7 @@ macro_rules! define_resource {
         /// An enum listing the resource limits available on the current platform.
         ///
         /// See getrlimit(2) for more information.
+        #[allow(non_camel_case_types, clippy::upper_case_acronyms)]
         #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
         #[repr(i32)]
         pub enum Resource {
@@ -410,6 +411,7 @@ pub mod rlimits {
     }
 }
 
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 #[repr(i32)]
 pub enum RusageWho {

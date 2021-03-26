@@ -153,7 +153,7 @@ impl BorrowedFd {
             } else {
                 let mut flags = crate::fcntl_getfd(self.0)?;
 
-                #[allow(clippy::collapsible_if)]
+                #[allow(clippy::collapsible_else_if)]
                 if cloexec {
                     if flags & libc::FD_CLOEXEC == 0 {
                         flags |= libc::FD_CLOEXEC;
@@ -192,7 +192,7 @@ impl BorrowedFd {
             } else {
                 let mut flags = crate::fcntl_getfl(self.0)?;
 
-                #[allow(clippy::collapsible_if)]
+                #[allow(clippy::collapsible_else_if)]
                 if nonblock {
                     if flags & libc::O_NONBLOCK == 0 {
                         flags |= libc::O_NONBLOCK;

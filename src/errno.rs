@@ -38,6 +38,7 @@ macro_rules! define_errno {
         /// assert_eq!(Errno::EPERM, Error::from_code(Errno::EPERM as i32));
         /// assert_ne!(Errno::Unknown, Error::from_code(0));
         /// ```
+        #[allow(non_camel_case_types, clippy::upper_case_acronyms)]
         #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
         #[repr(i32)]
         #[non_exhaustive]

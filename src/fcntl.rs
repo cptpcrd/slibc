@@ -200,6 +200,7 @@ pub fn readahead(fd: RawFd, offset: u64, count: usize) -> Result<()> {
     )))
 )]
 #[cfg(any(linuxlike, freebsdlike, target_os = "netbsd"))]
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 #[repr(i32)]
 pub enum PosixFAdvice {

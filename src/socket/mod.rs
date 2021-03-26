@@ -32,6 +32,7 @@ macro_rules! define_enum {
             )+
         )+
     ) => {
+        #[allow(non_camel_case_types, clippy::upper_case_acronyms)]
         #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
         #[repr($repr)]
         pub enum $ename {
@@ -588,7 +589,7 @@ impl Socket {
 impl std::io::Read for Socket {
     #[inline]
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-        Ok(self.0.read(buf)?)
+        self.0.read(buf)
     }
 
     #[inline]
@@ -601,7 +602,7 @@ impl std::io::Read for Socket {
 impl std::io::Write for Socket {
     #[inline]
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        Ok(self.0.write(buf)?)
+        self.0.write(buf)
     }
 
     #[inline]

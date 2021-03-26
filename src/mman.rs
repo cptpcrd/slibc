@@ -76,6 +76,7 @@ pub fn msync(data: &mut [u8], flags: MsyncFlags) -> Result<()> {
 
 #[cfg_attr(docsrs, doc(cfg(not(target_os = "android"))))]
 #[cfg(not(target_os = "android"))]
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 #[repr(i32)]
 pub enum PosixMAdvice {
@@ -108,7 +109,7 @@ macro_rules! define_madvice {
             $name:ident = $value:path,
         )+
     )*) => {
-        #[allow(non_camel_case_types)]
+        #[allow(non_camel_case_types, clippy::upper_case_acronyms)]
         #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
         #[repr(i32)]
         pub enum MemAdvice {
