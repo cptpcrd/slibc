@@ -199,6 +199,8 @@ define_madvice! {
     AUTOSYNC = libc::MADV_AUTOSYNC,
     NOCORE = libc::MADV_NOCORE,
     CORE = libc::MADV_CORE,
+
+    #[cfg(target_os = "freebsd")]
     PROTECT = libc::MADV_PROTECT,
 
     #[cfg(any(target_os = "macos", target_os = "ios"))]
