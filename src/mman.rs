@@ -98,7 +98,7 @@ pub fn posix_madvise(data: &mut [u8], advice: PosixMAdvice) -> Result<()> {
 #[cfg(not(target_os = "android"))]
 #[inline]
 pub unsafe fn posix_madvise_raw(addr: *mut u8, length: usize, advice: PosixMAdvice) -> Result<()> {
-    Error::unpack_nz(libc::posix_madvise(addr as *mut _, length, advice as _))
+    Error::unpack_eno(libc::posix_madvise(addr as *mut _, length, advice as _))
 }
 
 macro_rules! define_madvice {
