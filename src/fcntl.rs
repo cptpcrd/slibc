@@ -228,6 +228,42 @@ pub fn posix_fadvise(fd: RawFd, offset: u64, len: u64, advice: PosixFAdvice) -> 
     Error::unpack_eno(unsafe { sys::posix_fadvise(fd, offset as _, len as _, advice as _) })
 }
 
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(
+        target_os = "linux",
+        target_os = "android",
+        target_os = "freebsd",
+        target_os = "netbsd"
+    )))
+)]
+#[cfg(any(linuxlike, target_os = "freebsd", target_os = "netbsd"))]
+#[inline]
+pub fn posix_fallocate(fd: RawFd, offset: u64, len: u64) -> Result<()> {
+    Error::unpack_eno(unsafe { sys::posix_fallocate(fd, offset as _, len as _) })
+}
+
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
+#[cfg(linuxlike)]
+bitflags::bitflags! {
+    #[derive(Default)]
+    pub struct FallocMode: libc::c_int {
+        const KEEP_SIZE = libc::FALLOC_FL_KEEP_SIZE;
+        const PUNCH_HOLE = libc::FALLOC_FL_PUNCH_HOLE;
+        const COLLAPSE_RANGE = libc::FALLOC_FL_COLLAPSE_RANGE;
+        const ZERO_RANGE = libc::FALLOC_FL_ZERO_RANGE;
+        const INSERT_RANGE = libc::FALLOC_FL_INSERT_RANGE;
+        const UNSHARE_RANGE = libc::FALLOC_FL_UNSHARE_RANGE;
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
+#[cfg(linuxlike)]
+#[inline]
+pub fn fallocate(fd: RawFd, mode: FallocMode, offset: u64, len: u64) -> Result<()> {
+    Error::unpack_eno(unsafe { libc::fallocate(fd, mode.bits(), offset as _, len as _) })
+}
+
 /// Call `fcntl()` with an `int` argument.
 ///
 /// # Safety

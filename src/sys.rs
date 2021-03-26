@@ -58,6 +58,14 @@ cfg_if::cfg_if! {
         pub const POSIX_FADV_WILLNEED: libc::c_int = 3;
         pub const POSIX_FADV_DONTNEED: libc::c_int = 4;
         pub const POSIX_FADV_NOREUSE: libc::c_int = 5;
+
+        extern "C" {
+            pub fn posix_fallocate(
+                fd: libc::c_int,
+                offset: libc::off_t,
+                len: libc::off_t,
+            ) -> libc::c_int;
+        }
     } else if #[cfg(target_os = "openbsd")] {
         pub const CLOCK_PROCESS_CPUTIME_ID: libc::clockid_t = 2;
         pub const CLOCK_THREAD_CPUTIME_ID: libc::clockid_t = 4;
@@ -149,8 +157,8 @@ extern "C" {
 
 #[cfg(any(linuxlike, target_os = "freebsd"))]
 pub use libc::{
-    posix_fadvise, POSIX_FADV_DONTNEED, POSIX_FADV_NOREUSE, POSIX_FADV_NORMAL, POSIX_FADV_RANDOM,
-    POSIX_FADV_SEQUENTIAL, POSIX_FADV_WILLNEED,
+    posix_fadvise, posix_fallocate, POSIX_FADV_DONTNEED, POSIX_FADV_NOREUSE, POSIX_FADV_NORMAL,
+    POSIX_FADV_RANDOM, POSIX_FADV_SEQUENTIAL, POSIX_FADV_WILLNEED,
 };
 
 #[cfg(any(target_os = "dragonfly", target_os = "netbsd"))]
