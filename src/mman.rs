@@ -28,19 +28,36 @@ bitflags::bitflags! {
 
 #[inline]
 pub fn mlock(data: &[u8]) -> Result<()> {
-    Error::unpack_nz(unsafe { libc::mlock(data.as_ptr() as *const _, data.len()) })
+    unsafe { mlock_raw(data.as_ptr(), data.len()) }
+}
+
+#[inline]
+pub unsafe fn mlock_raw(addr: *const u8, len: usize) -> Result<()> {
+    Error::unpack_nz(libc::mlock(addr as *const _, len))
 }
 
 #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
 #[cfg(target_os = "linux")]
 #[inline]
 pub fn mlock2(data: &[u8], flags: Mlock2Flags) -> Result<()> {
-    Error::unpack_nz(unsafe { sys::mlock2(data.as_ptr() as *const _, data.len(), flags.bits()) })
+    unsafe { mlock2_raw(data.as_ptr(), data.len(), flags) }
+}
+
+#[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
+#[cfg(target_os = "linux")]
+#[inline]
+pub unsafe fn mlock2_raw(addr: *const u8, len: usize, flags: Mlock2Flags) -> Result<()> {
+    Error::unpack_nz(sys::mlock2(addr as *const _, len, flags.bits()))
 }
 
 #[inline]
 pub fn munlock(data: &[u8]) -> Result<()> {
-    Error::unpack_nz(unsafe { libc::munlock(data.as_ptr() as *const _, data.len()) })
+    unsafe { munlock_raw(data.as_ptr(), data.len()) }
+}
+
+#[inline]
+pub unsafe fn munlock_raw(addr: *const u8, len: usize) -> Result<()> {
+    Error::unpack_nz(libc::munlock(addr as *const _, len))
 }
 
 #[inline]
