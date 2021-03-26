@@ -121,6 +121,15 @@ cfg_if::cfg_if! {
     }
 }
 
+cfg_if::cfg_if! {
+    if #[cfg(linuxlike)] {
+        pub const MADV_WIPEONFORK: libc::c_int = 18;
+        pub const MADV_KEEPONFORK: libc::c_int = 19;
+        pub const MADV_COLD: libc::c_int = 20;
+        pub const MADV_PAGEOUT: libc::c_int = 21;
+    }
+}
+
 #[cfg(not(netbsdlike))]
 pub use libc::{CLOCK_PROCESS_CPUTIME_ID, CLOCK_THREAD_CPUTIME_ID};
 #[cfg(freebsdlike)]
