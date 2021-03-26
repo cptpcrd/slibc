@@ -223,6 +223,7 @@ pub enum PosixFAdvice {
     )))
 )]
 #[cfg(any(linuxlike, freebsdlike, target_os = "netbsd"))]
+#[inline]
 pub fn posix_fadvise(fd: RawFd, offset: u64, len: u64, advice: PosixFAdvice) -> Result<()> {
     Error::unpack_eno(unsafe { sys::posix_fadvise(fd, offset as _, len as _, advice as _) })
 }

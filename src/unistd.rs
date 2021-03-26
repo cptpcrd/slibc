@@ -546,6 +546,7 @@ pub fn usleep(usec: libc::useconds_t) -> Result<()> {
     Error::unpack_nz(unsafe { libc::usleep(usec) })
 }
 
+#[inline]
 pub fn nice(inc: libc::c_int) -> Result<libc::c_int> {
     unsafe {
         let eno_ptr = util::errno_ptr();
