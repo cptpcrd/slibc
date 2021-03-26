@@ -56,7 +56,6 @@ macro_rules! define_errno {
             )*)*
         }
 
-        #[allow(dead_code)]
         static ERRNOS: &[Errno] = &[
             $($(
                 #[cfg($cfg)]
@@ -81,6 +80,21 @@ macro_rules! define_errno {
                         $val2 => Self::$name2,
                     )*)*
                     _ => Self::Unknown,
+                }
+            }
+
+            #[inline]
+            fn name_match(self) -> &'static str {
+                match self {
+                    $($(
+                        #[cfg($cfg)]
+                        Self::$name => stringify!($name),
+                    )*)*
+                    $($(
+                        #[cfg($cfg)]
+                        Self::$name2 => stringify!($name2),
+                    )*)*
+                    Self::Unknown => "Unknown",
                 }
             }
         }
@@ -290,6 +304,11 @@ impl Errno {
         Self::from_code_match(eno)
     }
 
+    /// Get the "name" of the given error number (e.g. `ENOENT`).
+    pub fn name(self) -> &'static str {
+        self.name_match()
+    }
+
     /// Get the "description" (i.e. `strerror()`) for the given error number.
     #[inline]
     pub fn desc(self) -> &'static str {
@@ -306,6 +325,14 @@ impl Errno {
     #[inline]
     pub fn last() -> Self {
         Self::from_code(errno_get())
+    }
+
+    /// Create an iterator over all of this system's `Errno` values.
+    ///
+    /// The iterator yields the values in an arbitrary order. It does NOT yield `Unknown`.
+    #[inline]
+    pub fn iter() -> ErrnoIter {
+        ErrnoIter(ERRNOS.iter().copied())
     }
 }
 
@@ -375,6 +402,50 @@ impl From<nix::errno::Errno> for Errno {
         Self::from_code(e as i32)
     }
 }
+
+/// An iterator over all of this system's [`Errno`] values.
+///
+/// This is created by [`Errno::iter()`].
+#[derive(Clone, Debug)]
+pub struct ErrnoIter(core::iter::Copied<core::slice::Iter<'static, Errno>>);
+
+impl Iterator for ErrnoIter {
+    type Item = Errno;
+
+    #[inline]
+    fn next(&mut self) -> Option<Errno> {
+        self.0.next()
+    }
+
+    #[inline]
+    fn nth(&mut self, n: usize) -> Option<Errno> {
+        self.0.nth(n)
+    }
+
+    #[inline]
+    fn last(self) -> Option<Errno> {
+        self.0.last()
+    }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.0.size_hint()
+    }
+
+    #[inline]
+    fn count(self) -> usize {
+        self.len()
+    }
+}
+
+impl ExactSizeIterator for ErrnoIter {
+    #[inline]
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+}
+
+impl core::iter::FusedIterator for ErrnoIter {}
 
 #[cfg(test)]
 mod tests {
@@ -461,7 +532,7 @@ mod tests {
 
     #[test]
     fn test_errno_error_eq() {
-        for &eno in ERRNOS {
+        for eno in Errno::iter() {
             assert_eq!(eno, Error::from(eno));
             assert_eq!(Error::from(eno), eno);
         }
@@ -469,6 +540,15 @@ mod tests {
         assert_ne!(Errno::EPERM, Error::from(Errno::EACCES));
         assert_ne!(Error::from(Errno::EACCES), Errno::EPERM);
         assert_ne!(Error::from_code(0), Errno::Unknown);
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn test_errno_name() {
+        for eno in Errno::iter() {
+            assert_ne!(eno, Errno::Unknown);
+            assert_eq!(format!("{:?}", eno), eno.name());
+        }
     }
 
     #[cfg(feature = "alloc")]
