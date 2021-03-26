@@ -200,9 +200,9 @@ pub fn readahead(fd: RawFd, offset: u64, count: usize) -> Result<()> {
     )))
 )]
 #[cfg(any(linuxlike, freebsdlike, target_os = "netbsd"))]
-#[derive(Copy, Clone, Eq, Hash, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 #[repr(i32)]
-pub enum PosixAdvice {
+pub enum PosixFAdvice {
     NORMAL = sys::POSIX_FADV_NORMAL,
     SEQUENTIAL = sys::POSIX_FADV_SEQUENTIAL,
     RANDOM = sys::POSIX_FADV_RANDOM,
@@ -222,7 +222,7 @@ pub enum PosixAdvice {
     )))
 )]
 #[cfg(any(linuxlike, freebsdlike, target_os = "netbsd"))]
-pub fn posix_fadvise(fd: RawFd, offset: u64, len: u64, advice: PosixAdvice) -> Result<()> {
+pub fn posix_fadvise(fd: RawFd, offset: u64, len: u64, advice: PosixFAdvice) -> Result<()> {
     Error::unpack_eno(unsafe { sys::posix_fadvise(fd, offset as _, len as _, advice as _) })
 }
 
