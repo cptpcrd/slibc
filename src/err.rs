@@ -94,37 +94,7 @@ impl Error {
     }
 
     pub(crate) fn strerror(&self) -> &'static str {
-        // If the given error number is invalid (negative, 0, or out of range), most OSes allocate
-        // memory and prints "Unknown error %d". This means it can't be 'static.
-        //
-        // (musl is the only libc I know of that doesn't do this.)
-        //
-        // So if the error code is <= 0 (or if the message returned by strerror() starts with
-        // "Unknown error"), we return "Unknown error" instead.
-
-        static UNKNOWN_ERROR: &str = "Unknown error";
-
-        use core::cmp::Ordering;
-        match self.0.cmp(&0) {
-            // eno < 0 -> invalid
-            Ordering::Less => return UNKNOWN_ERROR,
-            // eno == 0 -> success
-            Ordering::Equal => return "Success",
-
-            _ => (),
-        }
-
-        let ptr = unsafe { libc::strerror(self.0) };
-        debug_assert!(!ptr.is_null());
-
-        let msg = core::str::from_utf8(unsafe { util::bytes_from_ptr(ptr) }).unwrap();
-
-        #[cfg(not(all(target_os = "linux", target_env = "musl")))]
-        if msg.starts_with(UNKNOWN_ERROR) {
-            return UNKNOWN_ERROR;
-        }
-
-        msg
+        crate::strerror::strerror(self.0)
     }
 }
 

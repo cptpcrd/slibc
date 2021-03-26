@@ -53,6 +53,7 @@ pub fn cstring_from_buf(mut buf: Vec<u8>) -> Option<CString> {
 }
 
 /// Equivalent to `CStr::from_ptr(ptr).to_bytes()`, but (possibly) slightly faster.
+#[allow(unused)]
 #[inline]
 pub unsafe fn bytes_from_ptr<'a>(ptr: *const libc::c_char) -> &'a [u8] {
     core::slice::from_raw_parts(ptr as *const u8, libc::strlen(ptr))

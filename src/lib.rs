@@ -76,6 +76,7 @@ extern crate alloc;
 
 mod as_path;
 mod err;
+mod strerror;
 mod sys;
 mod util;
 

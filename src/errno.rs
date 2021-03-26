@@ -315,7 +315,7 @@ impl Errno {
         if self == Self::Unknown {
             "Unknown error"
         } else {
-            Error::from(self).strerror()
+            crate::strerror::strerror(self as i32)
         }
     }
 
