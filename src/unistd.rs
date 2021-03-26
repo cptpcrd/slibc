@@ -1385,6 +1385,16 @@ pub fn fchmodat<P: AsPath>(dirfd: RawFd, path: P, mode: u32, flags: crate::AtFla
     })
 }
 
+#[inline]
+pub fn truncate<P: AsPath>(path: P, len: u64) -> Result<()> {
+    path.with_cstr(|path| Error::unpack_nz(unsafe { libc::truncate(path.as_ptr(), len as _) }))
+}
+
+#[inline]
+pub fn ftruncate(fd: RawFd, len: u64) -> Result<()> {
+    Error::unpack_nz(unsafe { libc::ftruncate(fd, len as _) })
+}
+
 #[cfg_attr(
     docsrs,
     doc(cfg(any(
