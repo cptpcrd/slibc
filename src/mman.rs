@@ -26,16 +26,33 @@ bitflags::bitflags! {
     }
 }
 
+/// Lock the pages containing any part of the specified region of memory into RAM.
+///
+/// See `mlock(2)` for more information.
+///
+/// For a version of this function that accepts a raw pointer and length, see [`mlock_raw()`].
 #[inline]
 pub fn mlock(data: &[u8]) -> Result<()> {
     unsafe { mlock_raw(data.as_ptr(), data.len()) }
 }
 
+/// Lock the pages containing any part of the specified region of memory into RAM.
+///
+/// See `mlock(2)` for more information.
+///
+/// # Safety
+///
+/// `addr` and `len` must refer to a valid region of memory.
 #[inline]
 pub unsafe fn mlock_raw(addr: *const u8, len: usize) -> Result<()> {
     Error::unpack_nz(libc::mlock(addr as *const _, len))
 }
 
+/// Lock the pages containing any part of the specified region of memory into RAM.
+///
+/// If `flags` is not empty, it modifies aspects of the lock. See `mlock2(2)` for more information.
+///
+/// For a version of this function that accepts a raw pointer and length, see [`mlock2_raw()`].
 #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
 #[cfg(target_os = "linux")]
 #[inline]
@@ -43,6 +60,13 @@ pub fn mlock2(data: &[u8], flags: Mlock2Flags) -> Result<()> {
     unsafe { mlock2_raw(data.as_ptr(), data.len(), flags) }
 }
 
+/// Lock the pages containing any part of the specified region of memory into RAM.
+///
+/// If `flags` is not empty, it modifies aspects of the lock. See `mlock2(2)` for more information.
+///
+/// # Safety
+///
+/// `addr` and `len` must refer to a valid region of memory.
 #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
 #[cfg(target_os = "linux")]
 #[inline]
@@ -50,11 +74,23 @@ pub unsafe fn mlock2_raw(addr: *const u8, len: usize, flags: Mlock2Flags) -> Res
     Error::unpack_nz(sys::mlock2(addr as *const _, len, flags.bits()))
 }
 
+/// Unlock the pages containing any part of the specified region of memory from RAM.
+///
+/// See `munlock(2)` for more information.
+///
+/// For a version of this function that accepts a raw pointer and length, see [`munlock_raw()`].
 #[inline]
 pub fn munlock(data: &[u8]) -> Result<()> {
     unsafe { munlock_raw(data.as_ptr(), data.len()) }
 }
 
+/// Unlock the pages containing any part of the specified region of memory from RAM.
+///
+/// See `munlock(2)` for more information.
+///
+/// # Safety
+///
+/// `addr` and `len` must refer to a valid region of memory.
 #[inline]
 pub unsafe fn munlock_raw(addr: *const u8, len: usize) -> Result<()> {
     Error::unpack_nz(libc::munlock(addr as *const _, len))
@@ -87,6 +123,9 @@ pub enum PosixMAdvice {
     DONTNEED = libc::POSIX_MADV_DONTNEED,
 }
 
+/// Advise the system about this process's expected usage of the given version of memory.
+///
+/// For a version of this function that accepts a raw pointer and length, see [`posix_madvise_raw()`].
 #[cfg_attr(docsrs, doc(cfg(not(target_os = "android"))))]
 #[cfg(not(target_os = "android"))]
 #[inline]
@@ -94,6 +133,11 @@ pub fn posix_madvise(data: &mut [u8], advice: PosixMAdvice) -> Result<()> {
     unsafe { posix_madvise_raw(data.as_mut_ptr(), data.len(), advice) }
 }
 
+/// Advise the system about this process's expected usage of the given version of memory.
+///
+/// # Safety
+///
+/// `addr` and `len` must refer to a valid region of memory.
 #[cfg_attr(docsrs, doc(cfg(not(target_os = "android"))))]
 #[cfg(not(target_os = "android"))]
 #[inline]
@@ -161,11 +205,25 @@ define_madvice! {
     ZERO_WIRED_PAGES = libc::MADV_ZERO_WIRED_PAGES,
 }
 
+/// Advise the system about this process's expected usage of the given version of memory.
+///
+/// # Safety
+///
+/// Unlike [`posix_madvise()`], on some systems this function can be used to actually modify
+/// aspects of the given region of memory; e.g. making the range unavailable in the child of a
+/// `fork()`. Use extreme caution and read the OS-specific `madvise(2)` carefully.
+///
+/// It's recommended to use [`posix_madvise()`] if possible.
 #[inline]
 pub unsafe fn madvise(data: &mut [u8], advice: MemAdvice) -> Result<()> {
     madvise_raw(data.as_mut_ptr(), data.len(), advice)
 }
 
+/// Advise the system about this process's expected usage of the given version of memory.
+///
+/// # Safety
+///
+/// See [`madvise()`]. Additionally, `addr` and `len` must refer to a valid region of memory.
 #[inline]
 pub unsafe fn madvise_raw(addr: *mut u8, length: usize, advice: MemAdvice) -> Result<()> {
     Error::unpack_nz(libc::madvise(addr as *mut _, length, advice as _))
