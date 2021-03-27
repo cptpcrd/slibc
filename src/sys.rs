@@ -30,8 +30,42 @@ cfg_if::cfg_if! {
         pub const MCL_ONFAULT: libc::c_int = 4;
 
         pub const _CS_PATH: libc::c_int = 0;
+
+        #[cfg(target_env = "musl")]
+        #[derive(Copy, Clone, Debug)]
+        #[repr(C)]
+        pub struct regex_t {
+            pub re_nsub: usize,
+            __opaque: *mut libc::c_void,
+            __padding: [*mut libc::c_void; 4usize],
+            __nsub2: usize,
+            __padding2: libc::c_char,
+        }
+
+        #[cfg(any(target_env = "", target_env = "gnu"))]
+        #[derive(Copy, Clone, Debug)]
+        #[repr(C)]
+        pub struct regex_t {
+            buffer: *mut libc::c_void,
+            allocated: usize,
+            used: usize,
+            syntax: libc::c_ulong,
+            fastmap: *mut libc::c_char,
+            translate: *mut libc::c_char,
+            pub re_nsub: usize,
+            bitfields: u8,
+        }
     } else if #[cfg(target_os = "android")] {
         pub const IOV_MAX: usize = 1024;
+
+        #[derive(Copy, Clone, Debug)]
+        #[repr(C)]
+        pub struct regex_t {
+            re_magic: libc::c_int,
+            pub re_nsub: usize,
+            re_endp: *const libc::c_char,
+            re_guts: *mut libc::c_void,
+        }
     } else if #[cfg(any(target_os = "macos", target_os = "ios"))] {
         pub const CTL_MAXNAME: i32 = 12;
 
@@ -148,6 +182,16 @@ pub use libc::CTL_MAXNAME;
 
 #[cfg(bsd)]
 pub use libc::IOV_MAX;
+
+#[cfg(bsd)]
+#[derive(Copy, Clone, Debug)]
+#[repr(C)]
+pub struct regex_t {
+    re_magic: libc::c_int,
+    pub re_nsub: usize,
+    re_endp: *const libc::c_char,
+    re_guts: *mut libc::c_void,
+}
 
 #[cfg(linuxlike)]
 extern "C" {

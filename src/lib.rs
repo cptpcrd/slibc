@@ -107,6 +107,7 @@ mod internal_prelude {
         boxed::Box,
         format,
         string::{String, ToString},
+        vec,
         vec::Vec,
     };
 }
@@ -125,6 +126,7 @@ mod ioctl;
 mod limits;
 mod mman;
 mod pty;
+mod regex;
 mod resource;
 mod sched;
 mod signal;
@@ -145,6 +147,7 @@ pub use ioctl::*;
 pub use limits::*;
 pub use mman::*;
 pub use pty::*;
+pub use regex::*;
 pub use resource::*;
 pub use sched::*;
 pub use signal::*;
