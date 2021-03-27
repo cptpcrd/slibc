@@ -184,10 +184,8 @@ impl BorrowedFd {
     /// Set the non-blocking status of this file descriptor.
     #[inline]
     pub fn set_nonblocking(&self, nonblock: bool) -> Result<()> {
-        // We don't use ioctl_fionbio() on Linux because it doesn't work on O_PATH file descriptors
-
         cfg_if::cfg_if! {
-            if #[cfg(bsd)] {
+            if #[cfg(any(bsd, linuxlike))] {
                 crate::ioctl_fionbio(self.0, nonblock)?;
             } else {
                 let mut flags = crate::fcntl_getfl(self.0)?;
