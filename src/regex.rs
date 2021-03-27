@@ -102,7 +102,7 @@ impl Regex {
     /// Example usage:
     ///
     /// ```
-    /// # #![cfg(feature = "std")]
+    /// # #[cfg(feature = "std")]
     /// # {
     /// # use slibc::{Regex, RegexMatch, RegexCFlags, RegexEFlags};
     /// # use std::ffi::CStr;
