@@ -107,7 +107,7 @@ impl Regex {
     /// # use slibc::{Regex, RegexMatch, RegexCFlags, RegexEFlags};
     /// # use std::ffi::CStr;
     /// let reg = Regex::compile(
-    ///     CStr::from_bytes_with_nul(b"^abc\\([0-9]\\+\\)def$\0").unwrap(),
+    ///     CStr::from_bytes_with_nul(b"^abc\\([0-9]*\\)def$\0").unwrap(),
     ///     RegexCFlags::empty(),
     /// ).unwrap();
     ///
