@@ -366,7 +366,7 @@ mod tests {
     #[test]
     fn test_reg_nsub_capture() {
         let reg = Regex::compile(
-            CStr::from_bytes_with_nul(b"^abc\\([0-9]\\+\\)def$\0").unwrap(),
+            CStr::from_bytes_with_nul(b"^abc\\([0-9]*\\)def\0").unwrap(),
             RegexCFlags::empty(),
         )
         .unwrap();
@@ -400,7 +400,7 @@ mod tests {
     #[test]
     fn test_reg_nosub() {
         let reg = Regex::compile(
-            CStr::from_bytes_with_nul(b"^abc\\([0-9]\\+\\)def$\0").unwrap(),
+            CStr::from_bytes_with_nul(b"^abc\\([0-9]*\\)def\0").unwrap(),
             RegexCFlags::NOSUB,
         )
         .unwrap();
@@ -454,7 +454,7 @@ mod tests {
     #[test]
     fn test_match_bytes() {
         let reg = Regex::compile(
-            CStr::from_bytes_with_nul(b"^abc\\([0-9]\\+\\)def\0").unwrap(),
+            CStr::from_bytes_with_nul(b"^abc\\([0-9]*\\)def\0").unwrap(),
             RegexCFlags::empty(),
         )
         .unwrap();
