@@ -18,7 +18,13 @@ bitflags::bitflags! {
         ///
         /// If this flag is passed, then [`Regex::match_into()`] will always return `Some(&[])`.
         const NOSUB = libc::REG_NOSUB;
-        /// Match-any characters (and `[^...]`) won't match newlines.
+        /// Change behavior surrounding newlines.
+        ///
+        /// - Match-any characters and `[^...]` won't match newlines.
+        /// - `^` matches the empty string immediately after a newline, even if
+        ///   [`RegexEFlags::NOTBOL`] is passed.
+        /// - `$` matches the empty string immediately before a newline, even if
+        ///   [`RegexEFlags::NOTEOL`] is passed.
         const NEWLINE = libc::REG_NEWLINE;
     }
 }
@@ -38,6 +44,9 @@ const _REGEX_T_SIZE_CHECK: sys::regex_t =
     unsafe { core::mem::transmute([0u8; core::mem::size_of::<libc::regex_t>()]) };
 
 /// Represents a compiled regex.
+///
+/// Note that on some systems (even some 64-bit systems) the "match" methods of this struct may not
+/// properly handle text with more than `2 ** 31 - 2` bytes.
 #[derive(Debug)]
 pub struct Regex {
     preg: libc::regex_t,
@@ -181,11 +190,8 @@ impl Regex {
     /// Returns whether this expression matches the given text.
     ///
     /// This takes advantage of a BSD extension (which is also present on Android and Linux with
-    /// glibc) that allows e.g. searching strings with embedded NUL bytes. (Note that it still isn't
-    /// possible to actually match the NUL bytes).
-    ///
-    /// Note that on some systems (even some 64-bit systems) this function may not be able to
-    /// handle text with more than `2 ** 32` bytes.
+    /// glibc) that allows e.g. searching strings with embedded NUL bytes, or without a trailing
+    /// NUL. (Note that it still isn't possible to actually match the NUL bytes.)
     #[inline]
     pub fn matches_bytes(&self, text: &[u8], eflags: RegexEFlags) -> bool {
         use core::convert::TryInto;
