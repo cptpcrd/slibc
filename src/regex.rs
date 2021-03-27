@@ -1,4 +1,3 @@
-use core::convert::TryInto;
 use core::fmt;
 
 use crate::internal_prelude::*;
@@ -176,7 +175,7 @@ impl Regex {
 #[cfg(any(
     bsd,
     target_os = "android",
-    all(target_os = "linux", not(target_os = "musl"))
+    all(target_os = "linux", not(target_env = "musl"))
 ))]
 impl Regex {
     /// Returns whether this expression matches the given text.
@@ -187,9 +186,10 @@ impl Regex {
     ///
     /// Note that on some systems (even some 64-bit systems) this function may not be able to
     /// handle text with more than `2 ** 32` bytes.
-
     #[inline]
     pub fn matches_bytes(&self, text: &[u8], eflags: RegexEFlags) -> bool {
+        use core::convert::TryInto;
+
         let mut pmatch = libc::regmatch_t {
             rm_so: 0,
             rm_eo: text.len().try_into().unwrap(),
@@ -216,6 +216,8 @@ impl Regex {
         mut matchbuf: &'a mut [RegexMatch],
         eflags: RegexEFlags,
     ) -> Option<&'a [RegexMatch]> {
+        use core::convert::TryInto;
+
         let mut mstartend;
         let pmatch;
         let nmatch;
@@ -444,6 +446,11 @@ mod tests {
         }
     }
 
+    #[cfg(any(
+        bsd,
+        target_os = "android",
+        all(target_os = "linux", not(target_env = "musl"))
+    ))]
     #[test]
     fn test_match_bytes() {
         let reg = Regex::compile(
