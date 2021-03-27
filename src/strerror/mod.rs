@@ -1,5 +1,3 @@
-use core::cmp::Ordering;
-
 cfg_if::cfg_if! {
     if #[cfg(all(target_os = "linux", any(target_env = "gnu", target_env = "")))] {
         #[path = "linux_glibc.rs"]
@@ -30,22 +28,16 @@ cfg_if::cfg_if! {
     }
 }
 
+#[cfg(bsd)]
 pub(crate) fn strerror(eno: i32) -> &'static str {
-    match eno.cmp(&0) {
-        // eno < 0 -> invalid
-        Ordering::Less => "Unknown error",
-        // eno == 0 -> success
-        Ordering::Equal => "Success",
-
-        #[cfg(bsd)]
-        Ordering::Greater => imp::ERRNO_TABLE
-            .get(eno as usize)
-            .copied()
-            .unwrap_or("Unknown error"),
-        #[cfg(not(bsd))]
-        Ordering::Greater => imp::strerror_imp(eno),
-    }
+    imp::ERRNO_TABLE
+        .get(eno as usize)
+        .copied()
+        .unwrap_or("Unknown error")
 }
+
+#[cfg(not(bsd))]
+pub(crate) use imp::strerror_imp as strerror;
 
 #[cfg(test)]
 mod tests {
@@ -54,7 +46,11 @@ mod tests {
         debug_assert!(!ptr.is_null());
         let msg = core::str::from_utf8(unsafe { crate::util::bytes_from_ptr(ptr) }).unwrap();
 
-        if msg.starts_with("Unknown error") || msg == "No error information" {
+        if msg.starts_with("Unknown error")
+            || (cfg!(all(target_os = "linux", target_env = "musl"))
+                && msg == "No error information"
+                && eno != 0)
+        {
             None
         } else {
             Some(msg)
@@ -65,7 +61,7 @@ mod tests {
     fn test_strerror_correct() {
         use super::*;
 
-        for eno in 1..=4096 {
+        for eno in 0..=4096 {
             if let Some(s) = libc_strerror(eno) {
                 assert_eq!(strerror(eno), s);
             } else {
@@ -76,6 +72,5 @@ mod tests {
         for i in -4096..0 {
             assert_eq!(strerror(i), "Unknown error");
         }
-        assert_eq!(strerror(0), "Success");
     }
 }

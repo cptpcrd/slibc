@@ -172,7 +172,6 @@ mod tests {
         assert_eq!(Error::from_code(libc::EISDIR).strerror(), "Is a directory");
 
         assert_eq!(Error::from_code(-1).strerror(), "Unknown error");
-        assert_eq!(Error::from_code(0).strerror(), "Success");
 
         #[cfg(any(target_env = "", target_env = "gnu"))]
         assert_eq!(Error::from_code(8192).strerror(), "Unknown error");
