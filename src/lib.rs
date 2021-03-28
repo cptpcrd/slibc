@@ -101,6 +101,9 @@ mod internal_prelude {
 
     pub use super::errno::{errno_get, errno_set};
 
+    #[cfg(feature = "std")]
+    pub use std::borrow::Cow;
+
     #[cfg(all(feature = "alloc", not(feature = "std")))]
     pub use alloc::{
         borrow::{Cow, ToOwned},

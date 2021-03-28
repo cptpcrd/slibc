@@ -69,6 +69,46 @@ macro_rules! into_osstring_impl {
     };
 }
 
+#[cfg(feature = "alloc")]
+macro_rules! cow_impl {
+    ($($type:ty)*) => {
+        $(
+            impl AsPath for Cow<'_, $type> {
+                #[inline]
+                fn as_os_str(&self) -> &OsStr {
+                    match self {
+                        Cow::Borrowed(s) => s.as_os_str(),
+                        Cow::Owned(s) => s.as_os_str(),
+                    }
+                }
+
+                #[inline]
+                fn with_cstr<T, F: FnOnce(&CStr) -> Result<T>>(self, f: F) -> Result<T> {
+                    self.into_owned().with_cstr(f)
+                }
+            }
+
+            impl AsPath for &Cow<'_, $type> {
+                #[inline]
+                fn as_os_str(&self) -> &OsStr {
+                    match self {
+                        Cow::Borrowed(s) => s.as_os_str(),
+                        Cow::Owned(s) => s.as_os_str(),
+                    }
+                }
+
+                #[inline]
+                fn with_cstr<T, F: FnOnce(&CStr) -> Result<T>>(self, f: F) -> Result<T> {
+                    match self {
+                        Cow::Borrowed(s) => *s,
+                        Cow::Owned(s) => &s,
+                    }.with_cstr(f)
+                }
+            }
+        )*
+    };
+}
+
 macro_rules! cstr_impl {
     ($($type:ty)*) => {
         $(
@@ -92,11 +132,13 @@ cfg_if::cfg_if! {
         osstr_ref_impl! { &Path &PathBuf &OsStr &OsString &str &String }
         into_osstring_impl! { PathBuf OsString String }
         cstr_impl! { &CStr CString &CString }
+        cow_impl! { Path OsStr str CStr }
     } else if #[cfg(feature =  "alloc")] {
         use alloc::string::String;
         osstr_ref_impl! { &OsStr &OsString &str &String }
         into_osstring_impl! { OsString String }
         cstr_impl! { &CStr CString &CString }
+        cow_impl! { OsStr str CStr }
     } else {
         cstr_impl! { &CStr }
     }
@@ -122,6 +164,15 @@ mod tests {
             assert_eq!(OsString::from("abc/def").as_os_str(), OsStr::new("abc/def"));
 
             assert_eq!(
+                Cow::Borrowed(OsStr::new("abc/def")).as_os_str(),
+                OsStr::new("abc/def")
+            );
+            assert_eq!(
+                Cow::<'_, OsStr>::Owned(OsString::from("abc/def")).as_os_str(),
+                OsStr::new("abc/def")
+            );
+
+            assert_eq!(
                 CString::new(b"abc/def".as_ref()).unwrap().as_os_str(),
                 OsStr::new("abc/def")
             );
@@ -131,6 +182,15 @@ mod tests {
         {
             assert_eq!(Path::new("abc/def").as_os_str(), OsStr::new("abc/def"));
             assert_eq!(PathBuf::from("abc/def").as_os_str(), OsStr::new("abc/def"));
+
+            assert_eq!(
+                Cow::Borrowed(Path::new("abc/def")).as_os_str(),
+                OsStr::new("abc/def")
+            );
+            assert_eq!(
+                Cow::<'_, Path>::Owned(PathBuf::from("abc/def")).as_os_str(),
+                OsStr::new("abc/def")
+            );
         }
     }
 
@@ -156,6 +216,11 @@ mod tests {
             do_it(OsString::from("abc/def"));
             do_it(&OsString::from("abc/def"));
 
+            do_it(Cow::Borrowed(OsStr::new("abc/def")));
+            do_it(Cow::<'_, OsStr>::Owned(OsString::from("abc/def")));
+            do_it(&Cow::Borrowed(OsStr::new("abc/def")));
+            do_it(&Cow::<'_, OsStr>::Owned(OsString::from("abc/def")));
+
             do_it(CString::new("abc/def").unwrap());
             do_it(&CString::new("abc/def").unwrap());
         }
@@ -165,6 +230,11 @@ mod tests {
             do_it(Path::new("abc/def"));
             do_it(PathBuf::from("abc/def"));
             do_it(&PathBuf::from("abc/def"));
+
+            do_it(Cow::Borrowed(Path::new("abc/def")));
+            do_it(Cow::<'_, Path>::Owned(PathBuf::from("abc/def")));
+            do_it(&Cow::Borrowed(Path::new("abc/def")));
+            do_it(&Cow::<'_, Path>::Owned(PathBuf::from("abc/def")));
         }
 
         do_it(CStr::from_bytes_with_nul(b"abc/def\0").unwrap());
@@ -189,6 +259,11 @@ mod tests {
 
             do_it(OsString::from(""));
             do_it(&OsString::from(""));
+
+            do_it(Cow::Borrowed(OsStr::new("abc/def")));
+            do_it(Cow::<'_, OsStr>::Owned(OsString::from("abc/def")));
+            do_it(&Cow::Borrowed(OsStr::new("abc/def")));
+            do_it(&Cow::<'_, OsStr>::Owned(OsString::from("abc/def")));
 
             do_it(CString::new("").unwrap());
             do_it(&CString::new("").unwrap());
