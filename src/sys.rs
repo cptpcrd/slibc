@@ -23,10 +23,7 @@ cfg_if::cfg_if! {
             pub fn mlock2(addr: *const libc::c_void, len: libc::size_t, flags: libc::c_int) -> libc::c_int;
         }
 
-        pub const IOV_MAX: usize = 1024;
-
         pub const MLOCK_ONFAULT: libc::c_int = 1;
-
         pub const MCL_ONFAULT: libc::c_int = 4;
 
         pub const _CS_PATH: libc::c_int = 0;
@@ -56,8 +53,6 @@ cfg_if::cfg_if! {
             bitfields: u8,
         }
     } else if #[cfg(target_os = "android")] {
-        pub const IOV_MAX: usize = 1024;
-
         #[derive(Copy, Clone, Debug)]
         #[repr(C)]
         pub struct regex_t {
@@ -165,10 +160,28 @@ cfg_if::cfg_if! {
 
 cfg_if::cfg_if! {
     if #[cfg(linuxlike)] {
+        extern "C" {
+            pub fn __libc_current_sigrtmin() -> libc::c_int;
+            pub fn __libc_current_sigrtmax() -> libc::c_int;
+        }
+
+        pub const IOV_MAX: usize = 1024;
+
         pub const MADV_WIPEONFORK: libc::c_int = 18;
         pub const MADV_KEEPONFORK: libc::c_int = 19;
         pub const MADV_COLD: libc::c_int = 20;
         pub const MADV_PAGEOUT: libc::c_int = 21;
+    } else if #[cfg(bsd)] {
+        pub use libc::IOV_MAX;
+
+        #[derive(Copy, Clone, Debug)]
+        #[repr(C)]
+        pub struct regex_t {
+            re_magic: libc::c_int,
+            pub re_nsub: usize,
+            re_endp: *const libc::c_char,
+            re_guts: *mut libc::c_void,
+        }
     }
 }
 
@@ -179,25 +192,6 @@ pub use libc::{CLOCK_PROF, CLOCK_VIRTUAL};
 
 #[cfg(netbsdlike)]
 pub use libc::CTL_MAXNAME;
-
-#[cfg(bsd)]
-pub use libc::IOV_MAX;
-
-#[cfg(bsd)]
-#[derive(Copy, Clone, Debug)]
-#[repr(C)]
-pub struct regex_t {
-    re_magic: libc::c_int,
-    pub re_nsub: usize,
-    re_endp: *const libc::c_char,
-    re_guts: *mut libc::c_void,
-}
-
-#[cfg(linuxlike)]
-extern "C" {
-    pub fn __libc_current_sigrtmin() -> libc::c_int;
-    pub fn __libc_current_sigrtmax() -> libc::c_int;
-}
 
 #[cfg(any(linuxlike, target_os = "freebsd"))]
 pub use libc::{
