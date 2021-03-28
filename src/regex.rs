@@ -248,7 +248,7 @@ impl Regex {
                 text.as_ptr() as *const _,
                 matchbuf.len(),
                 pmatch as *mut _,
-                eflags.bits(),
+                eflags.bits() | libc::REG_STARTEND,
             )
         } != 0
         {
@@ -465,7 +465,6 @@ mod tests {
         let mut buf = [RegexMatch::uninit(); 3];
 
         // Matches
-        //let s = b"abc123def";
         let s = b"abc123def";
         assert!(reg.matches_bytes(s, RegexEFlags::empty()));
 
