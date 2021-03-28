@@ -226,7 +226,6 @@ impl Regex {
 
         let mut mstartend;
         let pmatch;
-        let nmatch;
 
         if let Some(first) = matchbuf.first_mut() {
             first.0.rm_so = 0;
@@ -236,22 +235,19 @@ impl Regex {
             if self.nosub {
                 matchbuf = &mut matchbuf[..0];
             }
-            nmatch = matchbuf.len();
         } else {
             mstartend = RegexMatch::uninit();
             mstartend.0.rm_so = 0;
             mstartend.0.rm_eo = text.len().try_into().unwrap();
-
             pmatch = &mut mstartend as *mut _;
-            nmatch = 0;
         }
 
         if unsafe {
             libc::regexec(
                 &self.preg,
                 text.as_ptr() as *const _,
-                nmatch,
-                pmatch as *mut _ as *mut _,
+                matchbuf.len(),
+                pmatch as *mut _,
                 eflags.bits(),
             )
         } != 0
