@@ -51,7 +51,7 @@ impl SignalFd {
 
     #[inline]
     pub fn into_fd(self) -> RawFd {
-        self.0.fd()
+        self.0.into_fd()
     }
 
     /// Create a new `SignalFd` wrapper around the given signalfd file descriptor.
