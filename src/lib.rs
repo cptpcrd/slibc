@@ -123,10 +123,8 @@ mod fdesc;
 pub use borrowed_fd::*;
 pub use fdesc::*;
 
-mod epoll;
 mod errno;
 mod fcntl;
-mod inotify;
 mod ioctl;
 mod limits;
 mod mman;
@@ -146,10 +144,8 @@ mod unistd;
 mod utsname;
 mod wait;
 
-pub use epoll::*;
 pub use errno::*;
 pub use fcntl::*;
-pub use inotify::*;
 pub use ioctl::*;
 pub use limits::*;
 pub use mman::*;
@@ -182,13 +178,22 @@ cfg_if::cfg_if! {
 }
 
 cfg_if::cfg_if! {
-    if #[cfg(target_os = "linux")] {
+    if #[cfg(linuxlike)] {
+        mod epoll;
+        mod inotify;
         mod signalfd;
-        mod statx;
         mod sysinfo;
+        pub use epoll::*;
+        pub use inotify::*;
         pub use signalfd::*;
-        pub use statx::*;
         pub use sysinfo::*;
+    }
+}
+
+cfg_if::cfg_if! {
+    if #[cfg(target_os = "linux")] {
+        mod statx;
+        pub use statx::*;
     }
 }
 

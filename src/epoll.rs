@@ -24,7 +24,7 @@ bitflags::bitflags! {
         const ET = libc::EPOLLET as u32;
         const ONESHOT = libc::EPOLLONESHOT as u32;
         const WAKEUP = libc::EPOLLWAKEUP as u32;
-        const EXCLUSIVE = libc::EPOLLEXCLUSIVE as u32;
+        const EXCLUSIVE = 0x10000000;
     }
 }
 
@@ -109,6 +109,8 @@ pub fn epoll_wait(epfd: RawFd, events: &mut [EpollEvent], timeout: libc::c_int) 
 ///
 /// `epfd`, `events`, and `timeout` are as for [`epoll_wait()`]. See `epoll_pwait(2)` for more
 /// information on `sigmask`.
+#[cfg_attr(docsrs, doc(cfg(not(target_os = "android"))))]
+#[cfg(not(target_os = "android"))]
 #[inline]
 pub fn epoll_pwait(
     epfd: RawFd,
@@ -136,6 +138,8 @@ pub fn epoll_pwait(
 /// nanosecond resolution.
 ///
 /// This system call was added in Linux 5.11; it will fail with `ENOSYS` on older kernels.
+#[cfg_attr(docsrs, doc(cfg(not(target_os = "android"))))]
+#[cfg(not(target_os = "android"))]
 #[inline]
 pub fn epoll_pwait2(
     epfd: RawFd,
@@ -206,6 +210,8 @@ impl Epoll {
     /// Wait for new events on this epoll instance.
     ///
     /// See [`epoll_pwait()`].
+    #[cfg_attr(docsrs, doc(cfg(not(target_os = "android"))))]
+    #[cfg(not(target_os = "android"))]
     #[inline]
     pub fn pwait(
         &self,
@@ -221,6 +227,8 @@ impl Epoll {
     /// See [`epoll_pwait2()`].
     ///
     /// This system call was added in Linux 5.11; it will fail with `ENOSYS` on older kernels.
+    #[cfg_attr(docsrs, doc(cfg(not(target_os = "android"))))]
+    #[cfg(not(target_os = "android"))]
     #[inline]
     pub fn pwait2(
         &self,

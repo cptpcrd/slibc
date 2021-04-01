@@ -140,7 +140,7 @@ pub fn inotify_add_watch<P: AsPath>(fd: RawFd, path: P, mask: InotifyMask) -> Re
 
 #[inline]
 pub fn inotify_rm_watch(fd: RawFd, wd: i32) -> Result<()> {
-    Error::unpack_nz(unsafe { libc::inotify_rm_watch(fd, wd) })
+    Error::unpack_nz(unsafe { libc::inotify_rm_watch(fd, wd as _) })
 }
 
 /// An iterator over events that were `read()` from an inotify file descriptor.
