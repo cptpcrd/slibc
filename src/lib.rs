@@ -123,6 +123,7 @@ mod fdesc;
 pub use borrowed_fd::*;
 pub use fdesc::*;
 
+mod epoll;
 mod errno;
 mod fcntl;
 mod ioctl;
@@ -144,6 +145,7 @@ mod unistd;
 mod utsname;
 mod wait;
 
+pub use epoll::*;
 pub use errno::*;
 pub use fcntl::*;
 pub use ioctl::*;
