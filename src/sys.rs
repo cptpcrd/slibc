@@ -28,6 +28,8 @@ cfg_if::cfg_if! {
 
         pub const _CS_PATH: libc::c_int = 0;
 
+        pub const NAME_MAX: usize = 255;
+
         #[cfg(target_env = "musl")]
         #[derive(Copy, Clone, Debug)]
         #[repr(C)]
@@ -53,6 +55,8 @@ cfg_if::cfg_if! {
             bitfields: u8,
         }
     } else if #[cfg(target_os = "android")] {
+        pub const NAME_MAX: usize = 255;
+
         #[derive(Copy, Clone, Debug)]
         #[repr(C)]
         pub struct regex_t {
@@ -70,6 +74,8 @@ cfg_if::cfg_if! {
         pub const CLOCK_UPTIME_RAW_APPROX: libc::clockid_t = 9;
 
         pub const _CS_PATH: libc::c_int = 1;
+
+        pub const NAME_MAX: usize = 255;
     } else if #[cfg(target_os = "netbsd")] {
         pub const SIGRTMIN: libc::c_int = 33;
         pub const SIGRTMAX: libc::c_int = 63;
@@ -88,6 +94,8 @@ cfg_if::cfg_if! {
         pub const POSIX_FADV_DONTNEED: libc::c_int = 4;
         pub const POSIX_FADV_NOREUSE: libc::c_int = 5;
 
+        pub const NAME_MAX: usize = 511;
+
         extern "C" {
             pub fn posix_fallocate(
                 fd: libc::c_int,
@@ -102,11 +110,15 @@ cfg_if::cfg_if! {
         pub const CLOCK_BOOTTIME: libc::clockid_t = 6;
 
         pub const _CS_PATH: libc::c_int = 1;
+
+        pub const NAME_MAX: usize = 255;
     } else if #[cfg(target_os = "freebsd")] {
         pub const SIGRTMIN: libc::c_int = 65;
         pub const SIGRTMAX: libc::c_int = 126;
 
         pub const CTL_MAXNAME: i32 = 24;
+
+        pub const NAME_MAX: usize = 255;
 
         extern "C" {
             pub fn bindat(
@@ -148,6 +160,8 @@ cfg_if::cfg_if! {
         pub const CTL_MAXNAME: i32 = 12;
 
         pub const _CS_PATH: libc::c_int = 1;
+
+        pub const NAME_MAX: usize = 255;
 
         pub const POSIX_FADV_NORMAL: libc::c_int = 0;
         pub const POSIX_FADV_SEQUENTIAL: libc::c_int = 1;
