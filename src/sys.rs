@@ -223,6 +223,17 @@ extern "C" {
     ) -> libc::c_int;
 }
 
+#[cfg(any(linuxlike, freebsdlike, netbsdlike))]
+extern "C" {
+    #[cfg_attr(target_os = "netbsd", link_name = "pollts")]
+    pub fn ppoll(
+        fds: *mut libc::pollfd,
+        nfds: libc::nfds_t,
+        timep: *const libc::timespec,
+        sigmask: *const libc::sigset_t,
+    ) -> libc::c_int;
+}
+
 #[cfg(any(
     target_os = "linux",
     target_os = "freebsd",
