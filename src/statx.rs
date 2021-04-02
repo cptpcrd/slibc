@@ -186,6 +186,7 @@ bitflags::bitflags! {
 /// they have been properly initialized!
 #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
 #[derive(Copy, Clone)]
+#[non_exhaustive]
 #[repr(C)]
 pub struct Statx {
     /// Indicates which fields are initialized (see [`StatxMask`] for more information).
