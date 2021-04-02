@@ -186,8 +186,13 @@ impl<'a> Iterator for InotifyEventIter<'a> {
         let event = unsafe { &*(self.buf.as_ptr() as *const libc::inotify_event) };
 
         // Extract the name, and cut self.buf down to what's remaining
-        let (name, rest) = rest.split_at(event.len as usize);
+        let (mut name, rest) = rest.split_at(event.len as usize);
         self.buf = rest;
+
+        if !name.is_empty() {
+            // `name` may include extra NUL bytes; trim it down
+            name = &name[..=crate::memchr(name, 0).unwrap()];
+        }
 
         Some(InotifyEvent { event, name })
     }
