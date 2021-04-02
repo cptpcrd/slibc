@@ -298,3 +298,86 @@ impl FromRawFd for Inotify {
         Self::from_fd(fd)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_flags() {
+        let i = Inotify::new(InotifyFlags::empty()).unwrap();
+        assert!(!i.as_ref().get_cloexec().unwrap());
+        assert!(!i.as_ref().get_nonblocking().unwrap());
+
+        let i = Inotify::new(InotifyFlags::CLOEXEC).unwrap();
+        assert!(i.as_ref().get_cloexec().unwrap());
+        assert!(!i.as_ref().get_nonblocking().unwrap());
+
+        let i = Inotify::new(InotifyFlags::NONBLOCK).unwrap();
+        assert!(!i.as_ref().get_cloexec().unwrap());
+        assert!(i.as_ref().get_nonblocking().unwrap());
+
+        let i = Inotify::new(InotifyFlags::CLOEXEC | InotifyFlags::NONBLOCK).unwrap();
+        assert!(i.as_ref().get_cloexec().unwrap());
+        assert!(i.as_ref().get_nonblocking().unwrap());
+    }
+
+    #[test]
+    fn test_eventiter_empty() {
+        let mut it = InotifyEventIter { buf: &[] };
+        assert_eq!(it.size_hint(), (0, Some(0)));
+        assert!(it.next().is_none());
+        #[cfg(feature = "alloc")]
+        assert_eq!(format!("{:?}", it), "InotifyEventIter([])");
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn test_tempdir() {
+        let tmpdir = tempfile::tempdir().unwrap();
+
+        let i = Inotify::new(InotifyFlags::CLOEXEC).unwrap();
+        let wd = i
+            .add_watch(
+                tmpdir.as_ref(),
+                InotifyMask::CREATE | InotifyMask::DELETE_SELF | InotifyMask::ONLYDIR,
+            )
+            .unwrap();
+
+        std::fs::File::create(tmpdir.as_ref().join("file")).unwrap();
+        drop(tmpdir);
+
+        let mut buf = [0; INOTIFY_MIN_BUFSIZE * 3];
+        let mut events = i.read_events(&mut buf).unwrap();
+
+        assert_eq!(events.size_hint().0, 1, "{:?}", events);
+
+        let event = events.next().unwrap();
+        assert_eq!(event.wd(), wd);
+        assert_eq!(event.mask(), InotifyMask::CREATE);
+        assert_eq!(event.name(), Some("file".as_ref()));
+        assert_eq!(
+            event.name_cstr(),
+            Some(CStr::from_bytes_with_nul(b"file\0").unwrap())
+        );
+
+        assert_eq!(events.size_hint(), (1, Some(2)), "{:?}", events);
+
+        let event = events.next().unwrap();
+        assert_eq!(event.wd(), wd);
+        assert_eq!(event.mask(), InotifyMask::DELETE_SELF);
+        assert_eq!(event.name(), None);
+        assert_eq!(event.name_cstr(), None);
+
+        assert_eq!(events.size_hint(), (1, Some(1)), "{:?}", events);
+
+        let event = events.next().unwrap();
+        assert_eq!(event.wd(), wd);
+        assert_eq!(event.mask(), InotifyMask::IGNORED);
+        assert_eq!(event.name(), None);
+        assert_eq!(event.name_cstr(), None);
+
+        assert_eq!(events.size_hint(), (0, Some(0)), "{:?}", events);
+        assert!(events.next().is_none());
+    }
+}

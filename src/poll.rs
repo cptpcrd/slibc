@@ -78,3 +78,130 @@ pub fn ppoll(
 
     Ok(n as usize)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_poll() {
+        let (r1, w1) = crate::pipe().unwrap();
+        let (r2, w2) = crate::pipe().unwrap();
+
+        let mut fds = [
+            PollFd::new(r1.fd(), PollEvents::IN),
+            PollFd {
+                fd: r2.fd(),
+                events: PollEvents::IN,
+                revents: PollEvents::empty(),
+            },
+        ];
+
+        // Nothing to start
+        assert_eq!(poll(&mut fds, 0).unwrap(), 0);
+
+        // Now we write some data and test again
+        w1.write_all(b"a").unwrap();
+        assert_eq!(poll(&mut fds, 0).unwrap(), 1);
+        assert_eq!(fds[0].fd, r1.fd());
+        assert_eq!(fds[0].revents, PollEvents::IN);
+
+        // Now make sure reading two files works
+        w2.write_all(b"a").unwrap();
+        assert_eq!(poll(&mut fds, 0).unwrap(), 2);
+        assert_eq!(fds[0].fd, r1.fd());
+        assert_eq!(fds[0].revents, PollEvents::IN);
+        assert_eq!(fds[1].fd, r2.fd());
+        assert_eq!(fds[1].revents, PollEvents::IN);
+
+        // Now try without a timeout
+        assert_eq!(poll(&mut fds, 0).unwrap(), 2);
+        assert_eq!(fds[0].fd, r1.fd());
+        assert_eq!(fds[0].revents, PollEvents::IN);
+        assert_eq!(fds[1].fd, r2.fd());
+        assert_eq!(fds[1].revents, PollEvents::IN);
+    }
+
+    #[cfg(any(
+        target_os = "linux",
+        target_os = "freebsd",
+        target_os = "openbsd",
+        target_os = "netbsd",
+        target_os = "dragonfly",
+    ))]
+    #[test]
+    fn test_ppoll() {
+        let (r1, w1) = crate::pipe().unwrap();
+        let (r2, w2) = crate::pipe().unwrap();
+
+        let mut fds = [
+            PollFd {
+                fd: r1.fd(),
+                events: PollEvents::IN,
+                revents: PollEvents::empty(),
+            },
+            PollFd {
+                fd: r2.fd(),
+                events: PollEvents::IN,
+                revents: PollEvents::empty(),
+            },
+        ];
+
+        // Nothing to start
+        assert_eq!(
+            ppoll(
+                &mut fds,
+                Some(crate::TimeSpec {
+                    tv_sec: 0,
+                    tv_nsec: 0
+                }),
+                None
+            )
+            .unwrap(),
+            0,
+        );
+
+        // Now we write some data and test again
+        w1.write_all(b"a").unwrap();
+        assert_eq!(
+            ppoll(
+                &mut fds,
+                Some(crate::TimeSpec {
+                    tv_sec: 0,
+                    tv_nsec: 0
+                }),
+                None
+            )
+            .unwrap(),
+            1,
+        );
+        assert_eq!(fds[0].fd, r1.fd());
+        assert_eq!(fds[0].revents, PollEvents::IN);
+
+        // Now make sure reading two files works
+        w2.write_all(b"a").unwrap();
+        assert_eq!(
+            ppoll(
+                &mut fds,
+                Some(crate::TimeSpec {
+                    tv_sec: 0,
+                    tv_nsec: 0
+                }),
+                None
+            )
+            .unwrap(),
+            2,
+        );
+        assert_eq!(fds[0].fd, r1.fd());
+        assert_eq!(fds[0].revents, PollEvents::IN);
+        assert_eq!(fds[1].fd, r2.fd());
+        assert_eq!(fds[1].revents, PollEvents::IN);
+
+        // Now try without a timeout
+        assert_eq!(ppoll(&mut fds, None, None).unwrap(), 2);
+        assert_eq!(fds[0].fd, r1.fd());
+        assert_eq!(fds[0].revents, PollEvents::IN);
+        assert_eq!(fds[1].fd, r2.fd());
+        assert_eq!(fds[1].revents, PollEvents::IN);
+    }
+}
