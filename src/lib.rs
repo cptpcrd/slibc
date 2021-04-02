@@ -200,6 +200,13 @@ cfg_if::cfg_if! {
 }
 
 cfg_if::cfg_if! {
+    if #[cfg(not(target_os = "netbsd"))] {
+        mod statfs;
+        pub use statfs::*;
+    }
+}
+
+cfg_if::cfg_if! {
     if #[cfg(any(
         target_os = "freebsd",
         target_os = "dragonfly",

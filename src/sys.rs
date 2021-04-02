@@ -30,6 +30,27 @@ cfg_if::cfg_if! {
 
         pub const NAME_MAX: usize = 255;
 
+        #[cfg(any(target_env = "", target_env = "gnu"))]
+        #[derive(Copy, Clone, Debug)]
+        #[repr(C)]
+        pub struct statfs {
+            pub f_type: libc::__fsword_t,
+            pub f_bsize: libc::__fsword_t,
+            pub f_blocks: libc::fsblkcnt_t,
+            pub f_bfree: libc::fsblkcnt_t,
+            pub f_bavail: libc::fsblkcnt_t,
+            pub f_files: libc::fsblkcnt_t,
+            pub f_ffree: libc::fsblkcnt_t,
+            pub f_fsid: libc::fsid_t,
+            pub f_namelen: libc::__fsword_t,
+            pub f_frsize: libc::__fsword_t,
+            pub f_flags: libc::__fsword_t,
+            pub f_spare: [libc::__fsword_t; 4],
+        }
+
+        #[cfg(target_env = "musl")]
+        pub use libc::statfs;
+
         #[cfg(target_env = "musl")]
         #[derive(Copy, Clone, Debug)]
         #[repr(C)]
@@ -57,6 +78,8 @@ cfg_if::cfg_if! {
     } else if #[cfg(target_os = "android")] {
         pub const NAME_MAX: usize = 255;
 
+        pub use libc::statfs;
+
         #[derive(Copy, Clone, Debug)]
         #[repr(C)]
         pub struct regex_t {
@@ -66,6 +89,12 @@ cfg_if::cfg_if! {
             re_guts: *mut libc::c_void,
         }
     } else if #[cfg(any(target_os = "macos", target_os = "ios"))] {
+        extern "C" {
+            pub fn getfsstat(
+                buf: *mut libc::statfs, bufsize: libc::c_int, flags: libc::c_int
+            ) -> libc::c_int;
+        }
+
         pub const CTL_MAXNAME: i32 = 12;
 
         pub const CLOCK_MONOTONIC_RAW: libc::clockid_t = 4;
@@ -76,6 +105,32 @@ cfg_if::cfg_if! {
         pub const _CS_PATH: libc::c_int = 1;
 
         pub const NAME_MAX: usize = 255;
+
+        pub const MNT_RDONLY: u32 = 0x1;
+        pub const MNT_SYNCHRONOUS: u32 = 0x2;
+        pub const MNT_NOEXEC: u32 = 0x4;
+        pub const MNT_NOSUID: u32 = 0x8;
+        pub const MNT_NODEV: u32 = 0x10;
+        pub const MNT_UNION: u32 = 0x20;
+        pub const MNT_ASYNC: u32 = 0x40;
+        pub const MNT_CPROTECT: u32 = 0x80;
+        pub const MNT_EXPORTED: u32 = 0x100;
+        pub const MNT_REMOVABLE: u32 = 0x200;
+        pub const MNT_QUARANTINE: u32 = 0x400;
+        pub const MNT_LOCAL: u32 = 0x1000;
+        pub const MNT_QUOTA: u32 = 0x2000;
+        pub const MNT_ROOTFS: u32 = 0x4000;
+        pub const MNT_DOVOLFS: u32 = 0x8000;
+        pub const MNT_DONTBROWSE: u32 = 0x100000;
+        pub const MNT_IGNORE_OWNERSHIP: u32 = 0x200000;
+        pub const MNT_AUTOMOUNTED: u32 = 0x400000;
+        pub const MNT_JOURNALED: u32 = 0x800000;
+        pub const MNT_NOUSERXATTR: u32 = 0x100000;
+        pub const MNT_DEFWRITE: u32 = 0x200000;
+        pub const MNT_MULTILABEL: u32 = 0x4000000;
+        pub const MNT_NOATIME: u32 = 0x10000000;
+        pub const MNT_SNAPSHOT: u32 = 0x40000000;
+        pub const MNT_STRICTATIME: u32 = 0x80000000;
     } else if #[cfg(target_os = "netbsd")] {
         pub const SIGRTMIN: libc::c_int = 33;
         pub const SIGRTMAX: libc::c_int = 63;
@@ -104,6 +159,12 @@ cfg_if::cfg_if! {
             ) -> libc::c_int;
         }
     } else if #[cfg(target_os = "openbsd")] {
+        extern "C" {
+            pub fn getfsstat(
+                buf: *mut libc::statfs, bufsize: libc::size_t, flags: libc::c_int
+            ) -> libc::c_int;
+        }
+
         pub const CLOCK_PROCESS_CPUTIME_ID: libc::clockid_t = 2;
         pub const CLOCK_THREAD_CPUTIME_ID: libc::clockid_t = 4;
         pub const CLOCK_UPTIME: libc::clockid_t = 5;
@@ -112,7 +173,30 @@ cfg_if::cfg_if! {
         pub const _CS_PATH: libc::c_int = 1;
 
         pub const NAME_MAX: usize = 255;
+
+        pub const MNT_RDONLY: u32 = 0x1;
+        pub const MNT_SYNCHRONOUS: u32 = 0x2;
+        pub const MNT_NOEXEC: u32 = 0x4;
+        pub const MNT_NOSUID: u32 = 0x8;
+        pub const MNT_NODEV: u32 = 0x10;
+        pub const MNT_NOPERM: u32 = 0x20;
+        pub const MNT_ASYNC: u32 = 0x40;
+        pub const MNT_WXALLOWED: u32 = 0x800;
+        pub const MNT_EXRDONLY: u32 = 0x80;
+        pub const MNT_EXPORTED: u32 = 0x100;
+        pub const MNT_DEFEXPORTED: u32 = 0x200;
+        pub const MNT_EXPORTANON: u32 = 0x400;
+        pub const MNT_LOCAL: u32 = 0x1000;
+        pub const MNT_QUOTA: u32 = 0x2000;
+        pub const MNT_ROOTFS: u32 = 0x4000;
+        pub const MNT_NOATIME: u32 = 0x8000;
     } else if #[cfg(target_os = "freebsd")] {
+        extern "C" {
+            pub fn getfsstat(
+                buf: *mut libc::statfs, bufsize: libc::c_long, mode: libc::c_int
+            ) -> libc::c_int;
+        }
+
         pub const SIGRTMIN: libc::c_int = 65;
         pub const SIGRTMAX: libc::c_int = 126;
 
@@ -156,7 +240,45 @@ cfg_if::cfg_if! {
         }
 
         pub const _CS_PATH: libc::c_int = 1;
+
+        pub const MNT_RDONLY: u64 = 0x1;
+        pub const MNT_SYNCHRONOUS: u64 = 0x2;
+        pub const MNT_NOEXEC: u64 = 0x4;
+        pub const MNT_NOSUID: u64 = 0x8;
+        pub const MNT_NFS4ACLS: u64 = 0x10;
+        pub const MNT_UNION: u64 = 0x20;
+        pub const MNT_ASYNC: u64 = 0x40;
+        pub const MNT_SUIDDIR: u64 = 0x100000;
+        pub const MNT_SOFTDEP: u64 = 0x200000;
+        pub const MNT_NOSYMFOLLOW: u64 = 0x400000;
+        pub const MNT_GJOURNAL: u64 = 0x2000000;
+        pub const MNT_MULTILABEL: u64 = 0x4000000;
+        pub const MNT_ACLS: u64 = 0x8000000;
+        pub const MNT_NOATIME: u64 = 0x10000000;
+        pub const MNT_NOCLUSTERR: u64 = 0x40000000;
+        pub const MNT_NOCLUSTERW: u64 = 0x80000000;
+        pub const MNT_SUJ: u64 = 0x100000000;
+        pub const MNT_AUTOMOUNTED: u64 = 0x200000000;
+        pub const MNT_UNTRUSTED: u64 = 0x800000000;
+        pub const MNT_EXRDONLY: u64 = 0x80;
+        pub const MNT_EXPORTED: u64 = 0x100;
+        pub const MNT_DEFEXPORTED: u64 = 0x200;
+        pub const MNT_EXPORTANON: u64 = 0x400;
+        pub const MNT_EXKERB: u64 = 0x800;
+        pub const MNT_EXPUBLIC: u64 = 0x20000000;
+        pub const MNT_LOCAL: u64 = 0x1000;
+        pub const MNT_QUOTA: u64 = 0x2000;
+        pub const MNT_ROOTFS: u64 = 0x4000;
+        pub const MNT_USER: u64 = 0x8000;
+        pub const MNT_IGNORE: u64 = 0x800000;
+        pub const MNT_VERIFIED: u64 = 0x400000000;
     } else if #[cfg(target_os = "dragonfly")] {
+        extern "C" {
+            pub fn getfsstat(
+                buf: *mut libc::statfs, bufsize: libc::c_long, flags: libc::c_int
+            ) -> libc::c_int;
+        }
+
         pub const CTL_MAXNAME: i32 = 12;
 
         pub const _CS_PATH: libc::c_int = 1;
@@ -169,6 +291,32 @@ cfg_if::cfg_if! {
         pub const POSIX_FADV_WILLNEED: libc::c_int = 3;
         pub const POSIX_FADV_DONTNEED: libc::c_int = 4;
         pub const POSIX_FADV_NOREUSE: libc::c_int = 5;
+
+        pub const MNT_RDONLY: i32 = 0x1;
+        pub const MNT_SYNCHRONOUS: i32 = 0x2;
+        pub const MNT_NOEXEC: i32 = 0x4;
+        pub const MNT_NOSUID: i32 = 0x8;
+        pub const MNT_NODEV: i32 = 0x10;
+        pub const MNT_AUTOMOUNTED: i32 = 0x20;
+        pub const MNT_ASYNC: i32 = 0x40;
+        pub const MNT_SUIDDIR: i32 = 0x100000;
+        pub const MNT_SOFTDEP: i32 = 0x200000;
+        pub const MNT_NOSYMFOLLOW: i32 = 0x400000;
+        pub const MNT_TRIM: i32 = 0x1000000;
+        pub const MNT_NOATIME: i32 = 0x10000000;
+        pub const MNT_NOCLUSTERR: i32 = 0x40000000;
+        pub const MNT_NOCLUSTERW: i32 = 0x80000000u32 as i32;
+        pub const MNT_EXRDONLY: i32 = 0x80;
+        pub const MNT_EXPORTED: i32 = 0x100;
+        pub const MNT_DEFEXPORTED: i32 = 0x200;
+        pub const MNT_EXPORTANON: i32 = 0x400;
+        pub const MNT_EXKERB: i32 = 0x800;
+        pub const MNT_EXPUBLIC: i32 = 0x20000000;
+        pub const MNT_LOCAL: i32 = 0x1000;
+        pub const MNT_QUOTA: i32 = 0x2000;
+        pub const MNT_ROOTFS: i32 = 0x4000;
+        pub const MNT_USER: i32 = 0x8000;
+        pub const MNT_IGNORE: i32 = 0x800000;
     }
 }
 
@@ -188,6 +336,9 @@ cfg_if::cfg_if! {
     } else if #[cfg(bsd)] {
         pub use libc::IOV_MAX;
 
+        #[cfg(not(target_os = "netbsd"))]
+        pub use libc::statfs;
+
         #[derive(Copy, Clone, Debug)]
         #[repr(C)]
         pub struct regex_t {
@@ -196,6 +347,11 @@ cfg_if::cfg_if! {
             re_endp: *const libc::c_char,
             re_guts: *mut libc::c_void,
         }
+
+        #[cfg(not(target_os = "netbsd"))]
+        pub const MNT_WAIT: libc::c_int = 1;
+        #[cfg(not(target_os = "netbsd"))]
+        pub const MNT_NOWAIT: libc::c_int = 2;
     }
 }
 
