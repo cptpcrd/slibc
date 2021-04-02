@@ -56,8 +56,7 @@ bitflags::bitflags! {
 #[derive(Copy, Clone)]
 pub struct InotifyEvent<'a> {
     event: &'a libc::inotify_event,
-    // This *should* be NUL-terminated by the kernel, but that isn't an invariant and it should be
-    // checked
+    // Invariant: This should either be empty or have exactly one NUL at the end
     name: &'a [u8],
 }
 
@@ -96,9 +95,7 @@ impl InotifyEvent<'_> {
     /// file within the directory that triggered the event.
     #[inline]
     pub fn name(&self) -> Option<&OsStr> {
-        let (nul, rest) = self.name.split_last()?;
-        assert_eq!(*nul, 0);
-        Some(OsStr::from_bytes(rest))
+        Some(OsStr::from_bytes(self.name.split_last()?.1))
     }
 
     /// Get the filename associated with the event as a `CStr`.
@@ -109,7 +106,7 @@ impl InotifyEvent<'_> {
         if self.name.is_empty() {
             None
         } else {
-            Some(CStr::from_bytes_with_nul(self.name).unwrap())
+            Some(unsafe { CStr::from_bytes_with_nul_unchecked(self.name) })
         }
     }
 }
