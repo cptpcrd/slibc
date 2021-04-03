@@ -168,3 +168,28 @@ impl SigFdSigInfo {
         Signal::from_i32(self.ssi_signo())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_flags() {
+        let sfd = SignalFd::new(&SigSet::empty(), SigFdFlags::empty()).unwrap();
+        assert!(!sfd.as_ref().get_cloexec().unwrap());
+        assert!(!sfd.as_ref().get_nonblocking().unwrap());
+
+        let sfd = SignalFd::new(&SigSet::empty(), SigFdFlags::CLOEXEC).unwrap();
+        assert!(sfd.as_ref().get_cloexec().unwrap());
+        assert!(!sfd.as_ref().get_nonblocking().unwrap());
+
+        let sfd = SignalFd::new(&SigSet::empty(), SigFdFlags::NONBLOCK).unwrap();
+        assert!(!sfd.as_ref().get_cloexec().unwrap());
+        assert!(sfd.as_ref().get_nonblocking().unwrap());
+
+        let sfd =
+            SignalFd::new(&SigSet::empty(), SigFdFlags::CLOEXEC | SigFdFlags::NONBLOCK).unwrap();
+        assert!(sfd.as_ref().get_cloexec().unwrap());
+        assert!(sfd.as_ref().get_nonblocking().unwrap());
+    }
+}

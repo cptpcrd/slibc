@@ -14,7 +14,10 @@ fn do_tests() {
     restore_sigmask(test_kill);
 
     #[cfg(linuxlike)]
-    restore_sigmask(test_tgkill);
+    {
+        restore_sigmask(test_tgkill);
+        restore_sigmask(test_signalfd);
+    }
 }
 
 fn test_sigmask() {
@@ -87,4 +90,32 @@ fn test_tgkill() {
     set.thread_block().unwrap();
     tgkill(getpid(), gettid(), Signal::SIGUSR1).unwrap();
     assert_eq!(set.wait().unwrap(), Signal::SIGUSR1);
+}
+
+#[cfg(linuxlike)]
+fn test_signalfd() {
+    use slibc::{gettid, tgkill, SigFdFlags, SigFdSigInfo, SignalFd};
+
+    fn check_siginfo(sfd: &SignalFd, sig: Signal) {
+        let mut sinfo = SigFdSigInfo::zeroed();
+        assert_eq!(
+            sfd.read_siginfos(std::slice::from_mut(&mut sinfo)).unwrap(),
+            1
+        );
+        assert_eq!(sinfo.signal(), Some(sig));
+    }
+
+    let set = sigset!(Signal::SIGUSR1);
+    set.thread_block().unwrap();
+    let sfd = SignalFd::new(&set, SigFdFlags::CLOEXEC).unwrap();
+
+    tgkill(getpid(), gettid(), Signal::SIGUSR1).unwrap();
+    check_siginfo(&sfd, Signal::SIGUSR1);
+
+    let set = sigset!(Signal::SIGUSR2);
+    set.thread_block().unwrap();
+    sfd.set_mask(&set).unwrap();
+
+    tgkill(getpid(), gettid(), Signal::SIGUSR2).unwrap();
+    check_siginfo(&sfd, Signal::SIGUSR2);
 }
