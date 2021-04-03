@@ -88,6 +88,13 @@ impl From<SignalFd> for FileDesc {
     }
 }
 
+impl AsRef<BorrowedFd> for SignalFd {
+    #[inline]
+    fn as_ref(&self) -> &BorrowedFd {
+        self.0.as_ref()
+    }
+}
+
 #[cfg(feature = "std")]
 impl AsRawFd for SignalFd {
     #[inline]
