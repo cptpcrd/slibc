@@ -15,41 +15,98 @@ const EVENT_SIZE: usize = core::mem::size_of::<libc::inotify_event>();
 pub const INOTIFY_MIN_BUFSIZE: usize = EVENT_SIZE + crate::NAME_MAX + 1;
 
 bitflags::bitflags! {
+    /// Flags to [`inotify_init1()`] or [`Inotify::new()`].
     pub struct InotifyFlags: libc::c_int {
+        /// Set the `O_NONBLOCK` flag on the returned inotify file descriptor.
         const NONBLOCK = libc::IN_NONBLOCK;
+        /// Set the close-on-exec flag on the returned inotify file descriptor.
         const CLOEXEC = libc::IN_CLOEXEC;
     }
 }
 
 bitflags::bitflags! {
+    /// "Masks" identifying inotify events (and some other flags).
+    ///
+    /// These are passed to [`inotify_add_watch()`]/[`Inotify::add_watch()`], and they are returned
+    /// in the events yielded by an [`InotifyEventIter`].
+    ///
+    /// See `inotify(7)` for more information.
     pub struct InotifyMask: u32 {
+        /// The watched file (or a file in the watched directory) was accessed.
         const ACCESS = libc::IN_ACCESS;
+        /// Metadata of the watched file/directory (or a file in the watched directory) was
+        /// changed.
         const ATTRIB = libc::IN_ATTRIB;
+        /// The watched file (or a file in the watched directory) was open for write access and
+        /// was closed.
         const CLOSE_WRITE = libc::IN_CLOSE_WRITE;
+        /// The watched file (or a file in the watched directory) was open for non-write access and
+        /// was closed.
         const CLOSE_NOWRITE = libc::IN_CLOSE_NOWRITE;
+        /// A file was created in the watched directory.
         const CREATE = libc::IN_CREATE;
+        /// A file was deleted from the watched file/directory.
         const DELETE = libc::IN_DELETE;
+        /// The watched file/directory was deleted.
         const DELETE_SELF = libc::IN_DELETE_SELF;
+        /// The watched file (or a file in the watched directory) was modified, e.g. with `write()`
+        /// or `truncate()`.
         const MODIFY = libc::IN_MODIFY;
+        /// The watched file/directory was moved.
         const MOVE_SELF = libc::IN_MOVE_SELF;
+        /// A file in the watched directory is being renamed.
         const MOVED_FROM = libc::IN_MOVED_FROM;
+        /// A file is being renamed into (or within) the watched directory.
         const MOVED_TO = libc::IN_MOVED_TO;
+        /// The watched file/directory (or a file in the watched directory) was opened.
         const OPEN = libc::IN_OPEN;
 
+        /// An alias for all of the previously listed events.
         const ALL_EVENTS = libc::IN_ALL_EVENTS;
+        /// An alias for [`Self::MOVED_FROM`] | [`Self::MOVED_TO`].
         const MOVE = libc::IN_MOVE;
+        /// An alias for [`Self::CLOSE_WRITE`] | [`Self::CLOSE_NOWRITE`].
         const CLOSE = libc::IN_CLOSE;
 
+        /// When passed to [`inotify_add_watch()`]/[`Inotify::add_watch()`], don't dereference
+        /// the specified path if it is a symbolic link.
         const DONT_FOLLOW = libc::IN_DONT_FOLLOW;
+        /// When passed to [`inotify_add_watch()`]/[`Inotify::add_watch()`], only watch the
+        /// specified path if it is a directory (fail with `ENOTDIR` otherwise).
         const ONLYDIR = libc::IN_ONLYDIR;
+        /// When passed to [`inotify_add_watch()`]/[`Inotify::add_watch()`], don't watch events
+        /// for children that have been unlinked.
         const EXCL_UNLINK = 0x04000000;
+        /// When passed to [`inotify_add_watch()`]/[`Inotify::add_watch()`], remove the watch
+        /// after one event has been generated.
         const ONESHOT = libc::IN_ONESHOT;
+        /// When passed to [`inotify_add_watch()`]/[`Inotify::add_watch()`], add the specified
+        /// events to the watch mask instead of replacing it.
         const MASK_ADD = 0x20000000;
+        /// When passed to [`inotify_add_watch()`]/[`Inotify::add_watch()`], fail with `EEXIST`
+        /// if the specified path is already being watched.
+        ///
+        /// This was added in Linux 4.18. (If this flag is not specified, the given mask will
+        /// replace the previous mask for that watch.)
         const MASK_CREATE = 0x10000000;
 
+        /// When returned in an [`InotifyEvent`], this means that the watch has been removed.
+        ///
+        /// This can happen if it was explicitly removed e.g. with [`inotify_rm_watch()`], or in
+        /// some cases if the file was deleted/the filesystem was unmounted.
         const IGNORED = libc::IN_IGNORED;
+        /// When returned in an [`InotifyEvent`], this means that the subject of the event is a
+        /// directory.
         const ISDIR = libc::IN_ISDIR;
+        /// When returned in an [`InotifyEvent`], this means that the event queue overflowed and
+        /// some events may have been discarded.
+        ///
+        /// The watch descriptor returned for this event is -1.
         const Q_OVERFLOW = libc::IN_Q_OVERFLOW;
+        /// When returned in an [`InotifyEvent`], this means that the filesystem containing the
+        /// watched object was unmounted.
+        ///
+        /// A [`Self::IGNORED`] event will later be generated.
         const UNMOUNT = libc::IN_UNMOUNT;
     }
 }
@@ -123,12 +180,17 @@ impl fmt::Debug for InotifyEvent<'_> {
     }
 }
 
+/// Create a new inotify file descriptor with the specified flags.
 #[inline]
 pub fn inotify_init1(flags: InotifyFlags) -> Result<FileDesc> {
     Error::unpack(unsafe { libc::inotify_init1(flags.bits()) })
         .map(|fd| unsafe { FileDesc::new(fd) })
 }
 
+/// Add a watch for the file specified by `path`, according to the flags in `mask`, to the inotify
+/// instance specified by `fd`.
+///
+/// On success, a watch descriptor is returned.
 #[inline]
 pub fn inotify_add_watch<P: AsPath>(fd: RawFd, path: P, mask: InotifyMask) -> Result<i32> {
     path.with_cstr(|path| {
@@ -136,6 +198,7 @@ pub fn inotify_add_watch<P: AsPath>(fd: RawFd, path: P, mask: InotifyMask) -> Re
     })
 }
 
+/// Remove the watch specified by the given watch descriptor.
 #[inline]
 pub fn inotify_rm_watch(fd: RawFd, wd: i32) -> Result<()> {
     Error::unpack_nz(unsafe { libc::inotify_rm_watch(fd, wd as _) })
@@ -143,7 +206,7 @@ pub fn inotify_rm_watch(fd: RawFd, wd: i32) -> Result<()> {
 
 /// An iterator over events that were `read()` from an inotify file descriptor.
 ///
-/// Currently this can only be obtained by calling [`Inotify::read_events()`].
+/// The easiest way to obtain one of these iterators is by calling [`Inotify::read_events()`].
 #[derive(Clone)]
 pub struct InotifyEventIter<'a> {
     buf: &'a [u8],
@@ -219,16 +282,19 @@ impl fmt::Debug for InotifyEventIter<'_> {
 pub struct Inotify(FileDesc);
 
 impl Inotify {
+    /// Create a new inotify file descriptor with the specified flags.
     #[inline]
     pub fn new(flags: InotifyFlags) -> Result<Self> {
         inotify_init1(flags).map(Self)
     }
 
+    /// See [`inotify_add_watch()`].
     #[inline]
     pub fn add_watch<P: AsPath>(&self, path: P, mask: InotifyMask) -> Result<i32> {
         inotify_add_watch(self.fd(), path, mask)
     }
 
+    /// See [`inotify_rm_watch()`].
     #[inline]
     pub fn rm_watch(&self, wd: i32) -> Result<()> {
         inotify_rm_watch(self.fd(), wd)
