@@ -26,6 +26,7 @@ bitflags::bitflags! {
         const ACCESS = libc::IN_ACCESS;
         const ATTRIB = libc::IN_ATTRIB;
         const CLOSE_WRITE = libc::IN_CLOSE_WRITE;
+        const CLOSE_NOWRITE = libc::IN_CLOSE_NOWRITE;
         const CREATE = libc::IN_CREATE;
         const DELETE = libc::IN_DELETE;
         const DELETE_SELF = libc::IN_DELETE_SELF;
