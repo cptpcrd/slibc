@@ -194,7 +194,9 @@ cfg_if::cfg_if! {
 
 cfg_if::cfg_if! {
     if #[cfg(target_os = "linux")] {
+        mod pidfd;
         mod statx;
+        pub use pidfd::*;
         pub use statx::*;
     }
 }
