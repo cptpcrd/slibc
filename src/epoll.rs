@@ -41,6 +41,7 @@ pub enum EpollCtlOp {
 /// An event returned by an epoll file descriptor.
 ///
 /// See [`epoll_wait()`].
+#[derive(Copy, Clone, Debug)]
 #[repr(transparent)]
 pub struct EpollEvent(libc::epoll_event);
 

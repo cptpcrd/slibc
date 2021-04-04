@@ -111,7 +111,7 @@ bitflags::bitflags! {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct InotifyEvent<'a> {
     event: &'a libc::inotify_event,
     // Invariant: This should either be empty or have exactly one NUL at the end
