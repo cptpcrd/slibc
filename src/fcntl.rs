@@ -64,6 +64,8 @@ define_oflag! {
     /// If the specified file is a terminal device, do not make it the process's controlling
     /// terminal.
     O_NOCTTY,
+    /// If the final component of the given path refers to a symbolic link, fail with `ELOOP`.
+    O_NOFOLLOW,
     /// Open the file in nonblocking mode.
     ///
     /// This has no effect for regular files. When opening FIFOs, it prevents the (normal) blocking on
