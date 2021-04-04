@@ -66,12 +66,16 @@ pub fn pidfd_getfd(pidfd: RawFd, targetfd: RawFd, flags: PidFdGetfdFlags) -> Res
 /// more information.
 #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
 #[inline]
-pub fn pidfd_send_signal_simple(pidfd: RawFd, sig: Signal, flags: PidFdSignalFlags) -> Result<()> {
+pub fn pidfd_send_signal_simple<S: Into<Option<Signal>>>(
+    pidfd: RawFd,
+    sig: S,
+    flags: PidFdSignalFlags,
+) -> Result<()> {
     Error::unpack_nz(unsafe {
         libc::syscall(
             libc::SYS_pidfd_send_signal,
             pidfd,
-            sig.as_i32(),
+            sig.into().map_or(0, |s| s.as_i32()),
             core::ptr::null_mut::<libc::siginfo_t>(),
             flags.bits(),
         ) as i32
@@ -97,7 +101,11 @@ impl PidFd {
 
     /// See [`pidfd_send_signal_simple()`].
     #[inline]
-    pub fn send_signal_simple(&self, sig: Signal, flags: PidFdSignalFlags) -> Result<()> {
+    pub fn send_signal_simple<S: Into<Option<Signal>>>(
+        &self,
+        sig: S,
+        flags: PidFdSignalFlags,
+    ) -> Result<()> {
         pidfd_send_signal_simple(self.fd(), sig, flags)
     }
 
