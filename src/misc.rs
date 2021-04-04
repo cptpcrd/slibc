@@ -10,6 +10,8 @@ pub enum FlockOp {
 }
 
 #[inline]
-pub fn flock(fd: RawFd, op: FlockOp) -> Result<()> {
-    Error::unpack_nz(unsafe { libc::flock(fd, op as _) })
+pub fn flock(fd: RawFd, op: FlockOp, nonblock: bool) -> Result<()> {
+    Error::unpack_nz(unsafe {
+        libc::flock(fd, (op as _) | if nonblock { libc::LOCK_NB } else { 0 })
+    })
 }
