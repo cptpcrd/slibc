@@ -1415,6 +1415,21 @@ pub fn getpeereid(sock: RawFd) -> Result<(libc::uid_t, libc::gid_t)> {
     unsafe { Ok((uid.assume_init(), gid.assume_init())) }
 }
 
+#[allow(clippy::upper_case_acronyms)]
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+#[repr(i32)]
+pub enum LockfCmd {
+    LOCK = libc::F_LOCK,
+    TLOCK = libc::F_TLOCK,
+    ULOCK = libc::F_ULOCK,
+    TEST = libc::F_TEST,
+}
+
+#[inline]
+pub fn lockf(fd: RawFd, cmd: LockfCmd, len: u64) -> Result<()> {
+    Error::unpack_nz(unsafe { libc::lockf(fd, cmd as _, len as _) })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
