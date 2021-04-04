@@ -321,7 +321,18 @@ cfg_if::cfg_if! {
 }
 
 cfg_if::cfg_if! {
+    if #[cfg(freebsdlike)] {
+        extern "C" {
+            pub fn swapon(path: *const libc::c_char) -> libc::c_int;
+            pub fn swapoff(path: *const libc::c_char) -> libc::c_int;
+        }
+    }
+}
+
+cfg_if::cfg_if! {
     if #[cfg(linuxlike)] {
+        pub use libc::swapoff;
+
         extern "C" {
             pub fn __libc_current_sigrtmin() -> libc::c_int;
             pub fn __libc_current_sigrtmax() -> libc::c_int;
