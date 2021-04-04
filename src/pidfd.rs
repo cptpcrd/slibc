@@ -111,12 +111,12 @@ impl PidFd {
         self.0.into_fd()
     }
 
-    /// Create a new `SignalFd` wrapper around the given signalfd file descriptor.
+    /// Create a new `PidFd` wrapper around the given pidfd file descriptor.
     ///
     /// # Safety
     ///
-    /// The given file descriptor must refer to a valid signalfd instance, and it must not be in
-    /// use by other code.
+    /// The given file descriptor must refer to a valid pidfd instance, and it must not be in use
+    /// by other code.
     #[inline]
     pub unsafe fn from_fd(fd: RawFd) -> Self {
         Self(FileDesc::new(fd))
