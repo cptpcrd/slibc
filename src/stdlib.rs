@@ -61,9 +61,29 @@ bitflags::bitflags! {
         ///
         /// The `random` source is more limited in its available entropy, and it may not be able to
         /// fill the supplied buffer if not enough bytes are available.
+        ///
+        /// Note that this flag is ignored since Linux 5.6 (since `/dev/urandom` and `/dev/random`
+        /// now use the same pool). See the notes in [`Self::INSECURE`].
         const RANDOM = libc::GRND_RANDOM;
         /// Fail with `EAGAIN` isntead of blocking if insufficient entropy is available.
         const NONBLOCK = libc::GRND_NONBLOCK;
+        /// If the random pool is not initialized, return non-cryptographic random bytes.
+        ///
+        /// Added in Linux 5.6 (will fail with `EINVAL` on older kernels). Cannot be specified
+        /// along with [`Self::NONBLOCK`].
+        ///
+        /// Linux 5.6 made several changes to `/dev/random`, `/dev/urandom`, and `getrandom()`.
+        /// Essentially, on Linux 5.6+:
+        ///
+        /// - Specifying neither [`Self::NONBLOCK`] nor [`Self::INSECURE`] is equivalent to reading
+        ///   from `/dev/random`: obtain random bytes, blocking if the pool is not fully
+        ///   initialized.
+        /// - Specifying [`Self::INSECURE`] is equivalent to reading from `/dev/urandom`: read
+        ///   random bytes, even if the pool is not fully initialized (may not be cryptographically
+        ///   secure).
+        /// - Specifying [`Self::NONBLOCK`] is equivalent to reading from `/dev/random`, except
+        ///   that it will fail with `EAGAIN` if the pool is not fully initialized.
+        const INSECURE = 0x4;
     }
 }
 
