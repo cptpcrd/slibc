@@ -513,7 +513,7 @@ mod tests {
         check_same_stats(CStr::from_bytes_with_nul(b"/\0").unwrap(), libc::S_IFDIR);
         check_same_stats(CStr::from_bytes_with_nul(b".\0").unwrap(), libc::S_IFDIR);
         check_same_stats(
-            CStr::from_bytes_with_nul(b"/tmp/\0").unwrap(),
+            CStr::from_bytes_with_nul(b"/bin/\0").unwrap(),
             libc::S_IFDIR,
         );
 
