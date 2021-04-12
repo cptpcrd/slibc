@@ -387,7 +387,7 @@ pub fn fcntl_setpipe_sz(fd: RawFd, cap: libc::c_int) -> Result<()> {
 
 /// Get the path to which the given file descriptor is open.
 ///
-/// `buf` must be an array [`PATH_MAX`] bytes long.
+/// `buf` must be an array [`PATH_MAX`](./constant.PATH_MAX.html) bytes long.
 ///
 /// To use a dynamically allocated buffer, see [`fcntl_getpath_unchecked()`].
 #[cfg(target_os = "macos")]
@@ -404,7 +404,7 @@ pub fn fcntl_getpath(fd: RawFd, buf: &mut [u8; crate::PATH_MAX]) -> Result<&CStr
 ///
 /// # Safety
 ///
-/// `buf` must be at least [`PATH_MAX`](../limits/constant.PATH_MAX.html) bytes long. (This is
+/// `buf` must be at least [`PATH_MAX`](./constant.PATH_MAX.html) bytes long. (This is
 /// verified if debug assertions are enabled.)
 #[cfg(target_os = "macos")]
 #[cfg_attr(docsrs, doc(cfg(target_os = "macos")))]
