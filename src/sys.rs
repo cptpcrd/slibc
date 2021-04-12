@@ -49,7 +49,7 @@ cfg_if::cfg_if! {
         }
 
         #[cfg(target_env = "musl")]
-        pub use libc::statfs;
+        pub use libc::{statfs, O_SEARCH};
 
         #[cfg(target_env = "musl")]
         #[derive(Copy, Clone, Debug)]
@@ -272,6 +272,12 @@ cfg_if::cfg_if! {
         pub const MNT_USER: u64 = 0x8000;
         pub const MNT_IGNORE: u64 = 0x800000;
         pub const MNT_VERIFIED: u64 = 0x400000000;
+
+        // FreeBSD has historically implemented O_EXEC on directories with *similar* semantics to
+        // POSIX's O_SEARCH. FreeBSD 13.0 (also backported to 11.4 and 12.2) a) added O_SEARCH as an
+        // alias for O_EXEC and b) cleaned up the behavior a bit.
+        // The libc crate doesn't define O_SEARCH on FreeBSD (yet?), so we have an alias here.
+        pub const O_SEARCH: libc::c_int = libc::O_EXEC;
     } else if #[cfg(target_os = "dragonfly")] {
         extern "C" {
             pub fn getfsstat(

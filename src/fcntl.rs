@@ -1,11 +1,17 @@
 use crate::internal_prelude::*;
 
 macro_rules! define_oflag {
-    ($(
-        $(#[doc = $doc:literal])*
-        $(#[cfg($($args:tt)*)])*
-        $name:ident,
-    )+) => {
+    (
+        $(
+            #[cfg($cfg:meta)]
+            $($(#[doc = $doc:literal])* $name:ident,)*
+        )*
+        @sys,
+        $(
+            #[cfg($cfg2:meta)]
+            $($(#[doc = $doc2:literal])* $name2:ident,)*
+        )*
+    ) => {
         bitflags::bitflags! {
             /// Flags for [`open()`] and [`openat()`].
             ///
@@ -14,20 +20,26 @@ macro_rules! define_oflag {
             /// These flags may also be used for other functions, like `pipe2()` and `dup3()`. See
             /// those functions' documentation for details.
             pub struct OFlag: libc::c_int {
-                $(
+                $($(
                     $(#[doc = $doc])*
-                    $(
-                        #[cfg($($args)*)]
-                        #[cfg_attr(docsrs, doc(cfg($($args)*)))]
-                    )*
+                    #[cfg($cfg)]
+                    #[cfg_attr(docsrs, doc(cfg($cfg)))]
                     const $name = libc::$name;
-                )+
+                )*)*
+
+                $($(
+                    $(#[doc = $doc2])*
+                    #[cfg($cfg2)]
+                    #[cfg_attr(docsrs, doc(cfg($cfg2)))]
+                    const $name2 = sys::$name2;
+                )*)*
             }
         }
     };
 }
 
 define_oflag! {
+    #[cfg(all())]
     /// Open the file for reading only.
     O_RDONLY,
     /// Open the file for writing only.
@@ -75,17 +87,17 @@ define_oflag! {
     /// Usually an alias for `O_NONBLOCK`.
     O_NDELAY,
 
-    // Present on most systems, but not all
-
+    // All except macOS/OpenBSD
     #[cfg(not(any(target_os = "macos", target_os = "ios", target_os = "openbsd")))]
     O_DIRECT,
+
+    // All except FreeBSD/DragonFlyBSD
+    #[cfg(not(any(target_os = "freebsd", target_os = "dragonfly")))]
     /// Synchronize file data (not metadata) after each write (often roughly equivalent to an
     /// `fdatasync()` after each write).
-    #[cfg(not(any(target_os = "freebsd", target_os = "dragonfly")))]
     O_DSYNC,
 
-    // Present on the BSDs and macOS
-
+    // macOS/*BSD-specific
     #[cfg(any(
         target_os = "openbsd",
         target_os = "freebsd",
@@ -95,43 +107,34 @@ define_oflag! {
         target_os = "ios"
     ))]
     O_SHLOCK,
-    #[cfg(any(
-        target_os = "openbsd",
-        target_os = "freebsd",
-        target_os = "netbsd",
-        target_os = "dragonfly",
-        target_os = "macos",
-        target_os = "ios"
-    ))]
     O_EXLOCK,
 
-    // Linux-specific flags
-
+    // Linux-specific
     #[cfg(target_os = "linux")]
     O_NOATIME,
-    #[cfg(target_os = "linux")]
     O_TMPFILE,
-    #[cfg(target_os = "linux")]
     O_PATH,
 
-    // FreeBSD-specific flags
-
+    // FreeBSD-specific
     #[cfg(target_os = "freebsd")]
     O_TTY_INIT,
 
     // O_SEARCH and O_EXEC are defined on some systems
 
+    #[cfg(any(all(target_os = "linux", target_env = "musl"), target_os = "freebsd"))]
+    /// When opening a non-directory file (behavior is undefined for other file types), open it for
+    /// execution (with `fexecve()`) only.
+    O_EXEC,
+
+    @sys,
+
+    #[cfg(any(all(target_os = "linux", target_env = "musl"), target_os = "freebsd"))]
     /// When opening a directory (behavior is undefined for other file types), open it for
     /// searching only.
     ///
     /// The resulting file descriptor cannot be used to list the contents of the directory; only to
     /// access files within it using [`openat()`] and the other `*at()` functions.
-    #[cfg(all(target_os = "linux", target_env = "musl"))]
     O_SEARCH,
-    /// When opening a non-directory file (behavior is undefined for other file types), open it for
-    /// execution (with `fexecve()`) only.
-    #[cfg(any(all(target_os = "linux", target_env = "musl"), target_os = "freebsd"))]
-    O_EXEC,
 }
 
 bitflags::bitflags! {
