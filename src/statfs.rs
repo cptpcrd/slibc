@@ -106,6 +106,7 @@ impl Statfs {
         len as usize
     }
 
+    /// Last mount time
     #[cfg(target_os = "openbsd")]
     #[cfg_attr(docsrs, doc(cfg(target_os = "openbsd")))]
     #[inline]
@@ -149,6 +150,7 @@ impl Statfs {
     )))
 )]
 impl Statfs {
+    /// Preferred I/O block size
     #[inline]
     pub fn iosize(&self) -> u64 {
         self.0.f_iosize as u64
@@ -160,16 +162,19 @@ impl Statfs {
         self.0.f_owner
     }
 
+    /// The filesystem type name.
     #[inline]
     pub fn fstypename(&self) -> &OsStr {
         util::osstr_from_buf(util::cvt_char_buf(&self.0.f_fstypename))
     }
 
+    /// The directory on which the filesystem is mounted.
     #[inline]
     pub fn mnttoname(&self) -> &OsStr {
         util::osstr_from_buf(util::cvt_char_buf(&self.0.f_mntonname))
     }
 
+    /// The source of the mounted filesystem.
     #[inline]
     pub fn mntfromname(&self) -> &OsStr {
         util::osstr_from_buf(util::cvt_char_buf(&self.0.f_mntfromname))
@@ -236,7 +241,7 @@ bitflags::bitflags! {
     /// Flags returned by [`Statfs::flags()`].
     ///
     /// These are very platform-specific (though some flags like `RDONLY`, `NOEXEC`, and
-    /// `NOSUID` are common).
+    /// `NOSUID` are common).Check the man pages for your OS of choice for more information.
     #[cfg_attr(docsrs, doc(cfg(not(target_os = "netbsd"))))]
     pub struct StatfsFlags: u64 {
         const MANDLOCK = libc::ST_MANDLOCK as _;
@@ -264,7 +269,8 @@ macro_rules! bsd_declare_statfs_flags {
             /// Flags returned by [`Statfs::flags()`].
             ///
             /// These are very platform-specific (though some flags like `RDONLY`, `NOEXEC`, and
-            /// `NOSUID` are common).
+            /// `NOSUID` are common). Check the man pages for your OS of choice for more
+            /// information.
             #[cfg_attr(docsrs, doc(cfg(not(target_os = "netbsd"))))]
             pub struct StatfsFlags: u64 {
                 $($(
@@ -347,6 +353,7 @@ bsd_declare_statfs_flags! {
     EXPORTANON = MNT_EXPORTANON,
 }
 
+/// Get information about the filesystem containing the file at the specified `path`.
 #[cfg_attr(docsrs, doc(cfg(not(target_os = "netbsd"))))]
 #[inline]
 pub fn statfs<P: AsPath>(path: P) -> Result<Statfs> {
@@ -357,6 +364,7 @@ pub fn statfs<P: AsPath>(path: P) -> Result<Statfs> {
     })
 }
 
+/// Get information about the filesystem containing the file referred to by the specified `fd`.
 #[cfg_attr(docsrs, doc(cfg(not(target_os = "netbsd"))))]
 #[inline]
 pub fn fstatfs(fd: RawFd) -> Result<Statfs> {
@@ -366,6 +374,17 @@ pub fn fstatfs(fd: RawFd) -> Result<Statfs> {
 }
 
 /// Retrieve a list of mounted filesystems.
+///
+/// `buf` specifies a list of [`Statfs`] structures into which information on the filesystems will
+/// be placed. This function will return the number of structures in `buf` that were filled out. If
+/// there are more mounted filesystems than can be placed in `buf`, the list will be truncated.
+///
+/// If `buf` is `None`, this function will return the number of mounted filesystems; this value can
+/// be used to pre-allocate a buffer for a subsequent call to actually retrieve the list.
+///
+/// If `nowait` is true, the `MNT_NOWAIT` flag will be specified (which may return out-of-date
+/// information); if it is false then `MNT_WAIT` will be specified (which may block waiting for an
+/// update from the filesystem(s)). See OS-specific documentation for more information.
 #[cfg_attr(
     docsrs,
     doc(cfg(any(
