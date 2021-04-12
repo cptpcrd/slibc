@@ -484,4 +484,42 @@ mod tests {
         #[cfg(feature = "std")]
         check_same_stats(std::env::current_exe().unwrap(), libc::S_IFREG);
     }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn test_utimensat_futimens() {
+        use std::os::unix::prelude::*;
+
+        let tmpfile_open = tempfile::NamedTempFile::new().unwrap();
+        let tmpfile = tmpfile_open.as_ref();
+
+        let t1 = TimeSpec {
+            tv_sec: 1,
+            tv_nsec: 1,
+        };
+        let t2 = TimeSpec {
+            tv_sec: 2,
+            tv_nsec: 2,
+        };
+
+        utimensat(libc::AT_FDCWD, tmpfile, t1, t2, AtFlag::empty()).unwrap();
+        let st = crate::stat(tmpfile).unwrap();
+        assert_eq!(st.atime(), t1);
+        assert_eq!(st.mtime(), t2);
+
+        utimensat(libc::AT_FDCWD, tmpfile, UTIMENS_OMIT, t1, AtFlag::empty()).unwrap();
+        let st = crate::stat(tmpfile).unwrap();
+        assert_eq!(st.atime(), t1);
+        assert_eq!(st.mtime(), t1);
+
+        utimensat(libc::AT_FDCWD, tmpfile, t2, UTIMENS_OMIT, AtFlag::empty()).unwrap();
+        let st = crate::stat(tmpfile).unwrap();
+        assert_eq!(st.atime(), t2);
+        assert_eq!(st.mtime(), t1);
+
+        futimens(tmpfile_open.as_raw_fd(), t1, t2).unwrap();
+        let st = crate::stat(tmpfile).unwrap();
+        assert_eq!(st.atime(), t1);
+        assert_eq!(st.mtime(), t2);
+    }
 }
