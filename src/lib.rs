@@ -67,7 +67,6 @@
 //! Some of the interfaces in `slibc` were designed after corresponding interfaces in `nix`, but
 //! `slibc` does *not* slavishly mimic `nix`'s API.
 
-#![deny(warnings)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
