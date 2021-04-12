@@ -403,3 +403,61 @@ pub fn getfsstat(buf: Option<&mut [Statfs]>, nowait: bool) -> Result<usize> {
 
     Ok(n as usize)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn check_statfs_same(sfs1: &Statfs, sfs2: &Statfs) {
+        assert_eq!(sfs1.flags(), sfs2.flags());
+        assert_eq!(sfs1.blocks(), sfs2.blocks());
+        assert_eq!(sfs1.bsize(), sfs2.bsize());
+        assert_eq!(sfs1.fsid(), sfs2.fsid());
+
+        #[cfg(not(target_os = "openbsd"))]
+        assert_eq!(sfs1.fstype(), sfs2.fstype());
+
+        #[cfg(not(any(target_os = "dragonfly", apple)))]
+        assert_eq!(sfs1.namelen(), sfs2.namelen());
+
+        #[cfg(bsd)]
+        {
+            assert_eq!(sfs1.iosize(), sfs2.iosize());
+            assert_eq!(sfs1.owner(), sfs2.owner());
+            assert_eq!(sfs1.fstypename(), sfs2.fstypename());
+            assert_eq!(sfs1.mnttoname(), sfs2.mnttoname());
+            assert_eq!(sfs1.mntfromname(), sfs2.mntfromname());
+        }
+    }
+
+    #[test]
+    fn test_statfs_fstatfs() {
+        for &path in [
+            crate::c_paths::slash(),
+            CStr::from_bytes_with_nul(b"/bin\0").unwrap(),
+            CStr::from_bytes_with_nul(b"/tmp\0").unwrap(),
+        ].iter() {
+            let sfs1 = statfs(path).unwrap();
+
+            let f2 =
+                crate::open(path, crate::OFlag::O_RDONLY | crate::OFlag::O_CLOEXEC, 0).unwrap();
+            let sfs2 = fstatfs(f2.fd()).unwrap();
+
+            check_statfs_same(&sfs1, &sfs2);
+        }
+    }
+
+    #[cfg(all(bsd, feature = "alloc"))]
+    #[test]
+    fn test_getfsstat() {
+        let len = getfsstat(None, false).unwrap();
+        let mut buf = vec![Statfs::zeroed(); len];
+        let len = getfsstat(Some(&mut buf), false).unwrap();
+        let buf = &buf[..len];
+
+        for sfs1 in buf {
+            let sfs2 = statfs(sfs1.mnttoname()).unwrap();
+            check_statfs_same(&sfs1, &sfs2);
+        }
+    }
+}
