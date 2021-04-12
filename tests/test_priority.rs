@@ -41,9 +41,7 @@ fn test_getset_prio_bad() {
 
 #[test]
 fn test_nice() {
-    if slibc::geteuid() == 0 {
-        nice(-1).unwrap();
-    } else {
+    if slibc::geteuid() != 0 {
         assert!(matches!(
             nice(-1).unwrap_err().code(),
             libc::EPERM | libc::EACCES
