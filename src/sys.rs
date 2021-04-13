@@ -89,11 +89,7 @@ cfg_if::cfg_if! {
             re_guts: *mut libc::c_void,
         }
     } else if #[cfg(any(target_os = "macos", target_os = "ios"))] {
-        extern "C" {
-            pub fn getfsstat(
-                buf: *mut libc::statfs, bufsize: libc::c_int, flags: libc::c_int
-            ) -> libc::c_int;
-        }
+        pub use libc::getfsstat;
 
         pub const CTL_MAXNAME: i32 = 12;
 
@@ -192,6 +188,11 @@ cfg_if::cfg_if! {
         pub const MNT_NOATIME: u32 = 0x8000;
     } else if #[cfg(target_os = "freebsd")] {
         extern "C" {
+            #[link_name = "getfsstat@FBSD_1.0"]
+            pub fn getfsstat_compat11(
+                buf: *mut libc::statfs, bufsize: libc::c_long, mode: libc::c_int
+            ) -> libc::c_int;
+
             pub fn getfsstat(
                 buf: *mut libc::statfs, bufsize: libc::c_long, mode: libc::c_int
             ) -> libc::c_int;

@@ -403,10 +403,34 @@ pub fn getfsstat(buf: Option<&mut [Statfs]>, nowait: bool) -> Result<usize> {
     let (ptr, len) = match buf {
         Some(buf) => (
             buf.as_mut_ptr() as *mut _,
-            buf.len().try_into().unwrap_or(i32::MAX as _),
+            (buf.len() * core::mem::size_of::<sys::statfs>())
+                .try_into()
+                .unwrap_or(i32::MAX as _),
         ),
         None => (core::ptr::null_mut(), 0),
     };
+
+    // TODO: Hack to fix FreeBSD 11 compatibility
+    // If/when libc bumps ABI compatibility to FreeBSD 12 (and slibc requires that version of
+    // libc), this can be removed
+
+    #[cfg(target_os = "freebsd")]
+    if core::mem::size_of::<sys::statfs>() == 472 {
+        // Note that sizeof(freebsd11_statfs) == 472, so if we got here then `libc` was built for
+        // FreeBSD 11
+        return Error::unpack(unsafe {
+            sys::getfsstat_compat11(
+                ptr,
+                len,
+                if nowait {
+                    sys::MNT_NOWAIT
+                } else {
+                    sys::MNT_WAIT
+                },
+            )
+        })
+        .map(|n| n as usize);
+    }
 
     let n = Error::unpack(unsafe {
         sys::getfsstat(
@@ -455,7 +479,9 @@ mod tests {
             crate::c_paths::slash(),
             CStr::from_bytes_with_nul(b"/bin\0").unwrap(),
             CStr::from_bytes_with_nul(b"/tmp\0").unwrap(),
-        ].iter() {
+        ]
+        .iter()
+        {
             let sfs1 = statfs(path).unwrap();
 
             let f2 =
@@ -471,7 +497,9 @@ mod tests {
     fn test_getfsstat() {
         let len = getfsstat(None, false).unwrap();
         let mut buf = vec![Statfs::zeroed(); len];
+
         let len = getfsstat(Some(&mut buf), false).unwrap();
+        assert!(len > 0);
         let buf = &buf[..len];
 
         for sfs1 in buf {
