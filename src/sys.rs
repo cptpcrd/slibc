@@ -147,17 +147,40 @@ cfg_if::cfg_if! {
 
         pub const NAME_MAX: usize = 511;
 
+        pub const SWAP_ON: libc::c_int = 1;
+        pub const SWAP_OFF: libc::c_int = 2;
+        pub const SWAP_NSWAP: libc::c_int = 3;
+        pub const SWAP_CTL: libc::c_int = 5;
+        pub const SWAP_DUMPDEV: libc::c_int = 7;
+        pub const SWAP_GETDUMPDEV: libc::c_int = 8;
+        pub const SWAP_DUMPOFF: libc::c_int = 9;
+        pub const SWAP_STATS: libc::c_int = 10;
+
+        pub const SWF_INUSE: libc::c_int = 0x1;
+        pub const SWF_ENABLE: libc::c_int = 0x2;
+        pub const SWF_BUSY: libc::c_int = 0x4;
+        pub const SWF_FAKE: libc::c_int = 0x8;
+
         extern "C" {
             pub fn posix_fallocate(
                 fd: libc::c_int,
                 offset: libc::off_t,
                 len: libc::off_t,
             ) -> libc::c_int;
+
+            pub fn swapon(path: *const libc::c_char) -> libc::c_int;
+            pub fn swapctl(
+                cmd: libc::c_int, arg: *const libc::c_void, misc: libc::c_int,
+            ) -> libc::c_int;
         }
     } else if #[cfg(target_os = "openbsd")] {
         extern "C" {
             pub fn getfsstat(
                 buf: *mut libc::statfs, bufsize: libc::size_t, flags: libc::c_int
+            ) -> libc::c_int;
+
+            pub fn swapctl(
+                cmd: libc::c_int, arg: *const libc::c_void, misc: libc::c_int,
             ) -> libc::c_int;
         }
 
@@ -186,6 +209,18 @@ cfg_if::cfg_if! {
         pub const MNT_QUOTA: u32 = 0x2000;
         pub const MNT_ROOTFS: u32 = 0x4000;
         pub const MNT_NOATIME: u32 = 0x8000;
+
+        pub const SWAP_ON: libc::c_int = 1;
+        pub const SWAP_OFF: libc::c_int = 2;
+        pub const SWAP_NSWAP: libc::c_int = 3;
+        pub const SWAP_STATS: libc::c_int = 4;
+        pub const SWAP_CTL: libc::c_int = 5;
+        pub const SWAP_DUMPDEV: libc::c_int = 7;
+
+        pub const SWF_INUSE: libc::c_int = 0x1;
+        pub const SWF_ENABLE: libc::c_int = 0x2;
+        pub const SWF_BUSY: libc::c_int = 0x4;
+        pub const SWF_FAKE: libc::c_int = 0x8;
     } else if #[cfg(target_os = "freebsd")] {
         extern "C" {
             #[link_name = "getfsstat@FBSD_1.0"]
