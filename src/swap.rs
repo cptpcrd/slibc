@@ -317,6 +317,37 @@ mod tests {
     #[allow(unused_imports)]
     use super::*;
 
+    #[cfg(linuxlike)]
+    #[test]
+    fn test_swapflags() {
+        let mut swflags = SwapFlags::new();
+        assert_eq!(swflags.as_raw(), 0);
+
+        swflags.set_prio(Some(0));
+        assert_eq!(swflags.as_raw(), SWAP_FLAG_PREFER);
+        swflags.set_prio(Some(4));
+        assert_eq!(
+            swflags.as_raw(),
+            SWAP_FLAG_PREFER | ((4 << SWAP_FLAG_PRIO_SHIFT) & SWAP_FLAG_PRIO_MASK)
+        );
+        swflags.set_prio(None);
+
+        swflags.set_discard(true);
+        assert_eq!(swflags.as_raw(), SWAP_FLAG_DISCARD);
+        swflags.set_discard_once(true);
+        assert_eq!(swflags.as_raw(), SWAP_FLAG_DISCARD | SWAP_FLAG_DISCARD_ONCE);
+        swflags.set_discard_once(false);
+        swflags.set_discard_pages(true);
+        assert_eq!(
+            swflags.as_raw(),
+            SWAP_FLAG_DISCARD | SWAP_FLAG_DISCARD_PAGES
+        );
+        swflags.set_discard_pages(false);
+        swflags.set_discard(false);
+
+        assert_eq!(swflags.as_raw(), 0);
+    }
+
     #[cfg(netbsdlike)]
     #[test]
     fn test_swapctl_stats() {
