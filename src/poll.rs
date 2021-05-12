@@ -1,6 +1,7 @@
 use crate::internal_prelude::*;
 
 bitflags::bitflags! {
+    #[repr(transparent)]
     pub struct PollEvents: libc::c_short {
         const IN = libc::POLLIN;
         const RDNORM = libc::POLLRDNORM;
