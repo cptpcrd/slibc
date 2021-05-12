@@ -38,13 +38,12 @@ impl PollFd {
 
 #[inline]
 pub fn poll(fds: &mut [PollFd], timeout: libc::c_int) -> Result<usize> {
-    let n = Error::unpack(unsafe {
-        libc::poll(
-            fds.as_mut_ptr() as *mut _,
-            fds.len().try_into().unwrap(),
-            timeout,
-        )
-    })?;
+    if fds.len() > libc::nfds_t::MAX as usize {
+        return Err(Error::from_code(libc::EINVAL));
+    }
+
+    let n =
+        Error::unpack(unsafe { libc::poll(fds.as_mut_ptr() as *mut _, fds.len() as _, timeout) })?;
 
     Ok(n as usize)
 }
@@ -67,10 +66,14 @@ pub fn ppoll(
     timeout: Option<crate::TimeSpec>,
     sigmask: Option<&crate::SigSet>,
 ) -> Result<usize> {
+    if fds.len() > libc::nfds_t::MAX as usize {
+        return Err(Error::from_code(libc::EINVAL));
+    }
+
     let n = Error::unpack(unsafe {
         sys::ppoll(
             fds.as_mut_ptr() as *mut _,
-            fds.len().try_into().unwrap(),
+            fds.len() as _,
             timeout.map_or_else(core::ptr::null, |t| t.as_ref()),
             sigmask.map_or_else(core::ptr::null, |s| s.as_ref()),
         )
