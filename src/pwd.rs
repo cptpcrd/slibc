@@ -58,6 +58,8 @@ impl Passwd {
         /// Get the user's "GECOS" field.
         ///
         /// This sometimes records information about the user.
+        #[cfg_attr(docsrs, doc(cfg(not(all(target_os = "android", target_pointer_width = "32")))))]
+        #[cfg(not(all(target_os = "android", target_pointer_width = "32")))]
         gecos, pw_gecos;
 
         /// Get the user's home directory.

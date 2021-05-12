@@ -194,8 +194,8 @@ pub fn getpid() -> libc::pid_t {
 }
 
 /// Get the current thread's TID.
-#[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
-#[cfg(target_os = "linux")]
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
+#[cfg(linuxlike)]
 #[allow(clippy::needless_return)]
 #[inline]
 pub fn gettid() -> libc::pid_t {
@@ -1602,6 +1602,7 @@ mod tests {
         assert!(w.get_cloexec().unwrap());
     }
 
+    #[cfg(not(target_os = "android"))]
     #[test]
     fn test_confstr() {
         let mut buf = [0; crate::PATH_MAX];
@@ -1609,7 +1610,7 @@ mod tests {
         CStr::from_bytes_with_nul(&buf[..len]).unwrap();
     }
 
-    #[cfg(feature = "alloc")]
+    #[cfg(all(feature = "alloc", not(target_os = "android")))]
     #[test]
     fn test_confstr_alloc() {
         let s = confstr_alloc(ConfstrName::PATH).unwrap();
