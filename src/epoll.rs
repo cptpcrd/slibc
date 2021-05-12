@@ -41,6 +41,8 @@ pub enum EpollCtlOp {
 /// An event returned by an epoll file descriptor.
 ///
 /// See [`epoll_wait()`].
+///
+/// This structure is guaranteed to be ABI-compatible with `libc::epoll_event`.
 #[derive(Copy, Clone, Debug)]
 #[repr(transparent)]
 pub struct EpollEvent(libc::epoll_event);

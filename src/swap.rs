@@ -237,7 +237,7 @@ pub fn swapctl_nswap() -> Result<usize> {
 ///
 /// This copies information about each swap device on the system into an entry in `buf`. If there
 /// are more entries in the system than `buf` has space for, the list is truncated. The number of
-/// devices with information copied into `buf` is returned.
+/// devices whose information was copied into `buf` is returned.
 #[cfg_attr(docsrs, doc(cfg(target_os = "openbsd", target_os = "netbsd")))]
 #[cfg(netbsdlike)]
 #[inline]
