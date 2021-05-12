@@ -266,7 +266,7 @@ bitflags::bitflags! {
 #[cfg(linuxlike)]
 #[inline]
 pub fn fallocate(fd: RawFd, mode: FallocMode, offset: u64, len: u64) -> Result<()> {
-    Error::unpack(unsafe { libc::fallocate(fd, mode.bits(), offset as _, len as _) })
+    Error::unpack_nz(unsafe { libc::fallocate(fd, mode.bits(), offset as _, len as _) })
 }
 
 /// Call `fcntl()` with an `int` argument.
