@@ -340,7 +340,7 @@ pub fn fcntl_setfd(fd: RawFd, flags: libc::c_int) -> Result<()> {
 }
 
 #[inline]
-pub fn fcntl_getfl(fd: RawFd) -> Result<RawFd> {
+pub fn fcntl_getfl(fd: RawFd) -> Result<libc::c_int> {
     unsafe { fcntl_arg(fd, libc::F_GETFL, 0) }
 }
 
@@ -358,7 +358,7 @@ pub fn fcntl_setfl(fd: RawFd, flags: libc::c_int) -> Result<()> {
 #[cfg(target_os = "linux")]
 #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
 #[inline]
-pub fn fcntl_getpipe_sz(fd: RawFd) -> Result<RawFd> {
+pub fn fcntl_getpipe_sz(fd: RawFd) -> Result<libc::c_int> {
     unsafe { fcntl_arg(fd, libc::F_GETPIPE_SZ, 0) }
 }
 
