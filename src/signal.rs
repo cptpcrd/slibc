@@ -895,7 +895,7 @@ pub fn sigwaitinfo(set: &SigSet) -> Result<(Signal, SigInfo)> {
 
 #[cfg_attr(
     docsrs,
-    doc(cfg(any(target_os = "macos", target_os = "ios", target_os = "openbsd")))
+    doc(cfg(not(any(target_os = "macos", target_os = "ios", target_os = "openbsd"))))
 )]
 #[cfg(not(any(apple, target_os = "openbsd")))]
 #[inline]
