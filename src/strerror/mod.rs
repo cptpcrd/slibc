@@ -64,7 +64,7 @@ mod tests {
         for eno in 0..=4096 {
             if let Some(s) = libc_strerror(eno) {
                 assert_eq!(strerror(eno), s);
-            } else {
+            } else if eno >= 2048 {
                 assert_eq!(strerror(eno), "Unknown error");
             }
         }
