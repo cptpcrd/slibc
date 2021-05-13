@@ -294,7 +294,7 @@ pub unsafe fn setrlimit(resource: Resource, new_limits: (Limit, Limit)) -> Resul
 /// # Safety
 ///
 /// See [`setrlimit()`].
-#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux"), target_os = "android")))]
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
 #[cfg(linuxlike)]
 #[inline]
 pub unsafe fn prlimit(
