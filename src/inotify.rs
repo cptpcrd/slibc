@@ -278,6 +278,7 @@ impl fmt::Debug for InotifyEventIter<'_> {
     }
 }
 
+/// A wrapper around an inotify file descriptor.
 #[derive(Debug)]
 pub struct Inotify(FileDesc);
 

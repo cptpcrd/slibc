@@ -515,12 +515,22 @@ pub fn pwrite(fd: RawFd, buf: &[u8], offset: u64) -> Result<usize> {
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 #[non_exhaustive]
 pub enum SeekPos {
+    /// Seek to the specified position from the start of the file.
     Start(u64),
+    /// Seek to the specified position from the end of the file (should usually be negative).
     End(i64),
+    /// Seek to the specified position relative to the current seek position.
     Current(i64),
+    /// Seek to the next location in the file greater than or equal to the specified position which
+    /// contains data (i.e. is not in a hole).
     #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
     #[cfg(linuxlike)]
     Data(u64),
+    /// Seek to the next location in the file greater than or equal to the specified position which
+    /// is in a hole.
+    ///
+    /// If there are no holes after the specified position within the file, seek to the end of the
+    /// file.
     #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
     #[cfg(linuxlike)]
     Hole(u64),

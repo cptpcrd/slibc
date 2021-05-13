@@ -7,6 +7,7 @@ pub fn sched_yield() {
     debug_assert_eq!(ret, 0);
 }
 
+/// Represents a CPU set (i.e. `cpu_set_t`).
 #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
 #[cfg(target_os = "linux")]
 #[derive(Copy, Clone)]
@@ -14,6 +15,7 @@ pub struct CpuSet(libc::cpu_set_t);
 
 #[cfg(target_os = "linux")]
 impl CpuSet {
+    /// Create a new, empty CPU set.
     #[inline]
     pub fn new() -> Self {
         let mut set = unsafe { core::mem::zeroed() };
@@ -23,6 +25,7 @@ impl CpuSet {
         Self(set)
     }
 
+    /// Clear this CPU set.
     #[inline]
     pub fn clear(&mut self) {
         unsafe {
@@ -30,11 +33,13 @@ impl CpuSet {
         }
     }
 
+    /// Return the number of CPUs in this set.
     #[inline]
     pub fn count(&self) -> usize {
         unsafe { libc::CPU_COUNT(&self.0) as _ }
     }
 
+    /// Add a CPU to this set.
     #[inline]
     pub fn add(&mut self, cpu: u32) {
         unsafe {
@@ -42,6 +47,7 @@ impl CpuSet {
         }
     }
 
+    /// Remove a CPU from this set.
     #[inline]
     pub fn remove(&mut self, cpu: u32) {
         unsafe {
@@ -49,6 +55,7 @@ impl CpuSet {
         }
     }
 
+    /// Return whether this set contains the specified CPU.
     #[inline]
     pub fn contains(&self, cpu: u32) -> bool {
         if cpu >= core::mem::size_of::<libc::cpu_set_t>() as u32 * 8 {
@@ -58,6 +65,7 @@ impl CpuSet {
         unsafe { libc::CPU_ISSET(cpu as usize, &self.0) }
     }
 
+    /// Return an iterator over this CPU set.
     #[inline]
     pub fn iter(&self) -> CpuSetIter {
         self.into_iter()

@@ -82,6 +82,7 @@ pub fn pidfd_send_signal_simple<S: Into<Option<Signal>>>(
     })
 }
 
+/// A wrapper around a PID file descriptor opened with `pidfd_open(2)`.
 #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
 #[derive(Debug)]
 pub struct PidFd(FileDesc);

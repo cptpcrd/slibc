@@ -10,9 +10,18 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    /// Flags for [`mlockall()`].
     pub struct MlockAllFlags: i32 {
+        /// Lock all pages currently mapped into the process' address space.
         const CURRENT = libc::MCL_CURRENT;
+        /// Lock all pages that are mapped into the process's address space in the future.
         const FUTURE = libc::MCL_FUTURE;
+        /// Lock all currently mapped pages (when specified with [`Self::CURRENT`]) or pages mapped
+        /// in the future (when specified with [`Self::FUTURE`]) into memory when they are faulted
+        /// in.
+        ///
+        /// See `mlockall(2)` for the exact semantics.
+        #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
         #[cfg(target_os = "linux")]
         const ONFAULT = sys::MCL_ONFAULT;
     }
@@ -96,11 +105,22 @@ pub unsafe fn munlock_raw(addr: *const u8, len: usize) -> Result<()> {
     Error::unpack_nz(libc::munlock(addr as *const _, len))
 }
 
+/// Lock all pages mapped into the address space of the current process into RAM.
+///
+/// At least one of
+/// [`MlockallFlags::CURRENT`](./struct.MlockAllFlags.html#associatedconstant.CURRENT) or
+/// [`MlockallFlags::FUTURE`](struct.MlockAllFlags.html#associatedconstant.FUTURE) must be
+/// specified in `flags`.
+///
+/// See `mlockall(2)` and [`MlockAllFlags`] for more information.
 #[inline]
 pub fn mlockall(flags: MlockAllFlags) -> Result<()> {
     Error::unpack_nz(unsafe { libc::mlockall(flags.bits()) })
 }
 
+/// Unlock all pages mapped into the address space of the current process from RAM.
+///
+/// See `munlockall(2)` for more information.
 #[inline]
 pub fn munlockall() -> Result<()> {
     Error::unpack_nz(unsafe { libc::munlockall() })

@@ -45,6 +45,10 @@ impl SwapFlags {
     }
 
     /// Set (or clear) a higher priority in the flags.
+    ///
+    /// `prio` values greater than 32767 (2 ^ 15 - 1) will be truncated by discarding the most
+    /// significant bit, effectively subtracting 32768 from them. (TL;DR: Only pass priorities
+    /// between 0 and 32767, inclusive.)
     #[inline]
     pub fn set_prio(&mut self, prio: Option<u16>) -> &mut Self {
         if let Some(prio) = prio {

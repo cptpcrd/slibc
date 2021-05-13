@@ -308,6 +308,7 @@ impl fmt::Display for Inet6SockAddr {
     }
 }
 
+/// Represents a Unix socket address.
 #[derive(Copy, Clone)]
 pub struct UnixAddr(libc::sockaddr_un);
 

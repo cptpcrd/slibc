@@ -315,10 +315,14 @@ define_signal! {
     SIGPOLL,
 }
 
+/// An iterator over all POSIX signals supported by the OS.
+///
+/// This can be created by [`Signal::posix_signals()`].
 #[derive(Clone, Debug)]
 pub struct SignalPosixIter(core::slice::Iter<'static, Signal>);
 
 impl SignalPosixIter {
+    /// Check whether the remaining list of signals in this iterator contains `sig` .
     #[inline]
     pub fn contains(&self, sig: Signal) -> bool {
         self.0.as_slice().contains(&sig)
@@ -363,6 +367,9 @@ impl ExactSizeIterator for SignalPosixIter {
 
 impl core::iter::FusedIterator for SignalPosixIter {}
 
+/// An iterator over all real-time signals supported by the OS.
+///
+/// This can be created by [`Signal::rt_signals()`].
 #[cfg_attr(
     docsrs,
     doc(cfg(any(
@@ -383,6 +390,7 @@ impl SignalRtIter {
         sig >= *self.0.start() && sig <= *self.0.end()
     }
 
+    /// Check whether the remaining list of signals in this iterator contains `sig` .
     #[inline]
     pub fn contains(&self, sig: Signal) -> bool {
         self.contains_i32(sig.0)
@@ -489,6 +497,7 @@ pub fn tgkill<S: Into<Option<Signal>>>(tgid: libc::pid_t, tid: libc::pid_t, sig:
     })
 }
 
+/// Represents a POSIX signal set (i.e. `sigset_t`).
 #[derive(Copy, Clone)]
 pub struct SigSet(libc::sigset_t);
 
@@ -529,6 +538,7 @@ impl SigSet {
         }
     }
 
+    /// Check whether the given `sig` is present in this signal set.
     #[inline]
     pub fn contains(&self, sig: Signal) -> bool {
         let res = unsafe { libc::sigismember(&self.0, sig.0) };
@@ -536,12 +546,14 @@ impl SigSet {
         res != 0
     }
 
+    /// Add the given `sig` to this signal set.
     #[inline]
     pub fn add(&mut self, sig: Signal) {
         let res = unsafe { libc::sigaddset(&mut self.0, sig.0) };
         debug_assert_eq!(res, 0);
     }
 
+    /// Remove the given `sig` from this signal set.
     #[inline]
     pub fn remove(&mut self, sig: Signal) {
         let res = unsafe { libc::sigdelset(&mut self.0, sig.0) };
@@ -738,6 +750,13 @@ impl IntoIterator for SigSet {
     }
 }
 
+/// An iterator over all the signals in a [`SigSet`].
+///
+/// Can be created by [`SigSet::iter()`] or [`SigSet::into_iter()`].
+///
+/// The order in which the signals are yielded is arbitrary, but it will be consistent within the
+/// same library version. For example, `set1.iter().eq(set2.iter())` is equivalent to `set1 ==
+/// set2`.
 #[derive(Clone, Debug)]
 pub struct SigSetIter {
     set: SigSet,

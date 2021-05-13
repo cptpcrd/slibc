@@ -135,6 +135,7 @@ impl From<Timeval> for TimeSpec {
     }
 }
 
+/// A clock ID for use with e.g. [`clock_gettime()`].
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub struct ClockId(libc::clockid_t);
 
@@ -217,16 +218,19 @@ define_clockids! {
 }
 
 impl ClockId {
+    /// See [`clock_getres()`].
     #[inline]
     pub fn getres(self) -> Result<TimeSpec> {
         clock_getres(self)
     }
 
+    /// See [`clock_gettime()`].
     #[inline]
     pub fn gettime(self) -> Result<TimeSpec> {
         clock_gettime(self)
     }
 
+    /// See [`clock_settime()`].
     #[inline]
     pub fn settime(self, t: TimeSpec) -> Result<()> {
         clock_settime(self, t)
@@ -282,7 +286,8 @@ pub fn clock_settime(clock: ClockId, t: TimeSpec) -> Result<()> {
 
 /// Get the clock ID of the specified process's CPU-time clock.
 ///
-/// Specifying 0 for `pid` is equivalent to specifying the current process's PID.
+/// Specifying 0 for `pid` will return a clock ID that can be used to measure the current process's
+/// CPU time.
 ///
 /// If `pid` is 0 or the current process's PID, the returned clock ID may be a "magic" value that
 /// always refers to the process that checks it with [`clock_gettime()`] (even in, say, a

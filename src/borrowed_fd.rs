@@ -218,11 +218,21 @@ impl BorrowedFd {
         crate::isatty(self.0)
     }
 
+    /// Seek to the specified position within the file referred to by this file descriptor.
+    ///
+    /// This only works on files that support seeking (e.g. regular files, certain shared memory
+    /// objects).
+    ///
+    /// The new seek position is returned.
     #[inline]
     pub fn seek(&self, pos: crate::SeekPos) -> Result<u64> {
         crate::lseek(self.0, pos)
     }
 
+    /// Get the current seek position within the file.
+    ///
+    /// This is equivalent to `self.seek(SeekPos::Current(0))`. All the caveats of [`Self::seek()`]
+    /// apply.
     #[inline]
     pub fn tell(&self) -> Result<u64> {
         crate::lseek(self.0, crate::SeekPos::Current(0))
@@ -276,6 +286,7 @@ impl BorrowedFd {
         crate::syncfs(self.0)
     }
 
+    /// Call `fstat()` on this file descriptor and return the results.
     #[inline]
     pub fn stat(&self) -> Result<crate::Stat> {
         crate::fstat(self.0)

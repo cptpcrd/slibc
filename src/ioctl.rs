@@ -21,6 +21,12 @@ pub unsafe fn ioctl(fd: RawFd, req: libc::c_ulong, ptr: *mut libc::c_void) -> Re
     Error::unpack(libc::ioctl(fd, req as _, ptr))
 }
 
+/// Call the `FIOCLEX` `ioctl()`.
+///
+/// On platforms that support it (Linux/Android, macOS, \*BSD), this sets the close-on-exec flag on
+/// the given file descriptor.
+///
+/// On Linux, this does not work on `O_PATH` file descriptors.
 #[cfg_attr(
     docsrs,
     doc(cfg(any(
@@ -43,6 +49,12 @@ pub fn ioctl_fioclex(fd: RawFd) -> Result<()> {
     Ok(())
 }
 
+/// Call the `FIONCLEX` `ioctl()`.
+///
+/// On platforms that support it (Linux/Android, macOS, \*BSD), this unsets the close-on-exec flag on
+/// the given file descriptor.
+///
+/// On Linux, this does not work on `O_PATH` file descriptors.
 #[cfg_attr(
     docsrs,
     doc(cfg(any(
@@ -65,6 +77,9 @@ pub fn ioctl_fionclex(fd: RawFd) -> Result<()> {
     Ok(())
 }
 
+/// Call the `FIONBIO` `ioctl()`.
+///
+/// This allows toggling the non-blocking flag on the given file descriptor.
 #[inline]
 pub fn ioctl_fionbio(fd: RawFd, nonblock: bool) -> Result<()> {
     // The size that the argument is read with isn't well-defined and seems to vary, but a `usize`
