@@ -30,7 +30,7 @@ pub fn swapoff<P: AsPath>(path: P) -> Result<()> {
 /// A set of flags to be passed to [`swapon()`].
 ///
 /// This structure wraps an integer "flags" argument and provides convenience methods for altering
-/// it.
+/// it. See [`swapon()`] for example usage.
 #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
 #[cfg(linuxlike)]
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
@@ -128,6 +128,22 @@ impl Default for SwapFlags {
 }
 
 /// Begin swapping on the specified device with the specified `flags`.
+///
+/// # Example usage
+///
+/// ```no_run
+/// # #[cfg(feature = "alloc")]
+/// # {
+/// # use slibc::{swapon, SwapFlags};
+/// let mut flags = SwapFlags::new();
+/// flags.set_prio(Some(1));
+/// flags.set_discard(true);
+/// swapon("/swapfile", flags).unwrap();
+///
+/// // Or to do it all at once
+/// swapon("/swapfile", SwapFlags::new().set_prio(Some(2)).set_discard(true).clone()).unwrap();
+/// # }
+/// ```
 #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
 #[cfg(linuxlike)]
 pub fn swapon<P: AsPath>(path: P, flags: SwapFlags) -> Result<()> {

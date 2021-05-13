@@ -25,6 +25,9 @@ pub struct PollFd {
 }
 
 impl PollFd {
+    /// Create a new `PollFd` structure.
+    ///
+    /// This constructor initializes `fd` and `events`, leaving `revents` empty.
     #[inline]
     pub const fn new(fd: RawFd, events: PollEvents) -> Self {
         Self {
@@ -35,6 +38,17 @@ impl PollFd {
     }
 }
 
+/// Poll for new data on the specified file descriptors.
+///
+/// `fds` specifies which file descriptors should be polled for new data; it is also used to return
+/// the events that were triggered on these file descriptors. See `poll(2)` for more details. On
+/// success, the number of elements in `fds` for which the `revents` field has been filled in is
+/// returned.
+///
+/// `timeout` specifies the maximum number of milliseconds to wait for an event to occur before
+/// returning. If it is 0, `poll()` will return immediately. If it is -1, `poll()` will block
+/// indefinitely (i.e. infinite timeout) waiting for events. (As a nonstandard extension, Linux
+/// provides an infinite timeout if `timeout` is any negative number, not just -1.)
 #[inline]
 pub fn poll(fds: &mut [PollFd], timeout: libc::c_int) -> Result<usize> {
     if fds.len() > libc::nfds_t::MAX as usize {
@@ -47,6 +61,14 @@ pub fn poll(fds: &mut [PollFd], timeout: libc::c_int) -> Result<usize> {
     Ok(n as usize)
 }
 
+/// Identical to [`poll()`], but allows changing the signal mask and providing a higher precision
+/// timeout.
+///
+/// See `ppoll(2)` for a discussion of the meaning of `sigmask`. If `sigmask` is `None`, `ppoll()`
+/// behaves like `poll()` (except for the different type of the `timeout` argument).
+///
+/// If `timeout` is `None`, `ppoll()` will block indefinitely waiting for events. Otherwise,
+/// `timeout` specifies the maximum time to wait for an event to occur before returning.
 #[cfg_attr(
     docsrs,
     doc(cfg(any(

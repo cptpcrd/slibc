@@ -4,7 +4,8 @@ use core::ptr::NonNull;
 
 /// A directory stream open for iterating over the entries in a directory.
 ///
-/// Note that this struct will yield entries for `.` and `..` if they are returned by the OS.
+/// Note that this iterator will yield entries for `.` and `..` if they are returned by the OS.
+/// This behavior is intentional and will not be changed.
 #[derive(Debug)]
 pub struct Dir(NonNull<libc::DIR>);
 
@@ -207,7 +208,8 @@ impl Dirent {
     /// Get the type of the file referred to by this entry, if available.
     ///
     /// This will not make any syscalls; it relies solely on information returned by the OS during
-    /// iteration.
+    /// iteration. As a result, it may return `None` at any time; in fact, on some platforms this
+    /// function may always return `None`.
     #[inline]
     pub fn file_type(&self) -> Option<DirFileType> {
         DirFileType::new(self.entry.d_type)
