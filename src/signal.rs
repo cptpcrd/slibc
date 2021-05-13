@@ -778,6 +778,18 @@ impl Iterator for SigSetIter {
 
         None
     }
+
+    fn count(self) -> usize {
+        let mut cnt = 0;
+        for sig in self.it {
+            cnt += self.set.contains(sig) as usize;
+        }
+        cnt
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (0, self.it.size_hint().1)
+    }
 }
 
 /// A helper macro to construct `SigSet`s.
@@ -1210,6 +1222,25 @@ mod tests {
                     Signal::rt_signals().next().unwrap()
                 )
             );
+        }
+    }
+
+    #[test]
+    fn test_sigset_iter() {
+        assert_eq!(SigSet::empty().iter().count(), 0);
+        assert_eq!(sigset!(Signal::SIGINT).iter().count(), 1);
+        assert_eq!(sigset!(Signal::SIGINT, Signal::SIGTERM).iter().count(), 2);
+        assert_eq!(SigSet::full().iter().count(), all_signals().count());
+
+        for set in [
+            SigSet::empty(),
+            sigset!(Signal::SIGINT),
+            sigset!(Signal::SIGINT, Signal::SIGTERM),
+            SigSet::full(),
+        ]
+        .iter()
+        {
+            assert_eq!(set.iter().size_hint(), (0, Some(all_signals().count())));
         }
     }
 
