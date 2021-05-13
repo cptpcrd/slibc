@@ -363,7 +363,7 @@ mod tests {
         }
     }
 
-    #[cfg(netbsdlike)]
+    #[cfg(target_os = "netbsd")]
     #[test]
     fn test_swapctl_getdumpdev() {
         // Just check that it works
