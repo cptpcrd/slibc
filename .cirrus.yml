@@ -7,6 +7,9 @@ task:
 
   matrix:
     - env:
+        FREEBSD_VERSION: 11.4
+        FREEBSD_IMAGE: freebsd-11-4
+    - env:
         FREEBSD_VERSION: 12.2
         FREEBSD_IMAGE: freebsd-12-2
     - env:
@@ -32,7 +35,8 @@ task:
     RUSTFLAGS: -D warnings
 
   install_script:
-    - pkg install -y curl kcov bash
+    - pkg install -y curl bash
+    - pkg install -y kcov || true
     - curl -sSf https://sh.rustup.rs -o rustup.sh
     - sh rustup.sh -y --profile default --default-toolchain $TOOLCHAIN
   build_script:
@@ -43,43 +47,52 @@ task:
     - cargo clean
     - cargo test
     - |
-      mkdir -p coverage-std
-      for f in target/debug/deps/*; do
-        if [ -x "$f" ]; then
-          echo
-          echo "=== $f ==="
-          echo
-          kcov --exclude-pattern=/.cargo,/.rustup,/usr/lib --include-path=$(pwd) --verify coverage-std "$f"
-        fi
-      done
+      if command -v kcov &>/dev/null; then
+        mkdir -p coverage-std
+        for f in target/debug/deps/*; do
+          if [ -x "$f" ]; then
+            echo
+            echo "=== $f ==="
+            echo
+            kcov --exclude-pattern=/.cargo,/.rustup,/usr/lib --include-path=$(pwd) --verify coverage-std "$f"
+          fi
+        done
+      fi
   alloc_test_script:
     - . $HOME/.cargo/env
     - cargo clean
     - cargo test --no-default-features --features alloc
     - |
-      mkdir -p coverage-alloc
-      for f in target/debug/deps/*; do
-        if [ -x "$f" ]; then
-          echo
-          echo "=== $f ==="
-          echo
-          kcov --exclude-pattern=/.cargo,/.rustup,/usr/lib --include-path=$(pwd) --verify coverage-alloc "$f"
-        fi
-      done
+      if command -v kcov &>/dev/null; then
+        mkdir -p coverage-alloc
+        for f in target/debug/deps/*; do
+          if [ -x "$f" ]; then
+            echo
+            echo "=== $f ==="
+            echo
+            kcov --exclude-pattern=/.cargo,/.rustup,/usr/lib --include-path=$(pwd) --verify coverage-alloc "$f"
+          fi
+        done
+      fi
   no_std_test_script:
     - . $HOME/.cargo/env
     - cargo clean
     - cargo test --no-default-features
     - |
-      mkdir -p coverage-no-std
-      for f in target/debug/deps/*; do
-        if [ -x "$f" ]; then
-          echo
-          echo "=== $f ==="
-          echo
-          kcov --exclude-pattern=/.cargo,/.rustup,/usr/lib --include-path=$(pwd) --verify coverage-no-std "$f"
-        fi
-      done
+      if command -v kcov &>/dev/null; then
+        mkdir -p coverage-no-std
+        for f in target/debug/deps/*; do
+          if [ -x "$f" ]; then
+            echo
+            echo "=== $f ==="
+            echo
+            kcov --exclude-pattern=/.cargo,/.rustup,/usr/lib --include-path=$(pwd) --verify coverage-no-std "$f"
+          fi
+        done
+      fi
   coverage_collect_upload_script:
-    - kcov --merge coverage-merged/ coverage-std/ coverage-alloc/ coverage-no-std/
-    - OS="$FREEBSD_IMAGE" bash <(curl -s https://codecov.io/bash) -e OS,TOOLCHAIN -n "$FREEBSD_IMAGE-$TOOLCHAIN" -Z -f coverage-merged/kcov-merged/cobertura.xml
+    - |
+      if command -v kcov &>/dev/null; then
+        kcov --merge coverage-merged/ coverage-std/ coverage-alloc/ coverage-no-std/
+        OS="$FREEBSD_IMAGE" bash <(curl -s https://codecov.io/bash) -e OS,TOOLCHAIN -n "$FREEBSD_IMAGE-$TOOLCHAIN" -Z -f coverage-merged/kcov-merged/cobertura.xml
+      fi
