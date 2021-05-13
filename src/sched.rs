@@ -220,6 +220,29 @@ pub fn sched_getcpu() -> Result<u32> {
     Error::unpack(unsafe { libc::sched_getcpu() }).map(|cpu| cpu as u32)
 }
 
+/// Get the CPU/NUMA node that this thread is currently running on.
+///
+/// If `cpu` is not `None`, it points to an integer where the current CPU number will be stored. If
+/// `node` is not `None`, it points to an integer where the current NUMA node number will be
+/// stored.
+///
+/// Note that this information may already be out of date when the syscall returns. See `getcpu(2)`
+/// for more information.
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
+#[cfg(linuxlike)]
+#[inline]
+pub fn getcpu(cpu: Option<&mut u32>, node: Option<&mut u32>) -> Result<()> {
+    Error::unpack_nz(unsafe {
+        libc::syscall(
+            libc::SYS_getcpu,
+            cpu.map_or_else(core::ptr::null_mut, |c| c),
+            node.map_or_else(core::ptr::null_mut, |n| n),
+            // tcache (unused since Linux 2.6.24)
+            core::ptr::null_mut::<libc::c_void>(),
+        )
+    } as i32)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -311,5 +334,22 @@ mod tests {
         let cpu = sched_getcpu().unwrap();
         let affinity = sched_getaffinity(0).unwrap();
         assert!(affinity.contains(cpu));
+    }
+
+    #[cfg(linuxlike)]
+    #[test]
+    fn test_getcpu() {
+        let mut ref_cpu = 0;
+        let mut ref_node = 0;
+        getcpu(Some(&mut ref_cpu), Some(&mut ref_node)).unwrap();
+
+        assert_eq!(ref_cpu, sched_getcpu().unwrap());
+
+        let mut cpu = 0;
+        let mut node = 0;
+        getcpu(Some(&mut cpu), None).unwrap();
+        getcpu(None, Some(&mut node)).unwrap();
+        assert_eq!(cpu, ref_cpu);
+        assert_eq!(node, ref_node);
     }
 }
