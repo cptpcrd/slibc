@@ -424,7 +424,7 @@ mod tests {
     fn test_same_statx_stat() {
         check_same_statx_stat(CStr::from_bytes_with_nul(b"/\0").unwrap());
         check_same_statx_stat(CStr::from_bytes_with_nul(b".\0").unwrap());
-        check_same_statx_stat(CStr::from_bytes_with_nul(b"/tmp\0").unwrap());
+        check_same_statx_stat(CStr::from_bytes_with_nul(b"/bin/\0").unwrap());
     }
 
     #[cfg(feature = "std")]
