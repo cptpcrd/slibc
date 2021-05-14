@@ -185,13 +185,17 @@ cfg_if::cfg_if! {
 cfg_if::cfg_if! {
     if #[cfg(linuxlike)] {
         mod epoll;
+        mod eventfd;
         mod inotify;
         mod signalfd;
         mod sysinfo;
+        mod timerfd;
         pub use epoll::*;
+        pub use eventfd::*;
         pub use inotify::*;
         pub use signalfd::*;
         pub use sysinfo::*;
+        pub use timerfd::*;
     }
 }
 

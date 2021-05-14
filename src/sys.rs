@@ -30,6 +30,8 @@ cfg_if::cfg_if! {
 
         pub const NAME_MAX: usize = 255;
 
+        pub const TFD_TIMER_CANCEL_ON_SET: libc::c_int = 2;
+
         #[cfg(any(target_env = "", target_env = "gnu"))]
         #[derive(Copy, Clone, Debug)]
         #[repr(C)]
