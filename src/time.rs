@@ -33,6 +33,16 @@ impl AsRef<libc::timespec> for TimeSpec {
     }
 }
 
+impl From<libc::timespec> for TimeSpec {
+    #[inline]
+    fn from(ts: libc::timespec) -> Self {
+        Self {
+            tv_sec: ts.tv_sec,
+            tv_nsec: ts.tv_nsec,
+        }
+    }
+}
+
 impl From<Duration> for TimeSpec {
     #[inline]
     fn from(d: Duration) -> Self {
