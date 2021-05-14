@@ -250,3 +250,41 @@ pub unsafe fn madvise(data: &mut [u8], advice: MemAdvice) -> Result<()> {
 pub unsafe fn madvise_raw(addr: *mut u8, length: usize, advice: MemAdvice) -> Result<()> {
     Error::unpack_nz(libc::madvise(addr as *mut _, length, advice as _))
 }
+
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
+#[cfg(linuxlike)]
+bitflags::bitflags! {
+    pub struct MemfdFlags: libc::c_uint {
+        const CLOEXEC = libc::MFD_CLOEXEC;
+        const ALLOW_SEALING = libc::MFD_ALLOW_SEALING;
+        const HUGETLB = libc::MFD_HUGETLB;
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
+#[cfg(linuxlike)]
+#[inline]
+pub fn memfd_create<N: AsPath>(name: N, flags: MemfdFlags) -> Result<FileDesc> {
+    name.with_cstr(|name| unsafe {
+        Error::unpack_fdesc(
+            libc::syscall(libc::SYS_memfd_create, name.as_ptr(), flags.bits()) as i32,
+        )
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[cfg(all(linuxlike, feature = "alloc"))]
+    #[test]
+    fn test_memfd_create() {
+        let mfd = memfd_create("/test/memfd", MemfdFlags::CLOEXEC).unwrap();
+
+        assert_eq!(
+            crate::readlink_alloc(format!("/proc/self/fd/{}", mfd.fd())).unwrap(),
+            "/memfd:/test/memfd (deleted)"
+        );
+    }
+}
