@@ -14,6 +14,7 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
     pub struct PidFdGetfdFlags: libc::c_uint {
         #[doc(hidden)]
         const __RESERVED = 0;
@@ -167,5 +168,26 @@ impl FromRawFd for PidFd {
     #[inline]
     unsafe fn from_raw_fd(fd: RawFd) -> Self {
         Self::from_fd(fd)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_pidfd_getfd() {
+        if pidfd_getfd(-1, -1, PidFdGetfdFlags::empty()).unwrap_err() != Errno::EBADF {
+            return;
+        }
+
+        let pfd = PidFd::open(crate::getpid(), PidFdOpenFlags::empty()).unwrap();
+        let r1 = crate::pipe().unwrap().0;
+        let r2 = pfd.getfd(r1.fd(), PidFdGetfdFlags::empty()).unwrap();
+
+        let r1_stat = r1.stat().unwrap();
+        let r2_stat = r2.stat().unwrap();
+        assert_eq!(r1_stat.dev(), r2_stat.dev());
+        assert_eq!(r1_stat.ino(), r2_stat.ino());
     }
 }

@@ -1,4 +1,6 @@
-use slibc::{getpid, kill, sigset, SigSet, Signal};
+use slibc::{
+    getpid, kill, sigset, SigSet, Signal, _exit, fork, sigpending, waitpid, WaitFlags, WaitStatus,
+};
 
 // These tests are not thread-safe, so we run them all from one #[test]
 
@@ -6,6 +8,20 @@ fn restore_sigmask<F: FnOnce()>(f: F) {
     let mask = SigSet::thread_get_mask().unwrap();
     f();
     mask.thread_set_mask().unwrap();
+}
+
+fn run_child<F: FnOnce() -> slibc::Result<()>>(f: F) -> WaitStatus {
+    match unsafe { fork().unwrap() } {
+        Some(pid) => waitpid(pid, WaitFlags::empty()).unwrap().unwrap().1,
+
+        None => unsafe {
+            if f().is_err() {
+                _exit(1);
+            }
+
+            _exit(0);
+        },
+    }
 }
 
 #[test]
@@ -17,6 +33,7 @@ fn do_tests() {
     {
         restore_sigmask(test_tgkill);
         restore_sigmask(test_signalfd);
+        restore_sigmask(test_pidfd);
     }
 }
 
@@ -39,22 +56,6 @@ fn test_sigmask() {
 }
 
 fn test_kill() {
-    use slibc::{_exit, fork, sigpending, waitpid, WaitFlags, WaitStatus};
-
-    fn run_child<F: FnOnce() -> slibc::Result<()>>(f: F) -> WaitStatus {
-        match unsafe { fork().unwrap() } {
-            Some(pid) => waitpid(pid, WaitFlags::empty()).unwrap().unwrap().1,
-
-            None => unsafe {
-                if f().is_err() {
-                    _exit(1);
-                }
-
-                _exit(0);
-            },
-        }
-    }
-
     let status = run_child(|| {
         let set = sigset!(Signal::SIGUSR1);
         set.thread_block()?;
@@ -118,4 +119,29 @@ fn test_signalfd() {
 
     tgkill(getpid(), gettid(), Signal::SIGUSR2).unwrap();
     check_siginfo(&sfd, Signal::SIGUSR2);
+}
+
+#[cfg(linuxlike)]
+fn test_pidfd() {
+    use slibc::{pidfd_send_signal_simple, Errno, PidFd, PidFdOpenFlags, PidFdSignalFlags};
+
+    if pidfd_send_signal_simple(-1, None, PidFdSignalFlags::empty()).unwrap_err() != Errno::EBADF {
+        return;
+    }
+
+    let status = run_child(|| {
+        let pfd = PidFd::open(getpid(), PidFdOpenFlags::empty()).unwrap();
+
+        let set = sigset!(Signal::SIGUSR1);
+        set.thread_block().unwrap();
+        pfd.send_signal_simple(Signal::SIGUSR1, PidFdSignalFlags::empty())
+            .unwrap();
+
+        let sig = set.wait()?;
+        unsafe {
+            _exit(sig.as_i32());
+        }
+    });
+
+    assert_eq!(status, WaitStatus::Exited(libc::SIGUSR1));
 }
