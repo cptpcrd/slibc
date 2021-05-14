@@ -30,8 +30,6 @@ cfg_if::cfg_if! {
 
         pub const NAME_MAX: usize = 255;
 
-        pub const TFD_TIMER_CANCEL_ON_SET: libc::c_int = 2;
-
         #[cfg(any(target_env = "", target_env = "gnu"))]
         #[derive(Copy, Clone, Debug)]
         #[repr(C)]
@@ -388,6 +386,8 @@ cfg_if::cfg_if! {
         pub const MADV_KEEPONFORK: libc::c_int = 19;
         pub const MADV_COLD: libc::c_int = 20;
         pub const MADV_PAGEOUT: libc::c_int = 21;
+
+        pub const TFD_TIMER_CANCEL_ON_SET: libc::c_int = 2;
     } else if #[cfg(bsd)] {
         pub use libc::IOV_MAX;
 
