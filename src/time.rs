@@ -273,6 +273,12 @@ impl ClockId {
     pub fn get_for_thread(thread: libc::pthread_t) -> Result<Self> {
         pthread_getcpuclockid(thread)
     }
+
+    /// Get the raw `clockid_t` value of this clock ID.
+    #[inline]
+    pub fn as_raw(&self) -> libc::clockid_t {
+        self.0
+    }
 }
 
 #[inline]
