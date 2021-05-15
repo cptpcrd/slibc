@@ -10,6 +10,12 @@ pub enum SysconfName {
     LOGIN_NAME_MAX = libc::_SC_LOGIN_NAME_MAX,
     TTY_NAME_MAX = libc::_SC_TTY_NAME_MAX,
     NGROUPS_MAX = libc::_SC_NGROUPS_MAX,
+    LINE_MAX = libc::_SC_LINE_MAX,
+    IOV_MAX = libc::_SC_IOV_MAX,
+    OPEN_MAX = libc::_SC_OPEN_MAX,
+    ARG_MAX = libc::_SC_ARG_MAX,
+    CHILD_MAX = libc::_SC_CHILD_MAX,
+    CLK_TCK = libc::_SC_CLK_TCK,
     PAGESIZE = libc::_SC_PAGESIZE,
 }
 
