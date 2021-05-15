@@ -333,7 +333,7 @@ mod tests {
         assert_eq!(events[1].events(), EpollEvents::IN);
 
         // Now remove one of the files
-        poller.del(r1.as_raw_fd()).unwrap();
+        poller.del(r1.fd()).unwrap();
         assert_eq!(poller.wait(&mut events, 0).unwrap(), 1);
         assert_eq!(events[0].data(), r2.fd() as u64);
         assert_eq!(events[0].events(), EpollEvents::IN);
