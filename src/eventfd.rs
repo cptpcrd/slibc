@@ -182,4 +182,17 @@ mod tests {
         assert_eq!(evfd.read().unwrap(), 1);
         assert_eq!(evfd.read().unwrap(), 1);
     }
+
+    #[test]
+    fn test_eventfd_initval() {
+        for &val in [1, 2, 10, u32::MAX].iter() {
+            assert_eq!(
+                EventFd::new(val, EventfdFlags::CLOEXEC)
+                    .unwrap()
+                    .read()
+                    .unwrap(),
+                val as u64,
+            );
+        }
+    }
 }
