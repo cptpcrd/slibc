@@ -273,7 +273,7 @@ mod tests {
         match tfd.set_expirations(10) {
             Ok(()) => assert_eq!(tfd.read_expirations().unwrap(), 10),
             Err(e) => {
-                if e != Errno::ENOTTY {
+                if !matches!(e.code(), libc::ENOTTY | libc::ENOSYS) {
                     panic!("{}", e);
                 }
             }
