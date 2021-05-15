@@ -339,17 +339,16 @@ mod tests {
     #[cfg(linuxlike)]
     #[test]
     fn test_getcpu() {
-        let mut ref_cpu = 0;
-        let mut ref_node = 0;
-        getcpu(Some(&mut ref_cpu), Some(&mut ref_node)).unwrap();
+        let mut cpu1 = 0;
+        let mut node1 = 0;
+        getcpu(Some(&mut cpu1), Some(&mut node1)).unwrap();
+        let mut cpu2 = 0;
+        let mut node2 = 0;
+        getcpu(Some(&mut cpu2), None).unwrap();
+        getcpu(None, Some(&mut node2)).unwrap();
 
-        assert_eq!(ref_cpu, sched_getcpu().unwrap());
-
-        let mut cpu = 0;
-        let mut node = 0;
-        getcpu(Some(&mut cpu), None).unwrap();
-        getcpu(None, Some(&mut node)).unwrap();
-        assert_eq!(cpu, ref_cpu);
-        assert_eq!(node, ref_node);
+        assert!(sched_getaffinity(0).unwrap().contains(cpu1));
+        assert!(sched_getaffinity(0).unwrap().contains(cpu2));
+        // XXX: Can't validate node1/node2
     }
 }
