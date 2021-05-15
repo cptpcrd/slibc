@@ -182,8 +182,10 @@ mod tests {
         }
 
         let pfd = PidFd::open(crate::getpid(), PidFdOpenFlags::empty()).unwrap();
+        assert!(pfd.as_ref().get_cloexec().unwrap());
         let r1 = crate::pipe().unwrap().0;
         let r2 = pfd.getfd(r1.fd(), PidFdGetfdFlags::empty()).unwrap();
+        assert!(r2.get_cloexec().unwrap());
 
         let r1_stat = r1.stat().unwrap();
         let r2_stat = r2.stat().unwrap();
