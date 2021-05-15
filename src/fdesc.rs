@@ -261,12 +261,13 @@ mod tests {
 
         #[cfg(target_os = "linux")]
         {
-            assert_eq!(
+            assert!(matches!(
                 fdesc
                     .statx(crate::AtFlag::empty(), crate::StatxMask::BASIC_STATS)
-                    .unwrap_err(),
-                Errno::EBADF
-            );
+                    .unwrap_err()
+                    .code(),
+                libc::EBADF | libc::ENOSYS | libc::EPERM
+            ));
             assert_eq!(fdesc.syncfs().unwrap_err(), Errno::EBADF);
         }
     }

@@ -389,7 +389,33 @@ pub fn statx<P: AsPath>(
 mod tests {
     use super::*;
 
+    fn check_has_statx() -> bool {
+        let err = statx(
+            crate::AT_FDCWD,
+            CStr::from_bytes_with_nul(b"\0").unwrap(),
+            crate::AtFlag::empty(),
+            StatxMask::BASIC_STATS,
+        )
+        .unwrap_err();
+
+        match err.code() {
+            libc::ENOENT => true,
+            libc::ENOSYS | libc::EPERM => false,
+            _ => panic!("{}", err),
+        }
+    }
+
+    macro_rules! check_has_statx {
+        () => {
+            if !check_has_statx() {
+                return;
+            }
+        };
+    }
+
     fn check_same_statx_stat<P: AsPath + Clone>(path: P) {
+        check_has_statx!();
+
         let st = crate::stat(path.clone()).unwrap();
         let stx = crate::statx(
             crate::AT_FDCWD,
@@ -422,6 +448,8 @@ mod tests {
 
     #[test]
     fn test_same_statx_stat() {
+        check_has_statx!();
+
         check_same_statx_stat(CStr::from_bytes_with_nul(b"/\0").unwrap());
         check_same_statx_stat(CStr::from_bytes_with_nul(b".\0").unwrap());
         check_same_statx_stat(CStr::from_bytes_with_nul(b"/bin/\0").unwrap());
@@ -430,6 +458,8 @@ mod tests {
     #[cfg(feature = "std")]
     #[test]
     fn test_same_statx_stat_current_exe() {
+        check_has_statx!();
+
         check_same_statx_stat(
             &CString::new(std::env::current_exe().unwrap().into_os_string().into_vec()).unwrap(),
         );
@@ -437,6 +467,8 @@ mod tests {
 
     #[test]
     fn test_statx_same() {
+        check_has_statx!();
+
         macro_rules! check_statx_eq {
             ($stx1:expr, $stx2:expr) => {
                 check_statx_eq!(
@@ -523,6 +555,8 @@ mod tests {
 
     #[test]
     fn test_statx_error() {
+        check_has_statx!();
+
         macro_rules! check_err {
             ($dirfd:expr, $name:expr, $eno:expr) => {
                 assert_eq!(
