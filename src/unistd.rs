@@ -34,6 +34,13 @@ pub fn sysconf(name: SysconfName) -> Option<usize> {
 #[repr(i32)]
 pub enum ConfstrName {
     PATH = sys::_CS_PATH,
+
+    #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
+    #[cfg(target_os = "linux")]
+    GNU_LIBC_VERSION = sys::_CS_GNU_LIBC_VERSION,
+    #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
+    #[cfg(target_os = "linux")]
+    GNU_LIBPTHREAD_VERSION = sys::_CS_GNU_LIBPTHREAD_VERSION,
 }
 
 #[cfg_attr(docsrs, doc(cfg(not(target_os = "android"))))]
@@ -1629,8 +1636,24 @@ mod tests {
     #[cfg(all(feature = "alloc", not(target_os = "android")))]
     #[test]
     fn test_confstr_alloc() {
-        let s = confstr_alloc(ConfstrName::PATH).unwrap();
-        assert!(!s.to_bytes().contains(&0));
-        assert_eq!(s.to_bytes_with_nul().last(), Some(&0));
+        for &name in [
+            ConfstrName::PATH,
+            #[cfg(all(target_os = "linux", any(target_env = "", target_env = "gnu")))]
+            ConfstrName::GNU_LIBC_VERSION,
+            #[cfg(all(target_os = "linux", any(target_env = "", target_env = "gnu")))]
+            ConfstrName::GNU_LIBPTHREAD_VERSION,
+        ]
+        .iter()
+        {
+            let s = confstr_alloc(name).unwrap();
+            assert!(!s.to_bytes().contains(&0));
+            assert_eq!(s.to_bytes_with_nul().last(), Some(&0));
+        }
+
+        #[cfg(all(target_os = "linux", target_env = "musl"))]
+        {
+            assert_eq!(confstr_alloc(ConfstrName::GNU_LIBC_VERSION), None);
+            assert_eq!(confstr_alloc(ConfstrName::GNU_LIBPTHREAD_VERSION), None);
+        }
     }
 }

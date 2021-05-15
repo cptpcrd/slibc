@@ -27,6 +27,8 @@ cfg_if::cfg_if! {
         pub const MCL_ONFAULT: libc::c_int = 4;
 
         pub const _CS_PATH: libc::c_int = 0;
+        pub const _CS_GNU_LIBC_VERSION: libc::c_int = 2;
+        pub const _CS_GNU_LIBPTHREAD_VERSION: libc::c_int = 3;
 
         pub const NAME_MAX: usize = 255;
 
