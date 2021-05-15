@@ -104,7 +104,7 @@ pub fn timerfd_settime(
 
 /// Get the current setting of the timer file descriptor.
 ///
-/// This returns a `(interval, value)` tuple. See [`timerfd_settimer()`] and `timerfd_create(2)`
+/// This returns a `(interval, value)` tuple. See [`timerfd_settime()`] and `timerfd_create(2)`
 /// for more information.
 #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
 #[inline]
@@ -134,7 +134,7 @@ pub struct TimerFd(FileDesc);
 impl TimerFd {
     /// Create a new timer file descriptor.
     ///
-    /// See [`timerfd()`].
+    /// See [`timerfd_create()`].
     #[inline]
     pub fn new(clockid: ClockId, flags: TimerfdFlags) -> Result<Self> {
         timerfd_create(clockid, flags).map(Self)
