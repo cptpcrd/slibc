@@ -436,7 +436,7 @@ extern "C" {
 
 #[cfg(any(linuxlike, freebsdlike, netbsdlike))]
 extern "C" {
-    #[cfg_attr(target_os = "netbsd", link_name = "pollts")]
+    #[cfg_attr(target_os = "netbsd", link_name = "__pollts50")]
     pub fn ppoll(
         fds: *mut libc::pollfd,
         nfds: libc::nfds_t,
