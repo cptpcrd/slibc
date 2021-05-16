@@ -467,6 +467,22 @@ mod tests {
         assert!(f.write(b"ignored").unwrap() > 0);
     }
 
+    #[test]
+    fn test_getset_fl() {
+        assert_eq!(fcntl_getfl(-1).unwrap_err(), Errno::EBADF);
+        assert_eq!(fcntl_setfl(-1, 0).unwrap_err(), Errno::EBADF);
+
+        let fdesc = get_fdesc();
+
+        assert!(!fdesc.get_nonblocking().unwrap());
+        let mut flags = fcntl_getfl(fdesc.fd()).unwrap();
+        assert_eq!(flags & libc::O_NONBLOCK, 0);
+
+        flags |= libc::O_NONBLOCK;
+        fcntl_setfl(fdesc.fd(), flags).unwrap();
+        assert!(fdesc.get_nonblocking().unwrap());
+    }
+
     #[cfg(target_os = "linux")]
     #[test]
     fn test_pipe_sz() {
@@ -478,6 +494,26 @@ mod tests {
         size /= 2;
         fcntl_setpipe_sz(w.fd(), size).unwrap();
         assert_eq!(size, fcntl_getpipe_sz(r.fd()).unwrap());
+
+        size *= 4;
+        fcntl_setpipe_sz(w.fd(), size).unwrap();
+        assert_eq!(size, fcntl_getpipe_sz(r.fd()).unwrap());
+    }
+
+    #[cfg(all(
+        any(linuxlike, target_os = "freebsd", target_os = "netbsd"),
+        feature = "std"
+    ))]
+    #[test]
+    fn test_posix_fallocate() {
+        let file: crate::FileDesc = tempfile::tempfile().unwrap().into();
+        assert_eq!(file.stat().unwrap().size(), 0);
+
+        posix_fallocate(file.fd(), 0, 1024).unwrap();
+        assert_eq!(file.stat().unwrap().size(), 1024);
+
+        posix_fallocate(file.fd(), 0, 100).unwrap();
+        assert_eq!(file.stat().unwrap().size(), 1024);
     }
 
     #[cfg(target_os = "macos")]
@@ -496,5 +532,17 @@ mod tests {
 
         check_path(crate::c_paths::slash());
         check_path(CStr::from_bytes_with_nul(b"/dev/null\0").unwrap());
+
+        let (r, w) = crate::pipe();
+        for &fd in [-1, r.fd(), w.fd()].iter() {
+            assert_eq!(
+                fcntl_getpath(fd, &mut [0; crate::PATH_MAX]).unwrap_err(),
+                Errno::EBADF
+            );
+            assert_eq!(
+                unsafe { fcntl_getpath_unchecked(fd, &mut [0; crate::PATH_MAX]) }.unwrap_err(),
+                Errno::EBADF
+            );
+        }
     }
 }
