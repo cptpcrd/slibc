@@ -533,7 +533,7 @@ mod tests {
         check_path(crate::c_paths::slash());
         check_path(CStr::from_bytes_with_nul(b"/dev/null\0").unwrap());
 
-        let (r, w) = crate::pipe();
+        let (r, w) = crate::pipe().unwrap();
         for &fd in [-1, r.fd(), w.fd()].iter() {
             assert_eq!(
                 fcntl_getpath(fd, &mut [0; crate::PATH_MAX]).unwrap_err(),
