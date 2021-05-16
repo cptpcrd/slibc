@@ -1683,6 +1683,35 @@ mod tests {
         );
     }
 
+    #[cfg(feature = "std")]
+    #[test]
+    fn test_lseek() {
+        let file: crate::FileDesc = tempfile::tempfile().unwrap().into();
+        file.write_all(b"abcdefghi").unwrap();
+
+        assert_eq!(lseek(file.fd(), SeekPos::Current(0)).unwrap(), 9);
+        assert_eq!(lseek(file.fd(), SeekPos::Start(0)).unwrap(), 0);
+        assert_eq!(lseek(file.fd(), SeekPos::Current(3)).unwrap(), 3);
+        assert_eq!(lseek(file.fd(), SeekPos::End(-3)).unwrap(), 6);
+        assert_eq!(lseek(file.fd(), SeekPos::Current(-1)).unwrap(), 5);
+
+        assert_eq!(
+            lseek(file.fd(), SeekPos::End(-10)).unwrap_err(),
+            Errno::EINVAL
+        );
+        assert_eq!(
+            lseek(file.fd(), SeekPos::Current(-10)).unwrap_err(),
+            Errno::EINVAL
+        );
+
+        assert_eq!(lseek(-1, SeekPos::Current(0)).unwrap_err(), Errno::EBADF);
+        let r = pipe_cloexec().unwrap().0;
+        assert_eq!(
+            lseek(r.fd(), SeekPos::Current(0)).unwrap_err(),
+            Errno::ESPIPE
+        );
+    }
+
     #[cfg(not(target_os = "android"))]
     #[test]
     fn test_confstr() {
