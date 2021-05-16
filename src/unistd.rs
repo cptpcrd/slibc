@@ -87,15 +87,29 @@ pub enum PathconfName {
     CHOWN_RESTRICTED = libc::_PC_CHOWN_RESTRICTED,
     NO_TRUNC = libc::_PC_NO_TRUNC,
     VDISABLE = libc::_PC_VDISABLE,
-    SYMLINKS = libc::_PC_2_SYMLINKS,
-    ALLOC_SIZE_MIN = libc::_PC_ALLOC_SIZE_MIN,
-    REC_INCR_XFER_SIZE = libc::_PC_REC_INCR_XFER_SIZE,
-    REC_MAX_XFER_SIZE = libc::_PC_REC_MAX_XFER_SIZE,
-    REC_MIN_XFER_SIZE = libc::_PC_REC_MIN_XFER_SIZE,
-    REC_XFER_ALIGN = libc::_PC_REC_XFER_ALIGN,
 
-    #[cfg(not(any(apple, target_os = "android")))]
-    FILESIZEBITS = libc::_PC_FILESIZEBITS,
+    #[cfg_attr(docsrs, doc(cfg(not(target_os = "netbsd"))))]
+    #[cfg(not(target_os = "netbsd"))]
+    ALLOC_SIZE_MIN = sys::_PC_ALLOC_SIZE_MIN,
+    #[cfg_attr(docsrs, doc(cfg(not(target_os = "netbsd"))))]
+    #[cfg(not(target_os = "netbsd"))]
+    REC_INCR_XFER_SIZE = sys::_PC_REC_INCR_XFER_SIZE,
+    #[cfg_attr(docsrs, doc(cfg(not(target_os = "netbsd"))))]
+    #[cfg(not(target_os = "netbsd"))]
+    REC_MAX_XFER_SIZE = sys::_PC_REC_MAX_XFER_SIZE,
+    #[cfg_attr(docsrs, doc(cfg(not(target_os = "netbsd"))))]
+    #[cfg(not(target_os = "netbsd"))]
+    REC_MIN_XFER_SIZE = sys::_PC_REC_MIN_XFER_SIZE,
+    #[cfg_attr(docsrs, doc(cfg(not(target_os = "netbsd"))))]
+    #[cfg(not(target_os = "netbsd"))]
+    REC_XFER_ALIGN = sys::_PC_REC_XFER_ALIGN,
+    #[cfg_attr(docsrs, doc(cfg(not(target_os = "netbsd"))))]
+    #[cfg(not(target_os = "netbsd"))]
+    FILESIZEBITS = sys::_PC_FILESIZEBITS,
+
+    #[cfg_attr(docsrs, doc(cfg(not(target_os = "freebsd"))))]
+    #[cfg(not(target_os = "freebsd"))]
+    SYMLINKS = sys::_PC_2_SYMLINKS,
 }
 
 pub fn fpathconf(fd: RawFd, name: PathconfName) -> Result<Option<usize>> {

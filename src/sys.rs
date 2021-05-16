@@ -15,6 +15,16 @@ extern "C" {
     pub fn confstr(name: libc::c_int, buf: *mut libc::c_char, len: usize) -> usize;
 }
 
+#[cfg(not(any(apple, target_os = "freebsd")))]
+pub use libc::_PC_2_SYMLINKS;
+#[cfg(not(apple))]
+pub use libc::_PC_FILESIZEBITS;
+#[cfg(not(any(apple, target_os = "netbsd")))]
+pub use libc::{
+    _PC_ALLOC_SIZE_MIN, _PC_REC_INCR_XFER_SIZE, _PC_REC_MAX_XFER_SIZE, _PC_REC_MIN_XFER_SIZE,
+    _PC_REC_XFER_ALIGN,
+};
+
 cfg_if::cfg_if! {
     if #[cfg(target_os = "linux")] {
         extern "C" {
@@ -101,6 +111,13 @@ cfg_if::cfg_if! {
         pub const CLOCK_UPTIME_RAW_APPROX: libc::clockid_t = 9;
 
         pub const _CS_PATH: libc::c_int = 1;
+        pub const _PC_2_SYMLINKS: libc::c_int = 15;
+        pub const _PC_ALLOC_SIZE_MIN: libc::c_int = 16;
+        pub const _PC_FILESIZEBITS: libc::c_int = 18;
+        pub const _PC_REC_INCR_XFER_SIZE: libc::c_int = 20;
+        pub const _PC_REC_MAX_XFER_SIZE: libc::c_int = 21;
+        pub const _PC_REC_MIN_XFER_SIZE: libc::c_int = 22;
+        pub const _PC_REC_XFER_ALIGN: libc::c_int = 23;
 
         pub const NAME_MAX: usize = 255;
 
