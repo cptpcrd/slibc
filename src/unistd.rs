@@ -1834,7 +1834,9 @@ mod tests {
         {
             assert_eq!(
                 pathconf(file.path(), name).unwrap(),
-                fpathconf(file_fd, name).unwrap()
+                fpathconf(file_fd, name).unwrap(),
+                "{:?}",
+                name,
             );
         }
 
@@ -1856,7 +1858,9 @@ mod tests {
         {
             assert_eq!(
                 pathconf(dir.path(), name).unwrap(),
-                fpathconf(dir_fd.fd(), name).unwrap()
+                fpathconf(dir_fd.fd(), name).unwrap(),
+                "{:?}",
+                name,
             );
         }
     }
