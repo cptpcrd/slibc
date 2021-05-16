@@ -17,7 +17,7 @@ extern "C" {
 
 #[cfg(not(any(apple, target_os = "freebsd")))]
 pub use libc::_PC_2_SYMLINKS;
-#[cfg(not(apple))]
+#[cfg(not(any(apple, target_os = "android")))]
 pub use libc::_PC_FILESIZEBITS;
 #[cfg(not(any(apple, target_os = "netbsd")))]
 pub use libc::{
@@ -89,6 +89,8 @@ cfg_if::cfg_if! {
         }
     } else if #[cfg(target_os = "android")] {
         pub const NAME_MAX: usize = 255;
+
+        pub const _PC_FILESIZEBITS: libc::c_int = 0;
 
         pub use libc::statfs;
 
