@@ -1625,6 +1625,63 @@ mod tests {
         assert!(w.get_cloexec().unwrap());
     }
 
+    #[test]
+    fn test_dup2() {
+        let f1 = pipe_cloexec().unwrap().0;
+        let f2 = pipe_cloexec().unwrap().0;
+
+        assert_ne!(f1.stat().unwrap().ino(), f2.stat().unwrap().ino());
+        assert!(f2.get_cloexec().unwrap());
+
+        unsafe {
+            dup2(f1.fd(), f2.fd()).unwrap().forget();
+        }
+        assert_eq!(f1.stat().unwrap().ino(), f2.stat().unwrap().ino());
+        assert!(!f2.get_cloexec().unwrap());
+    }
+
+    #[cfg(any(linuxlike, freebsdlike, netbsdlike))]
+    #[test]
+    fn test_dup3() {
+        let f1 = pipe_cloexec().unwrap().0;
+        let f2 = pipe_cloexec().unwrap().0;
+
+        assert_ne!(f1.stat().unwrap().ino(), f2.stat().unwrap().ino());
+        assert!(f2.get_cloexec().unwrap());
+
+        unsafe {
+            dup3(f1.fd(), f2.fd(), OFlag::empty()).unwrap().forget();
+        }
+        assert_eq!(f1.stat().unwrap().ino(), f2.stat().unwrap().ino());
+        assert!(!f2.get_cloexec().unwrap());
+
+        unsafe {
+            dup3(f1.fd(), f2.fd(), OFlag::O_CLOEXEC).unwrap().forget();
+        }
+        assert_eq!(f1.stat().unwrap().ino(), f2.stat().unwrap().ino());
+        assert!(f2.get_cloexec().unwrap());
+    }
+
+    #[test]
+    fn test_dup2_cloexec() {
+        let f1 = pipe_cloexec().unwrap().0;
+        let f2 = pipe_cloexec().unwrap().0;
+
+        assert_ne!(f1.stat().unwrap().ino(), f2.stat().unwrap().ino());
+        assert!(f2.get_cloexec().unwrap());
+
+        unsafe {
+            dup2_cloexec(f1.fd(), f2.fd()).unwrap().forget();
+        }
+        assert_eq!(f1.stat().unwrap().ino(), f2.stat().unwrap().ino());
+        assert!(f2.get_cloexec().unwrap());
+
+        assert_eq!(
+            unsafe { dup2_cloexec(f1.fd(), f1.fd()) }.unwrap_err(),
+            Errno::EINVAL
+        );
+    }
+
     #[cfg(not(target_os = "android"))]
     #[test]
     fn test_confstr() {
