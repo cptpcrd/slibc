@@ -1824,14 +1824,7 @@ mod tests {
         let file = tempfile::NamedTempFile::new().unwrap();
         let file_fd = file.as_file().as_raw_fd();
 
-        for &name in [
-            PathconfName::LINK_MAX,
-            PathconfName::MAX_CANON,
-            PathconfName::MAX_INPUT,
-            PathconfName::CHOWN_RESTRICTED,
-        ]
-        .iter()
-        {
+        for &name in [PathconfName::LINK_MAX, PathconfName::CHOWN_RESTRICTED].iter() {
             assert_eq!(
                 pathconf(file.path(), name).unwrap(),
                 fpathconf(file_fd, name).unwrap(),
