@@ -487,6 +487,50 @@ mod tests {
 
     #[cfg(feature = "std")]
     #[test]
+    fn test_umask_create() {
+        let old_mask = umask(0o077);
+
+        let tmpdir = tempfile::tempdir().unwrap();
+        let tmpdir_fd = crate::open(
+            tmpdir.path(),
+            OFlag::O_RDONLY | OFlag::O_DIRECTORY | OFlag::O_CLOEXEC,
+            0,
+        )
+        .unwrap();
+
+        let tmpdir_a = tmpdir.path().join("a");
+        mkdir(&tmpdir_a, 0o777).unwrap();
+        assert_eq!(stat(&tmpdir_a).unwrap().access_mode(), 0o700);
+
+        mkdirat(tmpdir_fd.fd(), "b", 0o777).unwrap();
+        assert_eq!(
+            fstatat(tmpdir_fd.fd(), "b", crate::AtFlag::empty())
+                .unwrap()
+                .access_mode(),
+            0o700
+        );
+
+        drop(
+            crate::openat(
+                tmpdir_fd.fd(),
+                "c",
+                OFlag::O_WRONLY | OFlag::O_CLOEXEC | OFlag::O_CREAT | OFlag::O_EXCL,
+                0o666,
+            )
+            .unwrap(),
+        );
+        assert_eq!(
+            fstatat(tmpdir_fd.fd(), "c", crate::AtFlag::empty())
+                .unwrap()
+                .access_mode(),
+            0o600
+        );
+
+        assert_eq!(umask(old_mask), 0o077);
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
     fn test_utimensat_futimens() {
         use std::os::unix::prelude::*;
 
