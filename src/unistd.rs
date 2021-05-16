@@ -45,6 +45,7 @@ pub enum ConfstrName {
 
 #[cfg_attr(docsrs, doc(cfg(not(target_os = "android"))))]
 #[cfg(not(target_os = "android"))]
+#[inline]
 pub fn confstr(name: ConfstrName, buf: &mut [u8]) -> Option<usize> {
     match unsafe { sys::confstr(name as i32, buf.as_mut_ptr() as *mut _, buf.len()) } {
         // It seems macOS *may* return (size_t)-1 on certain errors
