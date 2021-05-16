@@ -74,6 +74,62 @@ pub fn confstr_alloc(name: ConfstrName) -> Option<CString> {
     Some(unsafe { CString::from_vec_unchecked(buf) })
 }
 
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+#[repr(i32)]
+pub enum PathconfName {
+    LINK_MAX = libc::_PC_LINK_MAX,
+    MAX_CANON = libc::_PC_MAX_CANON,
+    MAX_INPUT = libc::_PC_MAX_INPUT,
+    NAME_MAX = libc::_PC_NAME_MAX,
+    PATH_MAX = libc::_PC_PATH_MAX,
+    PIPE_BUF = libc::_PC_PIPE_BUF,
+    CHOWN_RESTRICTED = libc::_PC_CHOWN_RESTRICTED,
+    NO_TRUNC = libc::_PC_NO_TRUNC,
+    VDISABLE = libc::_PC_VDISABLE,
+    SYMLINKS = libc::_PC_2_SYMLINKS,
+    ALLOC_SIZE_MIN = libc::_PC_ALLOC_SIZE_MIN,
+    REC_INCR_XFER_SIZE = libc::_PC_REC_INCR_XFER_SIZE,
+    REC_MAX_XFER_SIZE = libc::_PC_REC_MAX_XFER_SIZE,
+    REC_MIN_XFER_SIZE = libc::_PC_REC_MIN_XFER_SIZE,
+    REC_XFER_ALIGN = libc::_PC_REC_XFER_ALIGN,
+
+    #[cfg(not(any(apple, target_os = "android")))]
+    FILESIZEBITS = libc::_PC_FILESIZEBITS,
+}
+
+pub fn fpathconf(fd: RawFd, name: PathconfName) -> Result<Option<usize>> {
+    unsafe {
+        let eno_ptr = util::errno_ptr();
+        *eno_ptr = 0;
+
+        match libc::fpathconf(fd, name as i32) {
+            -1 => match *eno_ptr {
+                0 => Ok(None),
+                eno => Err(Error::from_code(eno)),
+            },
+
+            val => Ok(Some(val as usize)),
+        }
+    }
+}
+
+pub fn pathconf<P: AsPath>(path: P, name: PathconfName) -> Result<Option<usize>> {
+    path.with_cstr(|path| unsafe {
+        let eno_ptr = util::errno_ptr();
+        *eno_ptr = 0;
+
+        match libc::pathconf(path.as_ptr(), name as i32) {
+            -1 => match *eno_ptr {
+                0 => Ok(None),
+                eno => Err(Error::from_code(eno)),
+            },
+
+            val => Ok(Some(val as usize)),
+        }
+    })
+}
+
 #[inline]
 pub fn gethostid() -> u32 {
     unsafe { sys::gethostid() as u32 }
@@ -1743,6 +1799,51 @@ mod tests {
         {
             assert_eq!(confstr_alloc(ConfstrName::GNU_LIBC_VERSION), None);
             assert_eq!(confstr_alloc(ConfstrName::GNU_LIBPTHREAD_VERSION), None);
+        }
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn test_pathconf() {
+        use std::os::unix::io::AsRawFd;
+
+        let file = tempfile::NamedTempFile::new().unwrap();
+        let file_fd = file.as_file().as_raw_fd();
+
+        for &name in [
+            PathconfName::LINK_MAX,
+            PathconfName::MAX_CANON,
+            PathconfName::MAX_INPUT,
+            PathconfName::CHOWN_RESTRICTED,
+        ]
+        .iter()
+        {
+            assert_eq!(
+                pathconf(file.path(), name).unwrap(),
+                fpathconf(file_fd, name).unwrap()
+            );
+        }
+
+        let dir = tempfile::tempdir().unwrap();
+        let dir_fd = crate::open(
+            dir.path(),
+            OFlag::O_RDONLY | OFlag::O_DIRECTORY | OFlag::O_CLOEXEC,
+            0,
+        )
+        .unwrap();
+
+        for &name in [
+            PathconfName::LINK_MAX,
+            PathconfName::NAME_MAX,
+            PathconfName::PATH_MAX,
+            PathconfName::CHOWN_RESTRICTED,
+        ]
+        .iter()
+        {
+            assert_eq!(
+                pathconf(dir.path(), name).unwrap(),
+                fpathconf(dir_fd.fd(), name).unwrap()
+            );
         }
     }
 }
