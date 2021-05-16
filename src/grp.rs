@@ -6,10 +6,7 @@ use crate::internal_prelude::*;
 
 #[inline]
 fn init_bufsize() -> usize {
-    match unsafe { libc::sysconf(libc::_SC_GETGR_R_SIZE_MAX) } {
-        -1 => 1024,
-        size => size as usize,
-    }
+    crate::sysconf(crate::SysconfName::GETGR_R_SIZE_MAX).unwrap_or(1024)
 }
 
 const MAX_BUFSIZE: usize = 32768;

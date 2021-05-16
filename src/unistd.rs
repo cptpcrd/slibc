@@ -8,6 +8,8 @@ use crate::internal_prelude::*;
 pub enum SysconfName {
     HOST_NAME_MAX = libc::_SC_HOST_NAME_MAX,
     LOGIN_NAME_MAX = libc::_SC_LOGIN_NAME_MAX,
+    GETPW_R_SIZE_MAX = libc::_SC_GETPW_R_SIZE_MAX,
+    GETGR_R_SIZE_MAX = libc::_SC_GETGR_R_SIZE_MAX,
     TTY_NAME_MAX = libc::_SC_TTY_NAME_MAX,
     NGROUPS_MAX = libc::_SC_NGROUPS_MAX,
     LINE_MAX = libc::_SC_LINE_MAX,
