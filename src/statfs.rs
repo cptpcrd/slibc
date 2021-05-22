@@ -244,14 +244,23 @@ bitflags::bitflags! {
     /// `NOSUID` are common).Check the man pages for your OS of choice for more information.
     #[cfg_attr(docsrs, doc(cfg(not(target_os = "netbsd"))))]
     pub struct StatfsFlags: u64 {
+        #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
         const MANDLOCK = libc::ST_MANDLOCK as _;
+        #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
         const NOATIME = libc::ST_NOATIME as _;
+        #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
         const NODEV = libc::ST_NODEV as _;
+        #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
         const NODIRATIME = libc::ST_NODIRATIME as _;
+        #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
         const NOEXEC = libc::ST_NOEXEC as _;
+        #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
         const NOSUID = libc::ST_NOSUID as _;
+        #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
         const RDONLY = libc::ST_RDONLY as _;
+        #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
         const SYNCHRONOUS = libc::ST_SYNCHRONOUS as _;
+        #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
         const RELATIME = 4096;
     }
 }
