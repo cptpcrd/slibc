@@ -144,11 +144,27 @@ pub fn pathconf<P: AsPath>(path: P, name: PathconfName) -> Result<Option<usize>>
     })
 }
 
+/// Get a "unique" 32-bit identifier for the current host.
+///
+/// OS-specific notes:
+///
+/// - On Linux with glibc, the host ID is stored in `/etc/hostid`. If that file is unavailable,
+///   glibc gets the current hostname, looks up an IPv4 address for it, and converts the IP address
+///   to a 32-bit integer.
+/// - On Linux with musl, this function always returns 0.
+/// - On macOS and the BSDs, the host ID is stored by the kernel at the `kern.hostid` MIB.
 #[inline]
 pub fn gethostid() -> u32 {
     unsafe { sys::gethostid() as u32 }
 }
 
+/// Set a "unique" 32-bit identifier for the current host.
+///
+/// See [`gethostid()`] and `sethostid(3)` for details.
+///
+/// Note that on macOS, FreeBSD, and DragonFlyBSD, this always returns `Ok(())`. Those systems do
+/// not return a value to indicate success or failure, so it is impossible to determine whether it
+/// succeeded.
 #[cfg_attr(
     docsrs,
     doc(cfg(not(any(target_os = "android", all(target_os = "linux", target_env = "musl")))))
