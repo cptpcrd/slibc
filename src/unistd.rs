@@ -19,6 +19,8 @@ pub enum SysconfName {
     CHILD_MAX = libc::_SC_CHILD_MAX,
     CLK_TCK = libc::_SC_CLK_TCK,
     PAGESIZE = libc::_SC_PAGESIZE,
+    NPROCESSORS_CONF = libc::_SC_NPROCESSORS_CONF,
+    NPROCESSORS_ONLN = libc::_SC_NPROCESSORS_ONLN,
 }
 
 #[inline]
