@@ -153,7 +153,7 @@ pub fn swapon<P: AsPath>(path: P, flags: SwapFlags) -> Result<()> {
 /// Contains information on a swap device connected to the system.
 ///
 /// See the descriptions of `SWAP_STATS` and `struct swapent` in `swapctl(2)`.
-#[cfg_attr(docsrs, doc(cfg(target_os = "openbsd", target_os = "netbsd")))]
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "openbsd", target_os = "netbsd"))))]
 #[cfg(netbsdlike)]
 #[derive(Copy, Clone)]
 pub struct SwapEntry {
@@ -225,7 +225,7 @@ impl SwapEntry {
 #[cfg(netbsdlike)]
 bitflags::bitflags! {
     /// Flags returned by [`SwapEntry::flags()`].
-    #[cfg_attr(docsrs, doc(cfg(target_os = "openbsd", target_os = "netbsd")))]
+    #[cfg_attr(docsrs, doc(cfg(any(target_os = "openbsd", target_os = "netbsd"))))]
     pub struct SwapEntryFlags: libc::c_int {
         const INUSE = sys::SWF_INUSE;
         const ENABLE = sys::SWF_ENABLE;
@@ -237,7 +237,7 @@ bitflags::bitflags! {
 /// Begin swapping on the specified device.
 #[cfg_attr(
     docsrs,
-    doc(cfg(target_os = "freebsd", target_os = "dragonfly", target_os = "netbsd"))
+    doc(cfg(any(target_os = "freebsd", target_os = "dragonfly", target_os = "netbsd")))
 )]
 #[cfg(any(freebsdlike, target_os = "netbsd"))]
 pub fn swapon<P: AsPath>(path: P) -> Result<()> {
@@ -245,7 +245,7 @@ pub fn swapon<P: AsPath>(path: P) -> Result<()> {
 }
 
 /// Get the number of swap devices in the system.
-#[cfg_attr(docsrs, doc(cfg(target_os = "openbsd", target_os = "netbsd")))]
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "openbsd", target_os = "netbsd"))))]
 #[cfg(netbsdlike)]
 #[inline]
 pub fn swapctl_nswap() -> Result<usize> {
@@ -258,7 +258,7 @@ pub fn swapctl_nswap() -> Result<usize> {
 /// This copies information about each swap device on the system into an entry in `buf`. If there
 /// are more entries in the system than `buf` has space for, the list is truncated. The number of
 /// devices whose information was copied into `buf` is returned.
-#[cfg_attr(docsrs, doc(cfg(target_os = "openbsd", target_os = "netbsd")))]
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "openbsd", target_os = "netbsd"))))]
 #[cfg(netbsdlike)]
 #[inline]
 pub fn swapctl_stats(buf: &mut [SwapEntry]) -> Result<usize> {
@@ -275,7 +275,7 @@ pub fn swapctl_stats(buf: &mut [SwapEntry]) -> Result<usize> {
 }
 
 /// Begin swapping on the specified device with the specified priority.
-#[cfg_attr(docsrs, doc(cfg(target_os = "openbsd", target_os = "netbsd")))]
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "openbsd", target_os = "netbsd"))))]
 #[cfg(netbsdlike)]
 pub fn swapctl_on<P: AsPath>(path: P, priority: libc::c_int) -> Result<()> {
     path.with_cstr(|path| {
@@ -284,7 +284,7 @@ pub fn swapctl_on<P: AsPath>(path: P, priority: libc::c_int) -> Result<()> {
 }
 
 /// Stop swapping on the specified device.
-#[cfg_attr(docsrs, doc(cfg(target_os = "openbsd", target_os = "netbsd")))]
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "openbsd", target_os = "netbsd"))))]
 #[cfg(netbsdlike)]
 pub fn swapctl_off<P: AsPath>(path: P) -> Result<()> {
     path.with_cstr(|path| {
@@ -293,7 +293,7 @@ pub fn swapctl_off<P: AsPath>(path: P) -> Result<()> {
 }
 
 /// Like [`swapctl_on()`], but change the parameters of a currently enabled swap device.
-#[cfg_attr(docsrs, doc(cfg(target_os = "openbsd", target_os = "netbsd")))]
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "openbsd", target_os = "netbsd"))))]
 #[cfg(netbsdlike)]
 pub fn swapctl_ctl<P: AsPath>(path: P, priority: libc::c_int) -> Result<()> {
     path.with_cstr(|path| {
@@ -304,7 +304,7 @@ pub fn swapctl_ctl<P: AsPath>(path: P, priority: libc::c_int) -> Result<()> {
 }
 
 /// Set the device used as a dump device in case of system panic.
-#[cfg_attr(docsrs, doc(cfg(target_os = "openbsd", target_os = "netbsd")))]
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "openbsd", target_os = "netbsd"))))]
 #[cfg(netbsdlike)]
 pub fn swapctl_dumpdev<P: AsPath>(path: P) -> Result<()> {
     path.with_cstr(|path| {
