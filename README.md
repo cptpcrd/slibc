@@ -6,7 +6,7 @@
 [![Cirrus CI](https://api.cirrus-ci.com/github/cptpcrd/slibc.svg?branch=master)](https://cirrus-ci.com/github/cptpcrd/slibc)
 [![codecov](https://codecov.io/gh/cptpcrd/slibc/branch/master/graph/badge.svg)](https://codecov.io/gh/cptpcrd/slibc)
 
-Simple interfaces to low-level functions in the system libc.
+Simple interfaces to low-level functions in the system libc on \*nix systems.
 
 ## Advantages over `nix`
 
