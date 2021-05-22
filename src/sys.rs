@@ -4,8 +4,15 @@ extern "C" {
 
     pub fn gethostid() -> libc::c_long;
 
-    #[cfg(not(any(target_os = "android", all(target_os = "linux", target_env = "musl"))))]
+    #[cfg(not(any(
+        target_os = "android",
+        all(target_os = "linux", target_env = "musl"),
+        apple,
+        freebsdlike,
+    )))]
     pub fn sethostid(hostid: libc::c_long) -> libc::c_int;
+    #[cfg(any(apple, freebsdlike))]
+    pub fn sethostid(hostid: libc::c_long);
 
     pub fn getpagesize() -> libc::c_int;
 

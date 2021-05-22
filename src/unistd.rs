@@ -156,7 +156,17 @@ pub fn gethostid() -> u32 {
 #[cfg(not(any(target_os = "android", all(target_os = "linux", target_env = "musl"))))]
 #[inline]
 pub fn sethostid(hostid: u32) -> Result<()> {
-    Error::unpack_nz(unsafe { sys::sethostid(hostid as _) })
+    cfg_if::cfg_if! {
+        if #[cfg(any(apple, freebsdlike))] {
+            unsafe {
+                sys::sethostid(hostid as _);
+            }
+        } else {
+            Error::unpack_nz(unsafe { sys::sethostid(hostid as _) })?;
+        }
+    }
+
+    Ok(())
 }
 
 /// Get the number of bytes in a memory page.
