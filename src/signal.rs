@@ -562,20 +562,43 @@ impl SigSet {
 
     /// Check if this signal set is empty.
     ///
-    /// This is equivalent to `self == SigSet::empty()`.
+    /// This is equivalent to `self == SigSet::empty()`, but it is faster.
     ///
     /// On Linux and FreeBSD, this uses the `sigisemptyset()` extension function to improve
-    /// performance.
-    #[allow(clippy::needless_return)]
+    /// performance further.
     #[inline]
     pub fn is_empty(&self) -> bool {
         cfg_if::cfg_if! {
             if #[cfg(any(target_os = "linux", target_os = "freebsd"))] {
-                return unsafe { sys::sigisemptyset(&self.0) != 0 };
+                if unsafe { sys::sigisemptyset(&self.0) == 0 } {
+                    return false;
+                }
             } else {
-                return *self == Self::empty();
+                for sig in Signal::posix_signals() {
+                    if self.contains(sig) {
+                        return false;
+                    }
+                }
             }
         }
+
+        // These systems:
+        // 1. Support real-time signals AND
+        // 2. Don't have sigisemptyset() (or, for glibc, sigisemptyset() doesn't properly check
+        //    real-time signals).
+        // So we need to check for any real-time signals present.
+        #[cfg(any(
+            target_os = "android",
+            target_os = "netbsd",
+            all(target_os = "linux", any(target_env = "", target_env = "gnu")),
+        ))]
+        for sig in Signal::rt_signals() {
+            if self.contains(sig) {
+                return false;
+            }
+        }
+
+        true
     }
 
     /// Create a new signal set that is the union of the two provided signal sets (i.e. all signals
