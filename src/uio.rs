@@ -194,6 +194,8 @@ pub fn writev(fd: RawFd, iov: &[IoVec]) -> Result<usize> {
     })
 }
 
+#[cfg_attr(docsrs, doc(cfg(not(any(target_os = "macos", target_os = "ios")))))]
+#[cfg(not(apple))]
 #[inline]
 pub fn preadv(fd: RawFd, iov: &mut [IoVecMut], offset: u64) -> Result<usize> {
     Error::unpack_size(unsafe {
@@ -206,6 +208,8 @@ pub fn preadv(fd: RawFd, iov: &mut [IoVecMut], offset: u64) -> Result<usize> {
     })
 }
 
+#[cfg_attr(docsrs, doc(cfg(not(any(target_os = "macos", target_os = "ios")))))]
+#[cfg(not(apple))]
 #[inline]
 pub fn pwritev(fd: RawFd, iov: &[IoVec], offset: u64) -> Result<usize> {
     Error::unpack_size(unsafe {

@@ -127,12 +127,16 @@ impl BorrowedFd {
     }
 
     /// Read data from the file descriptor at a given offset into multiple buffers.
+    #[cfg_attr(docsrs, doc(cfg(not(any(target_os = "macos", target_os = "ios")))))]
+    #[cfg(not(apple))]
     #[inline]
     pub fn preadv(&self, bufs: &mut [crate::IoVecMut], offset: u64) -> Result<usize> {
         crate::preadv(self.0, bufs, offset)
     }
 
     /// Write data into the file descriptor at a given offset from multiple buffers.
+    #[cfg_attr(docsrs, doc(cfg(not(any(target_os = "macos", target_os = "ios")))))]
+    #[cfg(not(apple))]
     #[inline]
     pub fn pwritev(&self, bufs: &[crate::IoVec], offset: u64) -> Result<usize> {
         crate::pwritev(self.0, bufs, offset)
