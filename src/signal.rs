@@ -1139,7 +1139,9 @@ mod tests {
 
         fn check_empty(set: SigSet) {
             assert!(set.is_empty());
+            assert!(!set.is_full());
             assert_eq!(set, SigSet::empty());
+            assert_ne!(set, SigSet::full());
 
             #[cfg(feature = "std")]
             assert_eq!(hash_set(set), hash_set(SigSet::empty()));
@@ -1151,7 +1153,9 @@ mod tests {
 
         fn check_full(set: SigSet) {
             assert!(!set.is_empty());
+            assert!(set.is_full());
             assert_eq!(set, SigSet::full());
+            assert_ne!(set, SigSet::empty());
 
             #[cfg(feature = "std")]
             assert_eq!(hash_set(set), hash_set(SigSet::full()));
@@ -1159,6 +1163,13 @@ mod tests {
             for sig in all_signals() {
                 assert!(set.contains(sig));
             }
+        }
+
+        fn check_neither(set: SigSet) {
+            assert!(!set.is_empty());
+            assert!(!set.is_full());
+            assert_ne!(set, SigSet::full());
+            assert_ne!(set, SigSet::empty());
         }
 
         let mut s;
@@ -1200,9 +1211,24 @@ mod tests {
         check_empty([Signal::SIGINT; 0].iter().cloned().collect::<SigSet>());
         check_empty(sigset!());
 
+        for sig in all_signals() {
+            check_neither(sigset!(sig));
+        }
+
+        s = SigSet::full();
+        s.remove(Signal::SIGTERM);
+        check_neither(s);
+
+        #[cfg(any(linuxlike, target_os = "freebsd", target_os = "netbsd"))]
+        {
+            check_neither(Signal::posix_signals().collect());
+            check_neither(Signal::rt_signals().collect());
+        }
+
         s = SigSet::empty();
         s.add(Signal::SIGINT);
         assert!(!s.is_empty());
+        assert!(!s.is_full());
         assert_ne!(s, SigSet::empty());
         assert_ne!(s, SigSet::full());
         assert_eq!(s, [Signal::SIGINT].iter().cloned().collect::<SigSet>());
@@ -1265,6 +1291,23 @@ mod tests {
                     Signal::SIGTERM,
                     Signal::rt_signals().next().unwrap()
                 )
+            );
+
+            assert_eq!(
+                sigset!(Signal::SIGINT, Signal::sigrtmax())
+                    .union(&sigset!(Signal::SIGTERM, Signal::sigrtmin())),
+                sigset!(
+                    Signal::SIGINT,
+                    Signal::SIGTERM,
+                    Signal::sigrtmin(),
+                    Signal::sigrtmax()
+                )
+            );
+
+            assert_eq!(
+                sigset!(Signal::SIGINT, Signal::sigrtmin())
+                    .intersection(&sigset!(Signal::sigrtmin(), Signal::sigrtmax())),
+                sigset!(Signal::sigrtmin())
             );
         }
     }
