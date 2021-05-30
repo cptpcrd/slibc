@@ -60,7 +60,7 @@ impl fmt::Display for IntoStringError {
 }
 
 #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct CString(Vec<u8>);
 
 impl CString {
@@ -231,8 +231,15 @@ impl<'a> From<Cow<'a, CStr>> for CString {
     }
 }
 
+impl fmt::Debug for CString {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Debug::fmt(self.deref(), f)
+    }
+}
+
 #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
-#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct OsString(Vec<u8>);
 
 impl OsString {
@@ -409,6 +416,13 @@ impl IndexMut<RangeFull> for OsString {
     #[inline]
     fn index_mut(&mut self, _: RangeFull) -> &mut OsStr {
         self.as_os_str_mut()
+    }
+}
+
+impl fmt::Debug for OsString {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Debug::fmt(self.deref(), f)
     }
 }
 

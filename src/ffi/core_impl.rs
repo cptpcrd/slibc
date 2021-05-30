@@ -37,7 +37,7 @@ impl fmt::Display for FromBytesWithNulError {
     }
 }
 
-#[derive(Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[repr(transparent)]
 pub struct CStr([u8]);
 
@@ -161,6 +161,13 @@ impl ToOwned for CStr {
     #[inline]
     fn to_owned(&self) -> CString {
         unsafe { CString::from_vec_with_nul_unchecked(self.to_bytes_with_nul().to_vec()) }
+    }
+}
+
+impl fmt::Debug for CStr {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Debug::fmt(OsStr::from_bytes(self.to_bytes()), f)
     }
 }
 
