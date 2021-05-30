@@ -747,6 +747,13 @@ impl Default for SigSet {
     }
 }
 
+impl From<libc::sigset_t> for SigSet {
+    #[inline]
+    fn from(s: libc::sigset_t) -> Self {
+        Self(s)
+    }
+}
+
 impl AsRef<libc::sigset_t> for SigSet {
     #[inline]
     fn as_ref(&self) -> &libc::sigset_t {
