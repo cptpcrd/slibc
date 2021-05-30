@@ -82,9 +82,8 @@ pub fn ioctl_fionclex(fd: RawFd) -> Result<()> {
 /// This allows toggling the non-blocking flag on the given file descriptor.
 #[inline]
 pub fn ioctl_fionbio(fd: RawFd, nonblock: bool) -> Result<()> {
-    // The size that the argument is read with isn't well-defined and seems to vary, but a `usize`
-    // should be large enough.
-    let mut nonblock = nonblock as usize;
+    // The argument seems to be read as an `int` by most platforms
+    let mut nonblock = nonblock as libc::c_int;
     unsafe {
         ioctl(fd, libc::FIONBIO as _, &mut nonblock as *mut _ as *mut _)?;
     }
@@ -95,7 +94,7 @@ pub fn ioctl_fionbio(fd: RawFd, nonblock: bool) -> Result<()> {
 pub fn ioctl_getwinsz(fd: RawFd) -> Result<Winsize> {
     let mut winsize = MaybeUninit::uninit();
     unsafe {
-        ioctl(fd, libc::TIOCGWINSZ as _, &mut winsize as *mut _ as *mut _)?;
+        ioctl(fd, libc::TIOCGWINSZ as _, winsize.as_mut_ptr() as *mut _)?;
     }
     Ok(unsafe { winsize.assume_init() })
 }
