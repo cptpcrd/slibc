@@ -34,6 +34,11 @@ pub use libc::{
 
 cfg_if::cfg_if! {
     if #[cfg(target_os = "linux")] {
+        pub use libc::{
+            reboot, RB_AUTOBOOT, RB_HALT_SYSTEM, RB_POWER_OFF, RB_KEXEC, RB_ENABLE_CAD,
+            RB_DISABLE_CAD, RB_SW_SUSPEND,
+        };
+
         extern "C" {
             pub fn syncfs(fd: libc::c_int) -> libc::c_int;
 
@@ -95,9 +100,21 @@ cfg_if::cfg_if! {
             bitfields: u8,
         }
     } else if #[cfg(target_os = "android")] {
+        extern "C" {
+            pub fn reboot(cmd: libc::c_int) -> libc::c_int;
+        }
+
         pub const NAME_MAX: usize = 255;
 
         pub const _PC_FILESIZEBITS: libc::c_int = 0;
+
+        pub const RB_AUTOBOOT: libc::c_int = libc::LINUX_REBOOT_CMD_RESTART;
+        pub const RB_HALT_SYSTEM: libc::c_int = libc::LINUX_REBOOT_CMD_HALT;
+        pub const RB_POWER_OFF: libc::c_int = libc::LINUX_REBOOT_CMD_POWER_OFF;
+        pub const RB_KEXEC: libc::c_int = libc::LINUX_REBOOT_CMD_KEXEC;
+        pub const RB_SW_SUSPEND: libc::c_int = libc::LINUX_REBOOT_CMD_SW_SUSPEND;
+        pub const RB_DISABLE_CAD: libc::c_int = libc::LINUX_REBOOT_CMD_CAD_OFF;
+        pub const RB_ENABLE_CAD: libc::c_int = libc::LINUX_REBOOT_CMD_CAD_ON;
 
         pub use libc::statfs;
 
@@ -155,6 +172,24 @@ cfg_if::cfg_if! {
         pub const MNT_NOATIME: u32 = 0x10000000;
         pub const MNT_SNAPSHOT: u32 = 0x40000000;
         pub const MNT_STRICTATIME: u32 = 0x80000000;
+
+        pub const RB_AUTOBOOT: libc::c_int = 0;
+        pub const RB_ASKNAME: libc::c_int = 0x01;
+        pub const RB_SINGLE: libc::c_int = 0x02;
+        pub const RB_NOSYNC: libc::c_int = 0x04;
+        pub const RB_HALT: libc::c_int = 0x08;
+        // pub const RB_INITNAME: libc::c_int = 0x10;
+        // pub const RB_DFLTROOT: libc::c_int = 0x20;
+        // pub const RB_ALTBOOT: libc::c_int = 0x40;
+        // pub const RB_UNIPROC: libc::c_int = 0x80;
+        pub const RB_SAFEBOOT: libc::c_int = 0x100;
+        pub const RB_UPSDELAY: libc::c_int = 0x200;
+        pub const RB_QUICK: libc::c_int = 0x400;
+        //  const RB_PANIC: libc::c_int = 0x800;
+        //  const RB_PANIC_ZPRINT: libc::c_int = 0x1000;
+
+        // Aliases to make compatibility easier
+        pub const RB_HALT_SYSTEM: libc::c_int = RB_HALT;
     } else if #[cfg(target_os = "netbsd")] {
         pub const SIGRTMIN: libc::c_int = 33;
         pub const SIGRTMAX: libc::c_int = 63;
@@ -189,6 +224,23 @@ cfg_if::cfg_if! {
         pub const SWF_BUSY: libc::c_int = 0x4;
         pub const SWF_FAKE: libc::c_int = 0x8;
 
+        pub const RB_AUTOBOOT: libc::c_int = 0;
+        pub const RB_ASKNAME: libc::c_int = 0x1;
+        pub const RB_SINGLE: libc::c_int = 0x2;
+        pub const RB_NOSYNC: libc::c_int = 0x4;
+        pub const RB_HALT: libc::c_int = 0x8;
+        //pub const RB_INITNAME: libc::c_int = 0x10;
+        pub const RB_KDB: libc::c_int = 0x40;
+        pub const RB_RDONLY: libc::c_int = 0x80;
+        pub const RB_DUMP: libc::c_int = 0x100;
+        pub const RB_MINIROOT: libc::c_int = 0x200;
+        pub const RB_POWERDOWN: libc::c_int = RB_HALT | 0x800;
+        pub const RB_USERCONF: libc::c_int = 0x1_000;
+
+        // Aliases to make compatibility easier
+        pub const RB_HALT_SYSTEM: libc::c_int = RB_HALT;
+        pub const RB_POWER_OFF: libc::c_int = RB_POWERDOWN;
+
         extern "C" {
             pub fn posix_fallocate(
                 fd: libc::c_int,
@@ -200,6 +252,8 @@ cfg_if::cfg_if! {
             pub fn swapctl(
                 cmd: libc::c_int, arg: *const libc::c_void, misc: libc::c_int,
             ) -> libc::c_int;
+
+            pub fn reboot(howto: libc::c_int, bootstr: *mut libc::c_char) -> libc::c_int;
         }
     } else if #[cfg(target_os = "openbsd")] {
         extern "C" {
@@ -249,6 +303,29 @@ cfg_if::cfg_if! {
         pub const SWF_ENABLE: libc::c_int = 0x2;
         pub const SWF_BUSY: libc::c_int = 0x4;
         pub const SWF_FAKE: libc::c_int = 0x8;
+
+        pub const RB_AUTOBOOT: libc::c_int = 0;
+        pub const RB_ASKNAME: libc::c_int = 0x1;
+        pub const RB_SINGLE: libc::c_int = 0x2;
+        pub const RB_NOSYNC: libc::c_int = 0x4;
+        pub const RB_HALT: libc::c_int = 0x8;
+        //pub const RB_INITNAME: libc::c_int = 0x10;
+        pub const RB_DFLTROOT: libc::c_int = 0x20;
+        pub const RB_KDB: libc::c_int = 0x40;
+        pub const RB_RDONLY: libc::c_int = 0x80;
+        pub const RB_DUMP: libc::c_int = 0x100;
+        pub const RB_MINIROOT: libc::c_int = 0x200;
+        pub const RB_CONFIG: libc::c_int = 0x400;
+        pub const RB_TIMEBAD: libc::c_int = 0x800;
+        pub const RB_POWERDOWN: libc::c_int = 0x1_000;
+        pub const RB_SERCONS: libc::c_int = 0x2_000;
+        pub const RB_USERREQ: libc::c_int = 0x4_000;
+        pub const RB_RESET: libc::c_int = 0x8_000;
+        pub const RB_GOODRANDOM: libc::c_int = 0x1_000;
+
+        // Aliases to make compatibility easier
+        pub const RB_HALT_SYSTEM: libc::c_int = RB_HALT;
+        pub const RB_POWER_OFF: libc::c_int = RB_POWERDOWN | RB_HALT;
     } else if #[cfg(target_os = "freebsd")] {
         extern "C" {
             #[link_name = "getfsstat@FBSD_1.0"]
@@ -337,6 +414,34 @@ cfg_if::cfg_if! {
         pub const MNT_IGNORE: u64 = 0x800000;
         pub const MNT_VERIFIED: u64 = 0x400000000;
 
+        pub const RB_AUTOBOOT: libc::c_int = 0;
+        pub const RB_ASKNAME: libc::c_int = 0x1;
+        pub const RB_SINGLE: libc::c_int = 0x2;
+        pub const RB_NOSYNC: libc::c_int = 0x4;
+        pub const RB_HALT: libc::c_int = 0x8;
+        // pub const RB_INITNAME: libc::c_int = 0x010;
+        pub const RB_DFLTROOT: libc::c_int = 0x20;
+        pub const RB_KDB: libc::c_int = 0x40;
+        pub const RB_RDONLY: libc::c_int = 0x80;
+        pub const RB_DUMP: libc::c_int = 0x100;
+        // pub const RB_MINIROOT: libc::c_int = 0x200;
+        pub const RB_VERBOSE: libc::c_int = 0x800;
+        pub const RB_SERIAL: libc::c_int = 0x1_000;
+        pub const RB_CDROM: libc::c_int = 0x2_000;
+        pub const RB_POWEROFF: libc::c_int = 0x4_000;
+        pub const RB_GDB: libc::c_int = 0x8_000;
+        pub const RB_MUTE: libc::c_int = 0x10_000;
+        // pub const RB_SELFTEST: libc::c_int = 0x20_000;
+        pub const RB_PAUSE: libc::c_int = 0x100_000;
+        pub const RB_REROOT: libc::c_int = 0x200_000;
+        pub const RB_POWERCYCLE: libc::c_int = 0x400_000;
+        pub const RB_PROBE: libc::c_int = 0x10_000_000;
+        pub const RB_MULTIPLE: libc::c_int = 0x20_000_000;
+
+        // Aliases to make compatibility easier
+        pub const RB_HALT_SYSTEM: libc::c_int = RB_HALT;
+        pub const RB_POWER_OFF: libc::c_int = RB_POWEROFF;
+
         // FreeBSD has historically implemented O_EXEC on directories with *similar* semantics to
         // POSIX's O_SEARCH. FreeBSD 13.0 (also backported to 11.4 and 12.2) a) added O_SEARCH as an
         // alias for O_EXEC and b) cleaned up the behavior a bit.
@@ -387,6 +492,31 @@ cfg_if::cfg_if! {
         pub const MNT_ROOTFS: i32 = 0x4000;
         pub const MNT_USER: i32 = 0x8000;
         pub const MNT_IGNORE: i32 = 0x800000;
+
+        pub const RB_AUTOBOOT: libc::c_int = 0;
+        pub const RB_ASKNAME: libc::c_int = 0x1;
+        pub const RB_SINGLE: libc::c_int = 0x2;
+        pub const RB_NOSYNC: libc::c_int = 0x4;
+        pub const RB_HALT: libc::c_int = 0x8;
+        // pub const RB_INITNAME: libc::c_int = 0x010;
+        pub const RB_DFLTROOT: libc::c_int = 0x20;
+        pub const RB_KDB: libc::c_int = 0x40;
+        pub const RB_RDONLY: libc::c_int = 0x80;
+        pub const RB_DUMP: libc::c_int = 0x100;
+        pub const RB_MINIROOT: libc::c_int = 0x200;
+        pub const RB_VERBOSE: libc::c_int = 0x800;
+        pub const RB_SERIAL: libc::c_int = 0x1_000;
+        pub const RB_CDROM: libc::c_int = 0x2_000;
+        pub const RB_POWEROFF: libc::c_int = 0x4_000;
+        pub const RB_GDB: libc::c_int = 0x8_000;
+        pub const RB_MUTE: libc::c_int = 0x10_000;
+        pub const RB_SELFTEST: libc::c_int = 0x20_000;
+        pub const RB_PAUSE: libc::c_int = 0x100_000;
+        pub const RB_VIDEO: libc::c_int = 0x20_000_000;
+
+        // Aliases to make compatibility easier
+        pub const RB_HALT_SYSTEM: libc::c_int = RB_HALT;
+        pub const RB_POWER_OFF: libc::c_int = RB_POWEROFF;
     }
 }
 
@@ -441,6 +571,11 @@ cfg_if::cfg_if! {
         pub const MNT_WAIT: libc::c_int = 1;
         #[cfg(not(target_os = "netbsd"))]
         pub const MNT_NOWAIT: libc::c_int = 2;
+
+        #[cfg(not(target_os = "netbsd"))]
+        extern "C" {
+            pub fn reboot(howto: libc::c_int) -> libc::c_int;
+        }
     }
 }
 
