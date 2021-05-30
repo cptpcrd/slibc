@@ -1,3 +1,5 @@
+#![allow(non_camel_case_types)]
+
 extern "C" {
     pub fn setreuid(ruid: libc::uid_t, euid: libc::uid_t) -> libc::c_int;
     pub fn setregid(rgid: libc::gid_t, egid: libc::gid_t) -> libc::c_int;
@@ -43,6 +45,15 @@ cfg_if::cfg_if! {
             pub fn syncfs(fd: libc::c_int) -> libc::c_int;
 
             pub fn mlock2(addr: *const libc::c_void, len: libc::size_t, flags: libc::c_int) -> libc::c_int;
+
+            pub fn posix_spawn_file_actions_addchdir_np(
+                fa: *mut libc::posix_spawn_file_actions_t,
+                path: *const libc::c_char,
+            ) -> libc::c_int;
+            pub fn posix_spawn_file_actions_addfchdir_np(
+                fa: *mut libc::posix_spawn_file_actions_t,
+                fd: libc::c_int,
+            ) -> libc::c_int;
         }
 
         pub const MLOCK_ONFAULT: libc::c_int = 1;
@@ -53,6 +64,8 @@ cfg_if::cfg_if! {
         pub const _CS_GNU_LIBPTHREAD_VERSION: libc::c_int = 3;
 
         pub const NAME_MAX: usize = 255;
+
+        pub const POSIX_SPAWN_SETSID: libc::c_short = 0x80;
 
         #[cfg(any(target_env = "", target_env = "gnu"))]
         #[derive(Copy, Clone, Debug)]
@@ -147,6 +160,8 @@ cfg_if::cfg_if! {
 
         pub const NAME_MAX: usize = 255;
 
+        pub const POSIX_SPAWN_SETSID: libc::c_short = 0x400;
+
         pub const MNT_RDONLY: u32 = 0x1;
         pub const MNT_SYNCHRONOUS: u32 = 0x2;
         pub const MNT_NOEXEC: u32 = 0x4;
@@ -191,6 +206,31 @@ cfg_if::cfg_if! {
         // Aliases to make compatibility easier
         pub const RB_HALT_SYSTEM: libc::c_int = RB_HALT;
     } else if #[cfg(target_os = "netbsd")] {
+        #[derive(Copy, Clone, Debug)]
+        #[repr(C)]
+        pub struct sched_param {
+            pub sched_priority: libc::c_int,
+        }
+
+        #[derive(Copy, Clone, Debug)]
+        #[repr(C)]
+        pub struct posix_spawnattr_t {
+            sa_flags: libc::c_short,
+            sa_pgroup: libc::pid_t,
+            sa_schedparam: sched_param,
+            sa_schedpolicy: libc::c_int,
+            sa_sigdefault: libc::sigset_t,
+            sa_sigmask: libc::sigset_t,
+        }
+
+        #[derive(Copy, Clone, Debug)]
+        #[repr(C)]
+        pub struct posix_spawn_file_actions_t {
+            size: libc::c_uint,
+            len: libc::c_uint,
+            fae: *mut libc::c_void,
+        }
+
         pub const SIGRTMIN: libc::c_int = 33;
         pub const SIGRTMAX: libc::c_int = 63;
 
@@ -265,6 +305,9 @@ cfg_if::cfg_if! {
                 cmd: libc::c_int, arg: *const libc::c_void, misc: libc::c_int,
             ) -> libc::c_int;
         }
+
+        pub type posix_spawnattr_t = *mut libc::c_void;
+        pub type posix_spawn_file_actions_t = *mut libc::c_void;
 
         pub const CLOCK_PROCESS_CPUTIME_ID: libc::clockid_t = 2;
         pub const CLOCK_THREAD_CPUTIME_ID: libc::clockid_t = 4;
@@ -454,6 +497,9 @@ cfg_if::cfg_if! {
             ) -> libc::c_int;
         }
 
+        pub type posix_spawnattr_t = *mut libc::c_void;
+        pub type posix_spawn_file_actions_t = *mut libc::c_void;
+
         pub const CTL_MAXNAME: i32 = 12;
 
         pub const _CS_PATH: libc::c_int = 1;
@@ -530,6 +576,94 @@ cfg_if::cfg_if! {
 }
 
 cfg_if::cfg_if! {
+    if #[cfg(any(netbsdlike, target_os = "dragonfly"))] {
+        extern "C" {
+            pub fn posix_spawn(
+                pidp: *mut libc::pid_t,
+                path: *const libc::c_char,
+                file_actions: *const posix_spawn_file_actions_t,
+                attrp: *const posix_spawnattr_t,
+                argv: *const *mut libc::c_char,
+                envp: *const *mut libc::c_char,
+            ) -> libc::c_int;
+            pub fn posix_spawnp(
+                pidp: *mut libc::pid_t,
+                path: *const libc::c_char,
+                file_actions: *const posix_spawn_file_actions_t,
+                attrp: *const posix_spawnattr_t,
+                argv: *const *mut libc::c_char,
+                envp: *const *mut libc::c_char,
+            ) -> libc::c_int;
+
+            pub fn posix_spawn_file_actions_init(
+                file_actions: *const posix_spawn_file_actions_t,
+            ) -> libc::c_int;
+            pub fn posix_spawn_file_actions_destroy(
+                file_actions: *const posix_spawn_file_actions_t,
+            ) -> libc::c_int;
+            pub fn posix_spawn_file_actions_adddup2(
+                file_actions: *const posix_spawn_file_actions_t,
+                fildes: libc::c_int,
+                newfildes: libc::c_int,
+            ) -> libc::c_int;
+            pub fn posix_spawn_file_actions_addopen(
+                file_actions: *const posix_spawn_file_actions_t,
+                fildes: libc::c_int,
+                path: *const libc::c_char,
+                oflag: libc::c_int,
+                mode: libc::mode_t,
+            ) -> libc::c_int;
+            pub fn posix_spawn_file_actions_addclose(
+                file_actions: *const posix_spawn_file_actions_t,
+                fildes: libc::c_int,
+            ) -> libc::c_int;
+
+            pub fn posix_spawnattr_init(attr: *mut posix_spawnattr_t) -> libc::c_int;
+            pub fn posix_spawnattr_destroy(attr: *mut posix_spawnattr_t) -> libc::c_int;
+            pub fn posix_spawnattr_setflags(
+                attr: *mut posix_spawnattr_t,
+                flags: libc::c_short,
+            ) -> libc::c_int;
+            pub fn posix_spawnattr_getflags(
+                attr: *const posix_spawnattr_t,
+                flags: *mut libc::c_short,
+            ) -> libc::c_int;
+            pub fn posix_spawnattr_setpgroup(
+                attr: *mut posix_spawnattr_t,
+                pgroup: libc::pid_t,
+            ) -> libc::c_int;
+            pub fn posix_spawnattr_getpgroup(
+                attr: *const posix_spawnattr_t,
+                pgroup: *mut libc::pid_t,
+            ) -> libc::c_int;
+            pub fn posix_spawnattr_setsigdefault(
+                attr: *mut posix_spawnattr_t,
+                sigdefault: *const libc::sigset_t,
+            ) -> libc::c_int;
+            pub fn posix_spawnattr_getsigdefault(
+                attr: *const posix_spawnattr_t,
+                sigdefault: *mut libc::sigset_t,
+            ) -> libc::c_int;
+            pub fn posix_spawnattr_setsigmask(
+                attr: *mut posix_spawnattr_t,
+                sigmask: *const libc::sigset_t,
+            ) -> libc::c_int;
+            pub fn posix_spawnattr_getsigmask(
+                attr: *const posix_spawnattr_t,
+                sigmask: *mut libc::sigset_t,
+            ) -> libc::c_int;
+        }
+
+        pub const POSIX_SPAWN_RESETIDS: libc::c_short = 0x01;
+        pub const POSIX_SPAWN_SETPGROUP: libc::c_short = 0x02;
+        // pub const POSIX_SPAWN_SETSCHEDPARAM: libc::c_short = 0x04;
+        // pub const POSIX_SPAWN_SETSCHEDULER: libc::c_short = 0x08;
+        pub const POSIX_SPAWN_SETSIGDEF: libc::c_short = 0x10;
+        pub const POSIX_SPAWN_SETSIGMASK: libc::c_short = 0x20;
+    }
+}
+
+cfg_if::cfg_if! {
     if #[cfg(linuxlike)] {
         pub use libc::swapoff;
 
@@ -586,6 +720,18 @@ pub use libc::{CLOCK_PROF, CLOCK_VIRTUAL};
 
 #[cfg(netbsdlike)]
 pub use libc::CTL_MAXNAME;
+
+#[cfg(not(any(target_os = "openbsd", target_os = "netbsd", target_os = "dragonfly")))]
+pub use libc::{
+    posix_spawn, posix_spawn_file_actions_addclose, posix_spawn_file_actions_adddup2,
+    posix_spawn_file_actions_addopen, posix_spawn_file_actions_destroy,
+    posix_spawn_file_actions_init, posix_spawn_file_actions_t, posix_spawnattr_destroy,
+    posix_spawnattr_getflags, posix_spawnattr_getpgroup, posix_spawnattr_getsigdefault,
+    posix_spawnattr_getsigmask, posix_spawnattr_init, posix_spawnattr_setflags,
+    posix_spawnattr_setpgroup, posix_spawnattr_setsigdefault, posix_spawnattr_setsigmask,
+    posix_spawnattr_t, posix_spawnp, POSIX_SPAWN_RESETIDS, POSIX_SPAWN_SETPGROUP,
+    POSIX_SPAWN_SETSIGDEF, POSIX_SPAWN_SETSIGMASK,
+};
 
 #[cfg(any(linuxlike, target_os = "freebsd"))]
 pub use libc::{
