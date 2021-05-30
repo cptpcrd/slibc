@@ -126,6 +126,18 @@ impl BorrowedFd {
         crate::pwrite(self.0, buf, offset)
     }
 
+    /// Read data from the file descriptor at a given offset into multiple buffers.
+    #[inline]
+    pub fn preadv(&self, bufs: &mut [crate::IoVecMut], offset: u64) -> Result<usize> {
+        crate::preadv(self.0, bufs, offset)
+    }
+
+    /// Write data into the file descriptor at a given offset from multiple buffers.
+    #[inline]
+    pub fn pwritev(&self, bufs: &[crate::IoVec], offset: u64) -> Result<usize> {
+        crate::pwritev(self.0, bufs, offset)
+    }
+
     /// Get the close-on-exec status of the given file descriptor.
     #[inline]
     pub fn get_cloexec(&self) -> Result<bool> {

@@ -415,6 +415,12 @@ cfg_if::cfg_if! {
         pub const MADV_COLD: libc::c_int = 20;
         pub const MADV_PAGEOUT: libc::c_int = 21;
 
+        pub const RWF_HIPRI: libc::c_int = 0x1;
+        pub const RWF_DSYNC: libc::c_int = 0x2;
+        pub const RWF_SYNC: libc::c_int = 0x4;
+        pub const RWF_NOWAIT: libc::c_int = 0x8;
+        pub const RWF_APPEND: libc::c_int = 0x10;
+
         pub const TFD_TIMER_CANCEL_ON_SET: libc::c_int = 2;
     } else if #[cfg(bsd)] {
         pub use libc::IOV_MAX;

@@ -194,6 +194,75 @@ pub fn writev(fd: RawFd, iov: &[IoVec]) -> Result<usize> {
     })
 }
 
+#[inline]
+pub fn preadv(fd: RawFd, iov: &mut [IoVecMut], offset: u64) -> Result<usize> {
+    Error::unpack_size(unsafe {
+        libc::preadv(
+            fd,
+            iov.as_ptr() as *const _,
+            iov.len().try_into().unwrap_or(i32::MAX),
+            offset as _,
+        )
+    })
+}
+
+#[inline]
+pub fn pwritev(fd: RawFd, iov: &[IoVec], offset: u64) -> Result<usize> {
+    Error::unpack_size(unsafe {
+        libc::pwritev(
+            fd,
+            iov.as_ptr() as *const _,
+            iov.len().try_into().unwrap_or(i32::MAX),
+            offset as _,
+        )
+    })
+}
+
+#[cfg(linuxlike)]
+bitflags::bitflags! {
+    #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
+    #[derive(Default)]
+    pub struct RWFlags: libc::c_int {
+        const HIPRI = sys::RWF_HIPRI;
+        const DSYNC = sys::RWF_DSYNC;
+        const SYNC = sys::RWF_SYNC;
+        const NOWAIT = sys::RWF_NOWAIT;
+        const APPEND = sys::RWF_APPEND;
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
+#[cfg(linuxlike)]
+#[inline]
+pub fn preadv2(fd: RawFd, iov: &mut [IoVecMut], offset: u64, flags: RWFlags) -> Result<usize> {
+    Error::unpack_size(unsafe {
+        libc::syscall(
+            libc::SYS_preadv2,
+            fd,
+            iov.as_ptr() as *const libc::iovec,
+            iov.len().try_into().unwrap_or(i32::MAX),
+            offset as libc::off_t,
+            flags.bits(),
+        ) as isize
+    })
+}
+
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
+#[cfg(linuxlike)]
+#[inline]
+pub fn pwritev2(fd: RawFd, iov: &[IoVec], offset: u64, flags: RWFlags) -> Result<usize> {
+    Error::unpack_size(unsafe {
+        libc::syscall(
+            libc::SYS_pwritev2,
+            fd,
+            iov.as_ptr() as *const libc::iovec,
+            iov.len().try_into().unwrap_or(i32::MAX),
+            offset as libc::off_t,
+            flags.bits(),
+        ) as isize
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
