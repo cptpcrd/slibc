@@ -127,6 +127,20 @@ impl CString {
             Ok(unsafe { String::from_utf8_unchecked(self.into_bytes()) })
         }
     }
+
+    pub fn into_raw(self) -> *mut libc::c_char {
+        unsafe { (&*Box::into_raw(Box::<[u8]>::from(self.0))).as_ptr() as *mut _ }
+    }
+
+    pub unsafe fn from_raw(ptr: *mut libc::c_char) -> Self {
+        Self(
+            Box::from_raw(core::ptr::slice_from_raw_parts_mut(
+                ptr as *mut u8,
+                libc::strlen(ptr) + 1,
+            ))
+            .into(),
+        )
+    }
 }
 
 impl Default for CString {
@@ -502,6 +516,15 @@ mod tests {
         assert_eq!(CString::from(abc_cstr), abc);
         assert_eq!(CString::from(Cow::Borrowed(abc_cstr)), abc);
         assert_eq!(Vec::from(abc), b"abc");
+    }
+
+    #[test]
+    fn test_cstring_raw() {
+        unsafe {
+            let ptr = CString::new(*b"abc").unwrap().into_raw();
+            assert_eq!(libc::strlen(ptr), 3);
+            assert_eq!(CString::from_raw(ptr).as_bytes_with_nul(), b"abc\0");
+        }
     }
 
     #[test]
