@@ -58,6 +58,13 @@ jobs:
           command: build
           args: --verbose --target ${{ matrix.target }} --no-default-features
 
+      - name: Build (nix)
+        uses: actions-rs/cargo@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          command: build
+          args: --verbose --target ${{ matrix.target }} --features nix
+
   build-no-std:
     name: Build (no_std only)
 

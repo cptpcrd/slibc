@@ -381,7 +381,7 @@ impl From<Errno> for std::io::Error {
 impl From<Errno> for nix::errno::Errno {
     #[inline]
     fn from(e: Errno) -> Self {
-        nix::errno::Errno::from_code(e as i32)
+        nix::errno::Errno::from_i32(e as i32)
     }
 }
 
