@@ -601,6 +601,27 @@ impl SigSet {
         true
     }
 
+    /// Check if this signal set is full.
+    ///
+    /// This is equivalent to `self == SigSet::full()`, but it is faster.
+    #[inline]
+    pub fn is_full(&self) -> bool {
+        for sig in Signal::posix_signals() {
+            if !self.contains(sig) {
+                return false;
+            }
+        }
+
+        #[cfg(any(linuxlike, target_os = "freebsd", target_os = "netbsd"))]
+        for sig in Signal::rt_signals() {
+            if !self.contains(sig) {
+                return false;
+            }
+        }
+
+        true
+    }
+
     /// Create a new signal set that is the union of the two provided signal sets (i.e. all signals
     /// present in either set).
     ///
