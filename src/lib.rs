@@ -122,6 +122,13 @@ mod fdesc;
 pub use borrowed_fd::*;
 pub use fdesc::*;
 
+cfg_if::cfg_if! {
+    if #[cfg(feature = "alloc")] {
+        mod cstring_vec;
+        pub use cstring_vec::*;
+    }
+}
+
 mod errno;
 mod fcntl;
 mod ioctl;

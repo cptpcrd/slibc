@@ -1,8 +1,8 @@
 use crate::internal_prelude::*;
 use crate::{OFlag, SigSet};
 
-/// A list of file-related actions to be performed in a child launched by [`posix_spawn_raw()`] or
-/// [`posix_spawnp_raw()`].
+/// A list of file-related actions to be performed in a child launched by
+/// [`posix_spawn_raw()`]/[`posix_spawnp_raw()`]/[`posix_spawn()`]/[`posix_spawnp()`].
 ///
 /// Each method of this struct will add one action. Actions are performed in the order they are
 /// added.
@@ -133,7 +133,8 @@ bitflags::bitflags! {
     }
 }
 
-/// A set of attributes for a child launched by [`posix_spawn_raw()`] or [`posix_spawnp_raw()`].
+/// A set of attributes for a child launched by
+/// [`posix_spawn_raw()`]/[`posix_spawnp_raw()`]/[`posix_spawn()`]/[`posix_spawnp()`].
 #[derive(Debug)]
 pub struct PosixSpawnAttr(sys::posix_spawnattr_t);
 
@@ -291,10 +292,8 @@ pub unsafe fn posix_spawn_raw<P: AsPath>(
 ///
 /// # Safety
 ///
-/// 1. See [`posix_spawnp_raw()`].
-/// 2. Since `posix_spawnp()` may access the old environment to do a `PATH` search, it is unsound
-///    in multi-threaded programs where other threads may be concurrently modifying the
-///    environment. See rust-lang/rust#27970 for more information.
+/// 1. See [`posix_spawn_raw()`].
+/// 2. See [`posix_spawnp()`].
 #[inline]
 pub unsafe fn posix_spawnp_raw<P: AsPath>(
     prog: P,
@@ -317,4 +316,65 @@ pub unsafe fn posix_spawnp_raw<P: AsPath>(
     })?;
 
     Ok(pid.assume_init())
+}
+
+/// Call `posix_spawn(3)` to launch a new process.
+///
+/// This is identical to [`posix_spawn_raw()`], except that it accepts
+/// [`CStringVec`](./struct.CStringVec.html)s instead of raw pointers, which allows it to be safe.
+///
+/// # Panics
+///
+/// Panics if `envp` is `None`. This would normally translate to passing NULL, which would preserve
+/// the current environment. However, it cannot currently be done safely. See item (1) in
+/// [`execvp()`](./fn.execvp.html)'s [safety section](./fn.execvp.html#safety).
+#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
+#[cfg(feature = "alloc")]
+#[inline]
+pub fn posix_spawn<P: AsPath>(
+    prog: P,
+    file_actions: Option<&PosixSpawnFileActions>,
+    attr: Option<&PosixSpawnAttr>,
+    argv: &crate::CStringVec,
+    envp: Option<&crate::CStringVec>,
+) -> Result<libc::pid_t> {
+    unsafe {
+        posix_spawn_raw(
+            prog,
+            file_actions,
+            attr,
+            argv.as_ptr(),
+            envp.unwrap().as_ptr(),
+        )
+    }
+}
+
+/// Call `posix_spawnp(3)` to launch a new process.
+///
+/// This is identical to [`posix_spawn_raw()`], except that it accepts
+/// [`CStringVec`](./struct.CStringVec.html)s instead of raw pointers, which allows it to be safer.
+///
+/// # Safety
+///
+/// See item (2) in [`execvp()`](./fn.execvp.html)'s [safety section](./fn.execvp.html#safety).
+///
+/// Also, if you pass `envp` as `None` (which translates to passing NULL, which preserves the
+/// current environment), see item (1).
+#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
+#[cfg(feature = "alloc")]
+#[inline]
+pub unsafe fn posix_spawnp<P: AsPath>(
+    prog: P,
+    file_actions: Option<&PosixSpawnFileActions>,
+    attr: Option<&PosixSpawnAttr>,
+    argv: &crate::CStringVec,
+    envp: Option<&crate::CStringVec>,
+) -> Result<libc::pid_t> {
+    posix_spawnp_raw(
+        prog,
+        file_actions,
+        attr,
+        argv.as_ptr(),
+        envp.map_or_else(core::ptr::null, |e| e.as_ptr()),
+    )
 }

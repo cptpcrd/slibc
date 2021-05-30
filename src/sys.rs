@@ -22,6 +22,25 @@ extern "C" {
 
     #[cfg(not(target_os = "android"))]
     pub fn confstr(name: libc::c_int, buf: *mut libc::c_char, len: usize) -> usize;
+
+    #[cfg(any(linuxlike, freebsdlike))]
+    pub fn fexecve(
+        fd: libc::c_int,
+        argv: *const *const libc::c_char,
+        envp: *const *const libc::c_char,
+    ) -> libc::c_int;
+    #[cfg(any(freebsdlike, apple))]
+    pub fn execvP(
+        file: *const libc::c_char,
+        search_path: *const *const libc::c_char,
+        argv: *const *const libc::c_char,
+    ) -> libc::c_int;
+    #[cfg(any(linuxlike, netbsdlike))]
+    pub fn execvpe(
+        file: *const libc::c_char,
+        argv: *const *const libc::c_char,
+        envp: *const *const libc::c_char,
+    ) -> libc::c_int;
 }
 
 #[cfg(not(any(apple, target_os = "freebsd")))]

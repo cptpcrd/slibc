@@ -1554,6 +1554,171 @@ pub fn lockf(fd: RawFd, cmd: LockfCmd, len: u64) -> Result<()> {
     Error::unpack_nz(unsafe { libc::lockf(fd, cmd as _, len as _) })
 }
 
+/// Execute a program, replacing the current process.
+///
+/// This function executes the program specified by `path` with the arguments in `argv` and the
+/// environment in `envp` (`envp` should be a list of `key=value` strings).
+#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
+#[cfg(feature = "alloc")]
+#[inline]
+pub fn execve<P: AsPath>(path: P, argv: &crate::CStringVec, envp: &crate::CStringVec) -> Error {
+    let res: Result<()> = path.with_cstr(|path| {
+        unsafe {
+            libc::execve(path.as_ptr(), argv.as_ptr(), envp.as_ptr());
+        }
+        Err(Error::last())
+    });
+    res.unwrap_err()
+}
+
+/// Execute a program, replacing the current process.
+///
+/// This is identical to [`execve()`], but preserves the current environment rather than allowing a
+/// new environment to be specified.
+///
+/// # Safety
+///
+/// See item (1) in [`execvp()`]'s [safety section](./fn.execvp.html#safety).
+#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
+#[cfg(feature = "alloc")]
+#[inline]
+pub unsafe fn execv<P: AsPath>(path: P, argv: &crate::CStringVec) -> Error {
+    let res: Result<()> = path.with_cstr(|path| {
+        unsafe {
+            libc::execv(path.as_ptr(), argv.as_ptr());
+        }
+        Err(Error::last())
+    });
+    res.unwrap_err()
+}
+
+/// Execute a program, replacing the current process.
+///
+/// # Safety
+///
+/// Both safety issues with this function have to do with Rust's handling of environment safety.
+/// For more information, see rust-lang/rust#27970.
+///
+/// 1. If this function is called in a multithreaded program while another thread is modifying the
+///    environment, the `environ` variable (used to get the current environment to pass to
+///    `execve(2)`) may be in an inconsistent state.
+/// 2. Many implementations of this function call `getenv("PATH")`. If this function is called in a
+///    multithreaded program while another thread is modifying the environment, this call is
+///    unsound.
+///
+/// Note that both of these issues also apply in the child process of a multithreaded program.
+#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
+#[cfg(feature = "alloc")]
+#[inline]
+pub unsafe fn execvp<P: AsPath>(path: P, argv: &crate::CStringVec) -> Error {
+    let res: Result<()> = path.with_cstr(|path| {
+        unsafe {
+            libc::execvp(path.as_ptr(), argv.as_ptr());
+        }
+        Err(Error::last())
+    });
+    res.unwrap_err()
+}
+
+/// Execute a program, replacing the current process.
+///
+/// This is a "combination" of [`execve()`] and [`execvpe()`] that does a `PATH` search AND allows
+/// specifying a new environment.
+///
+/// # Safety
+///
+/// See item (2) in [`execvp()`]'s [safety section](./fn.execvp.html#safety).
+#[cfg_attr(
+    docsrs,
+    doc(cfg(all(
+        feature = "alloc",
+        any(
+            target_os = "linux",
+            target_os = "android",
+            target_os = "netbsd",
+            target_os = "openbsd",
+        )
+    )))
+)]
+#[cfg(all(feature = "alloc", any(linuxlike, netbsdlike)))]
+#[inline]
+pub unsafe fn execvpe<P: AsPath>(
+    path: P,
+    argv: &crate::CStringVec,
+    envp: &crate::CStringVec,
+) -> Error {
+    let res: Result<()> = path.with_cstr(|path| {
+        unsafe {
+            sys::execvpe(path.as_ptr(), argv.as_ptr(), envp.as_ptr());
+        }
+        Err(Error::last())
+    });
+    res.unwrap_err()
+}
+
+/// Execute a program, replacing the current process.
+///
+/// This is equivalent to [`execvp()`], but it uses the `search_path` argument as the search path
+/// instead of looking at the `PATH` environmental variable.
+///
+/// # Safety
+///
+/// See item (1) in [`execvp()`]'s [safety section](./fn.execvp.html#safety).
+#[cfg_attr(
+    docsrs,
+    doc(cfg(all(
+        feature = "alloc",
+        any(
+            target_os = "freebsd",
+            target_os = "dragonfly",
+            target_os = "macos",
+            target_os = "ios",
+        )
+    )))
+)]
+#[cfg(all(feature = "alloc", any(freebsdlike, apple)))]
+#[inline]
+pub unsafe fn execvP<P: AsPath, S: AsPath>(
+    path: P,
+    search_path: S,
+    argv: &crate::CStringVec,
+) -> Error {
+    let res: Result<()> = path.with_cstr(|path| {
+        search_path.with_cstr(|search_path| {
+            unsafe {
+                sys::execvP(path.as_ptr(), search_path.as_ptr(), argv.as_ptr());
+            }
+            Err(Error::last())
+        })
+    });
+    res.unwrap_err()
+}
+
+/// Execute a program specified by a file descriptor.
+///
+/// This behaves the same as [`execve()`], except that the program is specified by a file
+/// descriptor `fd`.
+#[cfg_attr(
+    docsrs,
+    doc(cfg(all(
+        feature = "alloc",
+        any(
+            target_os = "linux",
+            target_os = "android",
+            target_os = "freebsd",
+            target_os = "dragonfly",
+        )
+    )))
+)]
+#[cfg(all(feature = "alloc", any(linuxlike, freebsdlike)))]
+#[inline]
+pub fn fexecve(fd: RawFd, argv: &crate::CStringVec, envp: &crate::CStringVec) -> Error {
+    unsafe {
+        sys::fexecve(fd, argv.as_ptr(), envp.as_ptr());
+    }
+    Error::last()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
