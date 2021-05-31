@@ -1,4 +1,4 @@
-#![allow(non_camel_case_types)]
+#![allow(non_camel_case_types, dead_code)]
 
 extern "C" {
     pub fn setreuid(ruid: libc::uid_t, euid: libc::uid_t) -> libc::c_int;
