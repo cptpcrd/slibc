@@ -1677,6 +1677,7 @@ pub unsafe fn execvpe<P: AsPath>(
     )))
 )]
 #[cfg(all(feature = "alloc", any(freebsdlike, apple)))]
+#[allow(non_snake_case)]
 #[inline]
 pub unsafe fn execvP<P: AsPath, S: AsPath>(
     path: P,
