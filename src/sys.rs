@@ -32,7 +32,7 @@ extern "C" {
     #[cfg(any(freebsdlike, apple))]
     pub fn execvP(
         file: *const libc::c_char,
-        search_path: *const *const libc::c_char,
+        search_path: *const libc::c_char,
         argv: *const *const libc::c_char,
     ) -> libc::c_int;
     #[cfg(any(linuxlike, netbsdlike))]
