@@ -390,7 +390,7 @@ mod tests {
     use super::*;
 
     #[cfg(feature = "std")]
-    use crate::{pipe, pipe_cloexec, waitpid, WaitFlags};
+    use crate::{pipe_cloexec, waitpid, WaitFlags};
     #[cfg(feature = "std")]
     use std::io::Read;
 
@@ -478,7 +478,7 @@ mod tests {
 
         // open("/"), then fchdir(), then close() it
         let mut factions = PosixSpawnFileActions::new().unwrap();
-        let (fdesc, _) = pipe().unwrap();
+        let (fdesc, _) = crate::pipe().unwrap();
         factions
             .addopen(fdesc.fd(), "/", OFlag::O_DIRECTORY | OFlag::O_RDONLY, 0)
             .unwrap();
