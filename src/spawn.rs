@@ -378,3 +378,198 @@ pub unsafe fn posix_spawnp<P: AsPath>(
         envp.map_or_else(core::ptr::null, |e| e.as_ptr()),
     )
 }
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[cfg(feature = "std")]
+    use crate::{pipe, pipe_cloexec, waitpid, WaitFlags};
+    #[cfg(feature = "std")]
+    use std::io::Read;
+
+    #[cfg(feature = "std")]
+    fn posix_spawn_simple<P: AsPath, S: AsPath, I: Iterator<Item = S>>(
+        prog: P,
+        factions: Option<PosixSpawnFileActions>,
+        attr: Option<&PosixSpawnAttr>,
+        argv: I,
+    ) -> Result<(libc::pid_t, FileDesc, FileDesc, FileDesc)> {
+        let mut factions = factions.unwrap_or_else(|| PosixSpawnFileActions::new().unwrap());
+
+        let (in_r, in_w) = pipe_cloexec().unwrap();
+        let (out_r, out_w) = pipe_cloexec().unwrap();
+        let (err_r, err_w) = pipe_cloexec().unwrap();
+        in_r.set_cloexec(false).unwrap();
+        out_w.set_cloexec(false).unwrap();
+        err_w.set_cloexec(false).unwrap();
+
+        factions.adddup2(in_r.fd(), 0).unwrap();
+        factions.adddup2(out_w.fd(), 1).unwrap();
+        factions.adddup2(err_w.fd(), 2).unwrap();
+        factions.addclose(in_r.fd()).unwrap();
+        factions.addclose(out_w.fd()).unwrap();
+        factions.addclose(err_w.fd()).unwrap();
+
+        let env = std::env::vars_os()
+            .map(|(mut key, val)| {
+                key.push("=");
+                key.push(val);
+                CString::new(key.into_vec()).unwrap()
+            })
+            .collect();
+
+        let pid = posix_spawn(
+            prog,
+            Some(&factions),
+            attr,
+            &argv
+                .into_iter()
+                .map(|s| CString::new(s.as_os_str().as_bytes()).unwrap())
+                .collect(),
+            Some(&env),
+        )?;
+
+        Ok((pid, in_w, out_r, err_r))
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn test_posix_spawn_basic() {
+        let (pid, stdin, mut stdout, _) =
+            posix_spawn_simple("/bin/sh", None, None, ["sh", "-c", "cat"].iter().copied()).unwrap();
+
+        stdin.write_all(b"abc").unwrap();
+        drop(stdin);
+        let mut buf = Vec::new();
+        stdout.read_to_end(&mut buf).unwrap();
+        assert_eq!(buf, b"abc");
+        drop(stdout);
+
+        waitpid(pid, WaitFlags::empty()).unwrap();
+    }
+
+    #[cfg(all(feature = "std", target_os = "linux"))]
+    #[test]
+    fn test_posix_spawn_chdir() {
+        // Add a chdir("/")
+        let mut factions = PosixSpawnFileActions::new().unwrap();
+        factions.addchdir_np("/").unwrap();
+        let (pid, _, mut stdout, _) = posix_spawn_simple(
+            "/bin/sh",
+            Some(factions),
+            None,
+            ["sh", "-c", "pwd"].iter().copied(),
+        )
+        .unwrap();
+
+        let mut buf = Vec::new();
+        stdout.read_to_end(&mut buf).unwrap();
+        assert_eq!(buf, b"/\n");
+        drop(stdout);
+
+        waitpid(pid, WaitFlags::empty()).unwrap();
+
+        // open("/"), then fchdir(), then close() it
+        let mut factions = PosixSpawnFileActions::new().unwrap();
+        let (fdesc, _) = pipe().unwrap();
+        factions
+            .addopen(fdesc.fd(), "/", OFlag::O_DIRECTORY | OFlag::O_RDONLY, 0)
+            .unwrap();
+        factions.addfchdir_np(fdesc.fd()).unwrap();
+        factions.addclose(fdesc.fd()).unwrap();
+
+        let (pid, _, mut stdout, _) = posix_spawn_simple(
+            "/bin/sh",
+            Some(factions),
+            None,
+            ["sh", "-c", "pwd"].iter().copied(),
+        )
+        .unwrap();
+
+        let mut buf = Vec::new();
+        stdout.read_to_end(&mut buf).unwrap();
+        assert_eq!(buf, b"/\n");
+        drop(stdout);
+
+        waitpid(pid, WaitFlags::empty()).unwrap();
+    }
+
+    #[test]
+    fn test_posix_spawnattr_modify() {
+        use crate::{sigset, Signal};
+
+        let mut attr = PosixSpawnAttr::new().unwrap();
+
+        assert_eq!(attr.getflags().unwrap(), PosixSpawnFlags::empty());
+        for &flags in [
+            PosixSpawnFlags::SETPGROUP,
+            PosixSpawnFlags::empty(),
+            PosixSpawnFlags::SETSIGDEF | PosixSpawnFlags::SETSIGMASK,
+        ]
+        .iter()
+        {
+            attr.setflags(flags).unwrap();
+            assert_eq!(attr.getflags().unwrap(), flags);
+        }
+
+        assert_eq!(attr.getpgroup().unwrap(), 0);
+        attr.setpgroup(123).unwrap();
+        assert_eq!(attr.getpgroup().unwrap(), 123);
+        attr.setpgroup(0).unwrap();
+        assert_eq!(attr.getpgroup().unwrap(), 0);
+
+        assert!(attr.getsigmask().unwrap().is_empty());
+        attr.setsigmask(&sigset!(Signal::SIGINT)).unwrap();
+        assert_eq!(attr.getsigmask().unwrap(), sigset!(Signal::SIGINT));
+        attr.setsigmask(&sigset!()).unwrap();
+        assert!(attr.getsigmask().unwrap().is_empty());
+
+        assert!(attr.getsigdefault().unwrap().is_empty());
+        attr.setsigdefault(&sigset!(Signal::SIGINT)).unwrap();
+        assert_eq!(attr.getsigdefault().unwrap(), sigset!(Signal::SIGINT));
+        attr.setsigdefault(&sigset!()).unwrap();
+        assert!(attr.getsigdefault().unwrap().is_empty());
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn test_posix_spawnattr_setpgroup() {
+        let (pid, _, _, _) =
+            posix_spawn_simple("/bin/sh", None, None, ["sh", "-c", ""].iter().copied()).unwrap();
+        assert_eq!(crate::getpgid(pid).unwrap(), crate::getpgrp());
+        assert_eq!(crate::getsid(pid).unwrap(), crate::getsid(0).unwrap());
+        waitpid(pid, WaitFlags::empty()).unwrap();
+
+        let mut attr = PosixSpawnAttr::new().unwrap();
+        attr.setflags(PosixSpawnFlags::SETPGROUP).unwrap();
+        let (pid, _, _, _) = posix_spawn_simple(
+            "/bin/sh",
+            None,
+            Some(&attr),
+            ["sh", "-c", ""].iter().copied(),
+        )
+        .unwrap();
+        assert_eq!(crate::getpgid(pid).unwrap(), pid);
+        assert_eq!(crate::getsid(pid).unwrap(), crate::getsid(0).unwrap());
+        waitpid(pid, WaitFlags::empty()).unwrap();
+    }
+
+    #[cfg(all(feature = "std", any(target_os = "linux", apple)))]
+    #[test]
+    fn test_posix_spawnattr_setsid() {
+        let mut attr = PosixSpawnAttr::new().unwrap();
+        attr.setflags(PosixSpawnFlags::SETSID).unwrap();
+        let (pid, _, _, _) = posix_spawn_simple(
+            "/bin/sh",
+            None,
+            Some(&attr),
+            ["sh", "-c", ""].iter().copied(),
+        )
+        .unwrap();
+        assert_eq!(crate::getpgid(pid).unwrap(), pid);
+        assert_eq!(crate::getsid(pid).unwrap(), pid);
+        waitpid(pid, WaitFlags::empty()).unwrap();
+    }
+}
