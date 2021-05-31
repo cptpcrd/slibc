@@ -541,10 +541,16 @@ mod tests {
     #[cfg(feature = "std")]
     #[test]
     fn test_posix_spawnattr_setpgroup() {
-        let (pid, _, _, _) =
-            posix_spawn_simple("/bin/sh", None, None, ["sh", "-c", ""].iter().copied()).unwrap();
+        let (pid, _, _, _) = posix_spawn_simple(
+            "/bin/sh",
+            None,
+            None,
+            ["sh", "-c", "sleep 10"].iter().copied(),
+        )
+        .unwrap();
         assert_eq!(crate::getpgid(pid).unwrap(), crate::getpgrp());
         assert_eq!(crate::getsid(pid).unwrap(), crate::getsid(0).unwrap());
+        crate::kill(pid, crate::Signal::SIGTERM).unwrap();
         waitpid(pid, WaitFlags::empty()).unwrap();
 
         let mut attr = PosixSpawnAttr::new().unwrap();
@@ -553,11 +559,12 @@ mod tests {
             "/bin/sh",
             None,
             Some(&attr),
-            ["sh", "-c", ""].iter().copied(),
+            ["sh", "-c", "sleep 10"].iter().copied(),
         )
         .unwrap();
         assert_eq!(crate::getpgid(pid).unwrap(), pid);
         assert_eq!(crate::getsid(pid).unwrap(), crate::getsid(0).unwrap());
+        crate::kill(pid, crate::Signal::SIGTERM).unwrap();
         waitpid(pid, WaitFlags::empty()).unwrap();
     }
 
