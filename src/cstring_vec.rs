@@ -127,6 +127,13 @@ impl CStringVec {
     }
 }
 
+impl Default for CStringVec {
+    #[inline]
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Clone for CStringVec {
     fn clone(&self) -> Self {
         Self(
