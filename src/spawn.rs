@@ -6,6 +6,7 @@ use crate::{OFlag, SigSet};
 ///
 /// Each method of this struct will add one action. Actions are performed in the order they are
 /// added.
+#[cfg_attr(docsrs, doc(cfg(not(target_os = "android"))))]
 #[derive(Debug)]
 pub struct PosixSpawnFileActions(sys::posix_spawn_file_actions_t);
 
@@ -107,6 +108,7 @@ bitflags::bitflags! {
     ///
     /// These flags a) modify attributes of the spawned process and b) change how the attributes in
     /// [`PosixSpawnAttr`] are applied.
+    #[cfg_attr(docsrs, doc(cfg(not(target_os = "android"))))]
     pub struct PosixSpawnFlags: libc::c_short {
         /// Set the effective UID/GID of the child to the real UID/GID of this process.
         const RESETIDS = sys::POSIX_SPAWN_RESETIDS as libc::c_short;
@@ -135,6 +137,7 @@ bitflags::bitflags! {
 
 /// A set of attributes for a child launched by
 /// [`posix_spawn_raw()`]/[`posix_spawnp_raw()`]/[`posix_spawn()`]/[`posix_spawnp()`].
+#[cfg_attr(docsrs, doc(cfg(not(target_os = "android"))))]
 #[derive(Debug)]
 pub struct PosixSpawnAttr(sys::posix_spawnattr_t);
 
@@ -259,6 +262,7 @@ impl AsRef<sys::posix_spawnattr_t> for PosixSpawnAttr {
 ///    C strings. See `execve(2)` for more details.
 /// 2. Passing NULL for `envp` is unsound in multi-threaded programs where other threads may be
 ///    concurrently modifying the environment. See rust-lang/rust#27970 for more information.
+#[cfg_attr(docsrs, doc(cfg(not(target_os = "android"))))]
 #[inline]
 pub unsafe fn posix_spawn_raw<P: AsPath>(
     prog: P,
@@ -294,6 +298,7 @@ pub unsafe fn posix_spawn_raw<P: AsPath>(
 ///
 /// 1. See [`posix_spawn_raw()`].
 /// 2. See [`posix_spawnp()`].
+#[cfg_attr(docsrs, doc(cfg(not(target_os = "android"))))]
 #[inline]
 pub unsafe fn posix_spawnp_raw<P: AsPath>(
     prog: P,
@@ -328,7 +333,7 @@ pub unsafe fn posix_spawnp_raw<P: AsPath>(
 /// Panics if `envp` is `None`. This would normally translate to passing NULL, which would preserve
 /// the current environment. However, it cannot currently be done safely. See item (1) in
 /// [`execvp()`](./fn.execvp.html)'s [safety section](./fn.execvp.html#safety).
-#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
+#[cfg_attr(docsrs, doc(cfg(all(feature = "alloc", not(target_os = "android")))))]
 #[cfg(feature = "alloc")]
 #[inline]
 pub fn posix_spawn<P: AsPath>(
@@ -360,7 +365,7 @@ pub fn posix_spawn<P: AsPath>(
 ///
 /// Also, if you pass `envp` as `None` (which translates to passing NULL, which preserves the
 /// current environment), see item (1).
-#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
+#[cfg_attr(docsrs, doc(cfg(all(feature = "alloc", not(target_os = "android")))))]
 #[cfg(feature = "alloc")]
 #[inline]
 pub unsafe fn posix_spawnp<P: AsPath>(

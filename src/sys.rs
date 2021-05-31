@@ -740,7 +740,12 @@ pub use libc::{CLOCK_PROF, CLOCK_VIRTUAL};
 #[cfg(netbsdlike)]
 pub use libc::CTL_MAXNAME;
 
-#[cfg(not(any(target_os = "openbsd", target_os = "netbsd", target_os = "dragonfly")))]
+#[cfg(not(any(
+    target_os = "android",
+    target_os = "openbsd",
+    target_os = "netbsd",
+    target_os = "dragonfly"
+)))]
 pub use libc::{
     posix_spawn, posix_spawn_file_actions_addclose, posix_spawn_file_actions_adddup2,
     posix_spawn_file_actions_addopen, posix_spawn_file_actions_destroy,

@@ -143,7 +143,6 @@ mod resource;
 mod sched;
 mod signal;
 mod socket;
-mod spawn;
 mod stat;
 mod stdio;
 mod stdlib;
@@ -169,7 +168,6 @@ pub use resource::*;
 pub use sched::*;
 pub use signal::*;
 pub use socket::*;
-pub use spawn::*;
 pub use stat::*;
 pub use stdio::*;
 pub use stdlib::*;
@@ -216,6 +214,13 @@ cfg_if::cfg_if! {
         mod statx;
         pub use pidfd::*;
         pub use statx::*;
+    }
+}
+
+cfg_if::cfg_if! {
+    if #[cfg(not(target_os = "android"))] {
+        mod spawn;
+        pub use spawn::*;
     }
 }
 
