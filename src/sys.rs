@@ -581,6 +581,7 @@ cfg_if::cfg_if! {
         extern "C" {
             pub fn swapon(path: *const libc::c_char) -> libc::c_int;
             pub fn swapoff(path: *const libc::c_char) -> libc::c_int;
+            pub fn getosreldate() -> libc::c_int;
         }
     }
 }

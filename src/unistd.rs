@@ -1720,6 +1720,13 @@ pub fn fexecve(fd: RawFd, argv: &crate::CStringVec, envp: &crate::CStringVec) ->
     Error::last()
 }
 
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "freebsd", target_os = "dragonfly"))))]
+#[cfg(freebsdlike)]
+#[inline]
+pub fn getosreldate() -> Result<i32> {
+    Error::unpack(unsafe { sys::getosreldate() })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
