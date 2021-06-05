@@ -64,26 +64,69 @@ impl PosixSpawnFileActions {
             sys::posix_spawn_file_actions_adddup2(&mut self.0, oldfd, newfd)
         })
     }
+}
+
+#[cfg(target_os = "linux")]
+static ADDCHDIR: util::DlFuncLoader<
+    unsafe extern "C" fn(*mut libc::posix_spawn_file_actions_t, *const libc::c_char) -> libc::c_int,
+> = unsafe { util::DlFuncLoader::new(b"posix_spawn_file_actions_addchdir_np\0") };
+
+#[cfg(target_os = "linux")]
+static ADDFCHDIR: util::DlFuncLoader<
+    unsafe extern "C" fn(*mut libc::posix_spawn_file_actions_t, libc::c_int) -> libc::c_int,
+> = unsafe { util::DlFuncLoader::new(b"posix_spawn_file_actions_addfchdir_np\0") };
+
+#[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
+#[cfg(target_os = "linux")]
+impl PosixSpawnFileActions {
+    /// Check whether [`Self::addchdir_np()`] is supported by the running libc.
+    ///
+    /// If this function returns `true`, [`Self::addchdir_np()`] will NOT fail with `ENOSYS`.
+    #[inline]
+    pub fn has_addchdir_np() -> bool {
+        ADDCHDIR.get().is_some()
+    }
+
+    /// Check whether [`Self::addfchdir_np()`] is supported by the running libc.
+    ///
+    /// If this function returns `true`, [`Self::addfchdir_np()`] will NOT fail with `ENOSYS`.
+    #[inline]
+    pub fn has_addfchdir_np() -> bool {
+        ADDFCHDIR.get().is_some()
+    }
 
     /// Add a a file action to change the child's working directory to a specified path.
-    #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
-    #[cfg(target_os = "linux")]
+    ///
+    /// This wrapper may fail with `EINVAL` if `path` contains an interior NUL byte, or with
+    /// `ENOSYS` if the current libc does not have the `posix_spawn_file_actions_addchdir_np()`
+    /// function.
     #[inline]
     pub fn addchdir_np<P: AsPath>(&mut self, path: P) -> Result<()> {
         path.with_cstr(|path| {
             Error::unpack_eno(unsafe {
-                sys::posix_spawn_file_actions_addchdir_np(&mut self.0, path.as_ptr())
+                if let Some(func) = ADDCHDIR.get() {
+                    func(&mut self.0, path.as_ptr())
+                } else {
+                    libc::ENOSYS
+                }
             })
         })
     }
 
     /// Add a a file action to change the child's working directory to the directory referred to by
     /// the given `fd`.
-    #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
-    #[cfg(target_os = "linux")]
+    ///
+    /// This wrapper may fail with `ENOSYS` if the current libc does not have the
+    /// `posix_spawn_file_actions_addfchdir_np()` function.
     #[inline]
     pub fn addfchdir_np(&mut self, fd: RawFd) -> Result<()> {
-        Error::unpack_eno(unsafe { sys::posix_spawn_file_actions_addfchdir_np(&mut self.0, fd) })
+        Error::unpack_eno(unsafe {
+            if let Some(func) = ADDFCHDIR.get() {
+                func(&mut self.0, fd)
+            } else {
+                libc::ENOSYS
+            }
+        })
     }
 }
 
@@ -458,6 +501,16 @@ mod tests {
     #[cfg(all(feature = "std", target_os = "linux"))]
     #[test]
     fn test_posix_spawn_chdir() {
+        if PosixSpawnFileActions::has_addchdir_np() {
+            assert!(PosixSpawnFileActions::has_addfchdir_np());
+        } else {
+            assert!(!PosixSpawnFileActions::has_addfchdir_np());
+            let mut factions = PosixSpawnFileActions::new().unwrap();
+            assert_eq!(factions.addchdir_np("/").unwrap_err(), Errno::ENOSYS);
+            assert_eq!(factions.addfchdir_np(-1).unwrap_err(), Errno::ENOSYS);
+            return;
+        }
+
         // Add a chdir("/")
         let mut factions = PosixSpawnFileActions::new().unwrap();
         factions.addchdir_np("/").unwrap();

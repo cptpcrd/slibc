@@ -64,15 +64,6 @@ cfg_if::cfg_if! {
             pub fn syncfs(fd: libc::c_int) -> libc::c_int;
 
             pub fn mlock2(addr: *const libc::c_void, len: libc::size_t, flags: libc::c_int) -> libc::c_int;
-
-            pub fn posix_spawn_file_actions_addchdir_np(
-                fa: *mut libc::posix_spawn_file_actions_t,
-                path: *const libc::c_char,
-            ) -> libc::c_int;
-            pub fn posix_spawn_file_actions_addfchdir_np(
-                fa: *mut libc::posix_spawn_file_actions_t,
-                fd: libc::c_int,
-            ) -> libc::c_int;
         }
 
         pub const MLOCK_ONFAULT: libc::c_int = 1;

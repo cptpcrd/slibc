@@ -1,6 +1,8 @@
 use crate::internal_prelude::*;
 
 use core::fmt;
+use core::marker::PhantomData;
+use core::sync::atomic::{AtomicUsize, Ordering};
 
 #[cfg(any(target_os = "linux", target_os = "dragonfly"))]
 pub use libc::__errno_location as errno_ptr;
@@ -170,6 +172,55 @@ macro_rules! parse_bytes_int_impl {
             }
         )*
     };
+}
+
+#[allow(dead_code)]
+pub struct DlFuncLoader<F> {
+    name: &'static [u8],
+    addr: AtomicUsize,
+    func: PhantomData<F>,
+}
+
+#[allow(dead_code)]
+impl<F> DlFuncLoader<F> {
+    #[inline]
+    pub const unsafe fn new(name: &'static [u8]) -> Self {
+        Self {
+            name,
+            addr: AtomicUsize::new(0),
+            func: PhantomData,
+        }
+    }
+
+    #[inline]
+    pub fn get(&self) -> Option<F> {
+        debug_assert_eq!(self.name.last(), Some(&0));
+        assert_eq!(core::mem::size_of::<F>(), core::mem::size_of::<usize>());
+
+        if cfg!(target_feature = "crt-static") {
+            // dlsym() won't work from statically linked executables... don't even try
+            // This may also let the compiler optimize more out
+            return None;
+        }
+
+        let addr = match self.addr.load(Ordering::SeqCst) {
+            0 => {
+                let addr =
+                    unsafe { libc::dlsym(libc::RTLD_DEFAULT, self.name.as_ptr() as *const _) }
+                        as *const u8;
+                if addr.is_null() {
+                    self.addr.store(usize::MAX, Ordering::SeqCst);
+                    return None;
+                }
+                self.addr.store(addr as usize, Ordering::SeqCst);
+                addr
+            }
+            usize::MAX => return None,
+            addr => addr as *const u8,
+        };
+
+        Some(unsafe { core::mem::transmute_copy(&addr) })
+    }
 }
 
 parse_bytes_int_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
