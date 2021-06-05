@@ -303,6 +303,15 @@ impl Statx {
     pub fn dev(&self) -> u64 {
         unsafe { libc::makedev(self.dev_major as _, self.dev_minor as _) as u64 }
     }
+
+    /// Check if two `Statx` objects refer to the same file.
+    ///
+    /// This returns `true` if the `dev_major`, `dev_minor`, and `ino` attributes of both objects
+    /// are the same. It only works properly if [`Self::mask`] contains [`StatxMask::INO`].
+    #[inline]
+    pub fn is_same(stx1: &Self, stx2: &Self) -> bool {
+        stx1.ino == stx2.ino && stx1.dev_major == stx2.dev_major && stx1.dev_minor == stx2.dev_minor
+    }
 }
 
 impl fmt::Debug for Statx {

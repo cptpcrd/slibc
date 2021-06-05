@@ -235,6 +235,14 @@ impl Stat {
 
         None
     }
+
+    /// Check if two `Stat` objects refer to the same file.
+    ///
+    /// This returns `true` if the `dev` and `ino` attributes of both objects are the same.
+    #[inline]
+    pub fn is_same(st1: &Self, st2: &Self) -> bool {
+        st1.ino() == st2.ino() && st1.dev() == st2.dev()
+    }
 }
 
 impl From<Stat> for libc::stat {
