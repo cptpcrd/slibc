@@ -23,8 +23,7 @@ pub unsafe fn openpty(winsize: Option<&crate::Winsize>) -> Result<(FileDesc, Fil
         core::ptr::null_mut(),
         winsize
             .as_mut()
-            .map(|w| w as *mut _ as *mut _)
-            .unwrap_or_else(core::ptr::null_mut),
+            .map_or_else(core::ptr::null_mut, |w| w as *mut _ as *mut _),
     ))?;
 
     Ok((FileDesc::new(master), FileDesc::new(slave)))
