@@ -50,24 +50,41 @@ pub fn ptsname_alloc(fd: RawFd) -> Result<CString> {
     Ok(unsafe { CString::from_vec_unchecked(buf) })
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(any(linuxlike, freebsdlike))]
 bitflags::bitflags! {
     /// Flags for [`getrandom()`].
-    #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
+    #[cfg_attr(
+        docsrs,
+        doc(cfg(any(
+            target_os = "linux",
+            target_os = "android",
+            target_os = "freebsd",
+            target_os = "dragonfly",
+        )))
+    )]
     #[derive(Default)]
     pub struct GrndFlags: libc::c_uint {
         /// Obtain the random data from the `random` source (i.e. `/dev/random`) instead of the
         /// `urandom` source (i.e. `/dev/urandom`) source.
+        ///
+        /// # On Linux/Android
         ///
         /// The `random` source is more limited in its available entropy, and it may not be able to
         /// fill the supplied buffer if not enough bytes are available.
         ///
         /// Note that this flag is ignored since Linux 5.6 (since `/dev/urandom` and `/dev/random`
         /// now use the same pool). See the notes in [`Self::INSECURE`].
-        const RANDOM = libc::GRND_RANDOM;
+        ///
+        /// # On FreeBSD/DragonFlyBSD
+        ///
+        /// This flag is ignored, since `/dev/random` and `/dev/urandom` use the same source on
+        /// FreeBSD and DragonFlyBSD.
+        const RANDOM = 0x2;
         /// Fail with `EAGAIN` isntead of blocking if insufficient entropy is available.
-        const NONBLOCK = libc::GRND_NONBLOCK;
+        const NONBLOCK = 0x1;
         /// If the random pool is not initialized, return non-cryptographic random bytes.
+        ///
+        /// # On Linux/Android
         ///
         /// Added in Linux 5.6 (will fail with `EINVAL` on older kernels). Cannot be specified
         /// along with [`Self::NONBLOCK`].
@@ -83,6 +100,11 @@ bitflags::bitflags! {
         ///   secure).
         /// - Specifying [`Self::NONBLOCK`] is equivalent to reading from `/dev/random`, except
         ///   that it will fail with `EAGAIN` if the pool is not fully initialized.
+        ///
+        /// # On FreeBSD/DragonFlyBSD
+        ///
+        /// This flag is treated as an alias for [`Self::NONBLOCK`], and is only present for API
+        /// compatibility with Linux.
         const INSECURE = 0x4;
     }
 }
@@ -98,19 +120,47 @@ bitflags::bitflags! {
 ///
 /// See [`GrndFlags`] for more information.
 ///
-/// This is only available on Linux 3.17 and newer.
-#[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
-#[cfg(target_os = "linux")]
+/// This is only available on Linux 3.17 and newer, on FreeBSD 12.0 and newer, or on DragonFlyBSD
+/// 5.7 and newer. It will fail with `ENOSYS` on older kernels. (On FreeBSD and DragonFlyBSD, it
+/// will also fail with `ENOSYS` in statically linked progams.)
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(
+        target_os = "linux",
+        target_os = "android",
+        target_os = "freebsd",
+        target_os = "dragonfly",
+    )))
+)]
+#[cfg(any(linuxlike, freebsdlike))]
 #[inline]
 pub fn getrandom(buf: &mut [u8], flags: GrndFlags) -> Result<usize> {
-    Error::unpack_size(unsafe {
+    #[cfg(linuxlike)]
+    let n = Error::unpack_size(unsafe {
         libc::syscall(
             libc::SYS_getrandom,
             buf.as_mut_ptr() as *mut libc::c_void,
             buf.len(),
             flags.bits(),
         ) as isize
-    })
+    })?;
+
+    #[cfg(freebsdlike)]
+    let n = {
+        static GETRANDOM: util::DlFuncLoader<
+            unsafe extern "C" fn(*mut libc::c_void, usize, libc::c_uint) -> isize,
+        > = unsafe { util::DlFuncLoader::new(b"getrandom\0") };
+
+        if let Some(func) = GETRANDOM.get() {
+            Error::unpack_size(unsafe {
+                func(buf.as_mut_ptr() as *mut _, buf.len(), flags.bits())
+            })?
+        } else {
+            return Err(Error::from_code(libc::ENOSYS));
+        }
+    };
+
+    Ok(n)
 }
 
 /// Get the absolute, canonicalized version of the given `path`.
@@ -286,9 +336,18 @@ mod tests {
     #[allow(unused)]
     use super::*;
 
-    #[cfg(target_os = "linux")]
+    #[cfg(any(linuxlike, freebsdlike))]
     #[test]
     fn test_getrandom() {
+        #[cfg(target_os = "freebsd")]
+        if crate::getosreldate().unwrap() < 1200061 {
+            assert_eq!(
+                getrandom(&mut [], GrndFlags::default()).unwrap_err(),
+                Errno::ENOSYS
+            );
+            return;
+        }
+
         let mut buf = [0; 256];
         assert_eq!(getrandom(&mut buf, GrndFlags::default()).unwrap(), 256);
     }
