@@ -386,8 +386,8 @@ pub mod rlimits {
     ///    the range of acceptable priority values.
     /// 2. An infinite resource limit will translate to -20.
     /// 3. Remember, lower priority values mean higher priority.
-    #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
-    #[cfg(target_os = "linux")]
+    #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
+    #[cfg(linuxlike)]
     #[inline]
     pub fn nice_rlimit_to_thresh(nice_rlim: Limit) -> libc::c_int {
         if nice_rlim == RLIM_INFINITY {
@@ -397,14 +397,14 @@ pub mod rlimits {
         }
     }
 
-    /// Convert a `NICE` resource limit value to the corresponding priority value.
+    /// Convert a priority limit to the corresponding `NICE` resource limit value.
     ///
     /// Notes:
-    /// 1. This function will only produce results in the range 1 to 20 (inclusive), since that is
+    /// 1. This function will only produce results in the range 1 to 40 (inclusive), since that is
     ///    the range of useful `NICE` resource limit values.
     /// 2. Remember, lower priority values mean higher priority.
-    #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
-    #[cfg(target_os = "linux")]
+    #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
+    #[cfg(linuxlike)]
     #[inline]
     pub fn nice_thresh_to_rlimit(nice_thresh: libc::c_int) -> Limit {
         (20 - nice_thresh.max(-20).min(19)) as Limit
@@ -542,7 +542,7 @@ mod tests {
         assert_eq!(compare_limits(0, RLIM_INFINITY), Ordering::Less);
     }
 
-    #[cfg(target_os = "linux")]
+    #[cfg(linuxlike)]
     #[test]
     fn test_nice_rlimit_thresh() {
         use rlimits::*;
