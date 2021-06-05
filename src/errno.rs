@@ -296,6 +296,29 @@ define_errno! {
 }
 
 impl Errno {
+    #[cfg(any(
+        target_os = "linux",
+        target_os = "android",
+        target_os = "freebsd",
+        target_os = "dragonfly",
+    ))]
+    pub const ENOTSUP: Self = Self::EOPNOTSUPP;
+
+    #[cfg(any(
+        target_os = "linux",
+        target_os = "android",
+        target_os = "macos",
+        target_os = "ios",
+        target_os = "freebsd",
+        target_os = "openbsd",
+        target_os = "netbsd",
+        target_os = "dragonfly",
+    ))]
+    pub const EWOULDBLOCK: Self = Self::EAGAIN;
+    #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
+    #[cfg(target_os = "linux")]
+    pub const EDEADLOCK: Self = Self::EDEADLK;
+
     /// Get the `Errno` value corresponding to the given error code.
     ///
     /// Note: All values that are not in this enum will be translated to `Errno::Unknown`.
@@ -540,6 +563,16 @@ mod tests {
         assert_ne!(Errno::EPERM, Error::from(Errno::EACCES));
         assert_ne!(Error::from(Errno::EACCES), Errno::EPERM);
         assert_ne!(Error::from_code(0), Errno::Unknown);
+    }
+
+    #[test]
+    fn test_errno_alias() {
+        // Make sure that these 2 (which are `const`s on most platforms) can be used in a `match`.
+        assert!(matches!(Errno::ENOTSUP, Errno::ENOTSUP));
+        assert!(matches!(Errno::EWOULDBLOCK, Errno::EWOULDBLOCK));
+        // Same here on Linux
+        #[cfg(target_os = "linux")]
+        assert!(matches!(Errno::EDEADLOCK, Errno::EDEADLOCK));
     }
 
     #[cfg(feature = "alloc")]
