@@ -163,6 +163,66 @@ pub fn getrandom(buf: &mut [u8], flags: GrndFlags) -> Result<usize> {
     Ok(n)
 }
 
+/// Fill a buffer (up to 256 bytes) with random data.
+///
+/// Upon a successful return, the entire buffer has been filled.
+///
+/// On OpenBSD, this will always succeed unless `buf.len() > 256`. (Note, however, that if the
+/// current process is `pledge()`d, the `stdio` promise must be specified to be able to call
+/// `getentropy()`).
+///
+/// On FreeBSD, this is supported since FreeBSD 12.0. On older versions of FreeBSD, this function
+/// will fail with `ENOSYS`.
+///
+/// On macOS, this is supported since macOS 10.2. On older versions of macOS, this function will
+/// fail with `ENOSYS`.
+///
+/// On Linux, this is supported since glibc 2.25 (or musl 1.1.20), and only if `getrandom(2)` is
+/// available (on Linux 3.17+). On older versions of glibc/musl, and on older kernels, this
+/// function will fail with `ENOSYS`.
+///
+/// On Android, this is supported since API 28, or Android 9. It will fail with `ENOSYS` on older
+/// versions.
+///
+/// On FreeBSD, macOS, and Linux/Android, this function will also fail with `ENOSYS` in statically
+/// linked programs.
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(
+        target_os = "linux",
+        target_os = "android",
+        target_os = "freebsd",
+        target_os = "openbsd",
+        target_os = "macos"
+    )))
+)]
+#[cfg(any(
+    linuxlike,
+    target_os = "freebsd",
+    target_os = "openbsd",
+    target_os = "macos",
+))]
+#[inline]
+pub fn getentropy(buf: &mut [u8]) -> Result<()> {
+    cfg_if::cfg_if! {
+        if #[cfg(target_os = "openbsd")] {
+            Error::unpack_nz(unsafe { libc::getentropy(buf.as_mut_ptr() as *mut _, buf.len()) })?;
+        } else {
+            static GETENTROPY: util::DlFuncLoader<
+                unsafe extern "C" fn(*mut libc::c_void, usize) -> libc::c_int,
+            > = unsafe { util::DlFuncLoader::new(b"getentropy\0") };
+
+            if let Some(func) = GETENTROPY.get() {
+                Error::unpack_nz(unsafe { func(buf.as_mut_ptr() as *mut _, buf.len()) })?;
+            } else {
+                return Err(Error::from_code(libc::ENOSYS));
+            }
+        }
+    }
+
+    Ok(())
+}
+
 /// Get the absolute, canonicalized version of the given `path`.
 ///
 /// This corresponds to `std::fs::canonicalize()` in the standard library.
@@ -350,6 +410,24 @@ mod tests {
 
         let mut buf = [0; 256];
         assert_eq!(getrandom(&mut buf, GrndFlags::default()).unwrap(), 256);
+    }
+
+    #[cfg(any(
+        linuxlike,
+        target_os = "freebsd",
+        target_os = "openbsd",
+        target_os = "macos",
+    ))]
+    #[test]
+    fn test_getentropy() {
+        #[cfg(target_os = "freebsd")]
+        if crate::getosreldate().unwrap() < 1200061 {
+            assert_eq!(getentropy(&mut []).unwrap_err(), Errno::ENOSYS);
+            return;
+        }
+
+        let mut buf = [0; 256];
+        getentropy(&mut buf).unwrap();
     }
 
     #[test]
