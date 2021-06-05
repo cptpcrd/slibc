@@ -99,7 +99,7 @@ impl PosixSpawnFileActions {
     ///
     /// This wrapper may fail with `EINVAL` if `path` contains an interior NUL byte, or with
     /// `ENOSYS` if the current libc does not have the `posix_spawn_file_actions_addchdir_np()`
-    /// function.
+    /// function. It will also fail with `ENOSYS` in statically linked programs.
     #[inline]
     pub fn addchdir_np<P: AsPath>(&mut self, path: P) -> Result<()> {
         path.with_cstr(|path| {
@@ -117,7 +117,8 @@ impl PosixSpawnFileActions {
     /// the given `fd`.
     ///
     /// This wrapper may fail with `ENOSYS` if the current libc does not have the
-    /// `posix_spawn_file_actions_addfchdir_np()` function.
+    /// `posix_spawn_file_actions_addfchdir_np()` function. It will also fail with `ENOSYS` in
+    /// statically linked programs.
     #[inline]
     pub fn addfchdir_np(&mut self, fd: RawFd) -> Result<()> {
         Error::unpack_eno(unsafe {
