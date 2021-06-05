@@ -117,9 +117,8 @@ pub fn getrandom(buf: &mut [u8], flags: GrndFlags) -> Result<usize> {
 ///
 /// This corresponds to `std::fs::canonicalize()` in the standard library.
 ///
-/// `buf` must be an array [`PATH_MAX`](../limits/constant.PATH_MAX.html) bytes long; the resolved
-/// path will be stored in there. To use a dynamically allocated buffer, see
-/// [`realpath_unchecked()`].
+/// `buf` must be an array [`PATH_MAX`](./constant.PATH_MAX.html) bytes long; the resolved path
+/// will be stored in there. To use a dynamically allocated buffer, see [`realpath_unchecked()`].
 #[inline]
 pub fn realpath<P: AsPath>(path: P, buf: &mut [u8; crate::PATH_MAX]) -> Result<&CStr> {
     // SAFETY: `buf` is guaranteed to be at least PATH_MAX bytes long
@@ -133,8 +132,8 @@ pub fn realpath<P: AsPath>(path: P, buf: &mut [u8; crate::PATH_MAX]) -> Result<&
 ///
 /// # Safety
 ///
-/// `buf` must be at least [`PATH_MAX`](../limits/constant.PATH_MAX.html) bytes long. (This is
-/// verified if debug assertions are enabled.)
+/// `buf` must be at least [`PATH_MAX`](./constant.PATH_MAX.html) bytes long. (This is verified if
+/// debug assertions are enabled.)
 #[inline]
 pub unsafe fn realpath_unchecked<P: AsPath>(path: P, buf: &mut [u8]) -> Result<&CStr> {
     debug_assert!(buf.len() >= crate::PATH_MAX);

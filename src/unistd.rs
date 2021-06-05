@@ -239,7 +239,7 @@ pub fn fchdir(fd: RawFd) -> Result<()> {
 
 /// Change this process's working directory to the directory specified by the given path.
 ///
-/// See [String/path handling](../index.html#stringpath-handling) at the crate root for more
+/// See [String/path handling](./index.html#stringpath-handling) at the crate root for more
 /// information regarding how string arguments are handled.
 #[inline]
 pub fn chdir<P: AsPath>(path: P) -> Result<()> {
@@ -248,7 +248,7 @@ pub fn chdir<P: AsPath>(path: P) -> Result<()> {
 
 /// Change this process's root directory to the directory specified by the given path.
 ///
-/// See [String/path handling](../index.html#stringpath-handling) at the crate root for more
+/// See [String/path handling](./index.html#stringpath-handling) at the crate root for more
 /// information regarding how string arguments are handled.
 ///
 /// # Use with `chdir()`
