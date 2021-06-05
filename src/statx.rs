@@ -203,9 +203,7 @@ pub struct Statx {
     pub gid: u32,
     /// The file's mode.
     ///
-    /// This embeds the file type and the access mode (see [`Statx::file_type()`] and
-    /// [`Statx::access_mode()`]). It also embeds several "flags" (see [`Statx::is_suid()`],
-    /// [`Statx::is_sgid()`], and [`Statx::is_sticky()`]).
+    /// This embeds the file type (see [`Statx::file_type()`]) and the access mode.
     pub mode: u16,
     __spare0: [u16; 1],
     /// The file's inode number.
@@ -258,15 +256,6 @@ impl Statx {
         crate::StatFileType {
             mask: (self.mode as u32) & (libc::S_IFMT as u32),
         }
-    }
-
-    /// Equivalent to [`Stat::access_mode()`](./struct.Stat.html#method.access_mode).
-    ///
-    /// Note that this is only valid if the access mode part of `self.mode` is initialized (i.e. if
-    /// `self.mask` contains [`StatxMask::MODE`]).
-    #[inline]
-    pub fn access_mode(&self) -> u32 {
-        (self.mode & 0o777) as u32
     }
 
     /// Check whether this file is set-user-ID.
@@ -440,7 +429,6 @@ mod tests {
         assert_eq!(st.mtime(), crate::TimeSpec::from(stx.mtime));
 
         assert_eq!(st.file_type(), stx.file_type());
-        assert_eq!(st.access_mode(), stx.access_mode());
         assert_eq!(st.is_suid(), stx.is_suid());
         assert_eq!(st.is_sgid(), stx.is_sgid());
         assert_eq!(st.is_sticky(), stx.is_sticky());
@@ -496,7 +484,6 @@ mod tests {
                     mnt_id,
                     @,
                     file_type,
-                    access_mode,
                     is_suid,
                     is_sgid,
                     is_sticky,

@@ -97,9 +97,7 @@ impl Stat {
 
     /// Get this file's mode.
     ///
-    /// This embeds the file type and the access mode (see [`Stat::file_type()`] and
-    /// [`Stat::access_mode()`]). It also embeds several "flags" (see [`Stat::is_suid()`],
-    /// [`Stat::is_sgid()`], and [`Stat::is_sticky()`]).
+    /// This embeds the file type (see [`Stat::file_type()`]) and the access mode.
     #[inline]
     pub fn mode(&self) -> u32 {
         self.0.st_mode as u32
@@ -134,14 +132,6 @@ impl Stat {
     #[inline]
     pub fn is_sticky(&self) -> bool {
         self.mode() & libc::S_ISVTX as u32 == libc::S_ISVTX as u32
-    }
-
-    /// Get the access mode associated with this `Stat` structure.
-    ///
-    /// This is the portion of [`Stat::mode()`] that does not embed the file type.
-    #[inline]
-    pub fn access_mode(&self) -> u32 {
-        self.mode() & 0o777
     }
 
     /// Get the number of hardlinks to this file.
@@ -435,7 +425,6 @@ mod tests {
                     is_suid,
                     is_sgid,
                     is_sticky,
-                    access_mode,
                     nlink,
                     uid,
                     gid,
@@ -500,13 +489,14 @@ mod tests {
 
         let tmpdir_a = tmpdir.path().join("a");
         mkdir(&tmpdir_a, 0o777).unwrap();
-        assert_eq!(stat(&tmpdir_a).unwrap().access_mode(), 0o700);
+        assert_eq!(stat(&tmpdir_a).unwrap().mode() & 0o777, 0o700);
 
         mkdirat(tmpdir_fd.fd(), "b", 0o777).unwrap();
         assert_eq!(
             fstatat(tmpdir_fd.fd(), "b", crate::AtFlag::empty())
                 .unwrap()
-                .access_mode(),
+                .mode()
+                & 0o777,
             0o700
         );
 
@@ -522,7 +512,8 @@ mod tests {
         assert_eq!(
             fstatat(tmpdir_fd.fd(), "c", crate::AtFlag::empty())
                 .unwrap()
-                .access_mode(),
+                .mode()
+                & 0o777,
             0o600
         );
 
