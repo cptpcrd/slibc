@@ -396,6 +396,7 @@ mod tests {
     #[allow(unused)]
     use super::*;
 
+    #[cfg(any(linuxlike, freebsdlike))]
     fn has_getrandom() -> bool {
         if cfg!(all(freebsdlike, target_feature = "crt-static")) {
             return false;
@@ -422,6 +423,12 @@ mod tests {
         assert_eq!(getrandom(&mut buf, GrndFlags::default()).unwrap(), 256);
     }
 
+    #[cfg(any(
+        linuxlike,
+        target_os = "freebsd",
+        target_os = "openbsd",
+        target_os = "macos",
+    ))]
     fn has_getentropy() -> bool {
         if cfg!(target_feature = "crt-static") {
             return false;
