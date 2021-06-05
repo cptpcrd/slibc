@@ -118,4 +118,3 @@ fn test_chdir_getcwd() {
             .as_bytes()
     );
 }
-
