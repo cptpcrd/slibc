@@ -396,11 +396,21 @@ mod tests {
     #[allow(unused)]
     use super::*;
 
+    fn has_getrandom() -> bool {
+        if cfg!(all(freebsdlike, target_feature = "crt-static")) {
+            return false;
+        }
+        #[cfg(target_os = "freebsd")]
+        if crate::getosreldate().unwrap() < 1200061 {
+            return false;
+        }
+        true
+    }
+
     #[cfg(any(linuxlike, freebsdlike))]
     #[test]
     fn test_getrandom() {
-        #[cfg(target_os = "freebsd")]
-        if crate::getosreldate().unwrap() < 1200061 {
+        if !has_getrandom() {
             assert_eq!(
                 getrandom(&mut [], GrndFlags::default()).unwrap_err(),
                 Errno::ENOSYS
@@ -412,6 +422,17 @@ mod tests {
         assert_eq!(getrandom(&mut buf, GrndFlags::default()).unwrap(), 256);
     }
 
+    fn has_getentropy() -> bool {
+        if cfg!(target_feature = "crt-static") {
+            return false;
+        }
+        #[cfg(target_os = "freebsd")]
+        if crate::getosreldate().unwrap() < 1200061 {
+            return false;
+        }
+        true
+    }
+
     #[cfg(any(
         linuxlike,
         target_os = "freebsd",
@@ -420,8 +441,7 @@ mod tests {
     ))]
     #[test]
     fn test_getentropy() {
-        #[cfg(target_os = "freebsd")]
-        if crate::getosreldate().unwrap() < 1200061 {
+        if !has_getentropy() {
             assert_eq!(getentropy(&mut []).unwrap_err(), Errno::ENOSYS);
             return;
         }
