@@ -722,7 +722,7 @@ pub unsafe fn _exit(status: libc::c_int) -> ! {
 /// [`fcntl_dupfd_cloexec()`]: ./fn.fcntl_dupfd_cloexec.html
 #[inline]
 pub fn dup(fd: RawFd) -> Result<FileDesc> {
-    unsafe { Ok(FileDesc::new(Error::unpack(libc::dup(fd))?)) }
+    unsafe { Error::unpack_fdesc(libc::dup(fd)) }
 }
 
 /// Duplicate the file descriptor `oldfd`, using the file descriptor specified by `newfd` instead
@@ -739,7 +739,7 @@ pub fn dup(fd: RawFd) -> Result<FileDesc> {
 /// otherwise they may attempt to perform operations on it or close it.
 #[inline]
 pub unsafe fn dup2(oldfd: RawFd, newfd: RawFd) -> Result<FileDesc> {
-    Ok(FileDesc::new(Error::unpack(libc::dup2(oldfd, newfd))?))
+    Error::unpack_fdesc(libc::dup2(oldfd, newfd))
 }
 
 /// A variant of [`dup2()`] with a `flags` argument.
@@ -774,11 +774,7 @@ pub unsafe fn dup2(oldfd: RawFd, newfd: RawFd) -> Result<FileDesc> {
 ))]
 #[inline]
 pub unsafe fn dup3(oldfd: RawFd, newfd: RawFd, flags: OFlag) -> Result<FileDesc> {
-    Ok(FileDesc::new(Error::unpack(sys::dup3(
-        oldfd,
-        newfd,
-        flags.bits(),
-    ))?))
+    Error::unpack_fdesc(sys::dup3(oldfd, newfd, flags.bits()))
 }
 
 /// Emulates `dup3(oldfd, newfd, O_CLOEXEC)`.

@@ -74,9 +74,7 @@ impl EpollEvent {
 /// Create a new epoll instance and return a file descriptor referring to it.
 #[inline]
 pub fn epoll_create1(flags: EpollFlags) -> Result<FileDesc> {
-    let fd = Error::unpack(unsafe { libc::epoll_create1(flags.bits()) })?;
-
-    Ok(unsafe { FileDesc::new(fd) })
+    unsafe { Error::unpack_fdesc(libc::epoll_create1(flags.bits())) }
 }
 
 /// Add, modify, or delete an entry in the interest list of the epoll instance referred to by

@@ -183,8 +183,7 @@ impl fmt::Debug for InotifyEvent<'_> {
 /// Create a new inotify file descriptor with the specified flags.
 #[inline]
 pub fn inotify_init1(flags: InotifyFlags) -> Result<FileDesc> {
-    Error::unpack(unsafe { libc::inotify_init1(flags.bits()) })
-        .map(|fd| unsafe { FileDesc::new(fd) })
+    unsafe { Error::unpack_fdesc(libc::inotify_init1(flags.bits())) }
 }
 
 /// Add a watch for the file specified by `path`, according to the flags in `mask`, to the inotify

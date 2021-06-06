@@ -175,15 +175,14 @@ pub const AT_FDCWD: RawFd = libc::AT_FDCWD;
 #[inline]
 pub fn open<P: AsPath>(path: P, flags: OFlag, mode: u32) -> Result<FileDesc> {
     path.with_cstr(|path| unsafe {
-        Error::unpack(libc::open(path.as_ptr(), flags.bits(), mode)).map(|fd| FileDesc::new(fd))
+        Error::unpack_fdesc(libc::open(path.as_ptr(), flags.bits(), mode))
     })
 }
 
 #[inline]
 pub fn openat<P: AsPath>(dirfd: RawFd, path: P, flags: OFlag, mode: u32) -> Result<FileDesc> {
     path.with_cstr(|path| unsafe {
-        Error::unpack(libc::openat(dirfd, path.as_ptr(), flags.bits(), mode))
-            .map(|fd| FileDesc::new(fd))
+        Error::unpack_fdesc(libc::openat(dirfd, path.as_ptr(), flags.bits(), mode))
     })
 }
 
