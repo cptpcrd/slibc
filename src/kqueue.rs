@@ -5,8 +5,12 @@ use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd};
 
 /// Create a new kqueue instance.
 ///
-/// The returned kqueue file descriptor does NOT have its close-on-exec flag set, but it will not be
-/// inherited by children of a `fork()`.
+/// This is a simple wrapper that calls `kqueue(2)` and handles errors.
+///
+/// The returned kqueue file descriptor will not be inherited by children of a `fork()`.
+///
+/// On macOS, the kqueue file descriptor will also have its close-on-exec flag set. On the BSDs, it
+/// will NOT have its close-on-exec flag set. See [`kqueue_cloexec()`] (and `kqueue1()` on NetBSD).
 #[inline]
 pub fn kqueue() -> Result<FileDesc> {
     unsafe { Error::unpack_fdesc(libc::kqueue()) }
@@ -25,19 +29,22 @@ pub fn kqueue1(flags: crate::OFlag) -> Result<FileDesc> {
 
 /// Create a new kqueue instance with its close-on-exec flag set.
 ///
-/// On NetBSD, this calls `kqueue1(O_CLOEXEC)`. On other platforms, it calls [`kqueue()`] and sets
-/// the close-on-exec flag on the returned kqueue instance (which does NOT create a race condition
+/// On NetBSD, this calls `kqueue1(O_CLOEXEC)`. On macOS, it simply calls [`kqueue()`] (since that
+/// sets the close-on-exec flag by default). On other platforms, it calls [`kqueue()`] and sets the
+/// close-on-exec flag on the returned kqueue instance (which does NOT create a race condition
 /// because the kqueue instance is not inherited by `fork()`ed children).
 #[inline]
 pub fn kqueue_cloexec() -> Result<FileDesc> {
-    #[cfg(target_os = "netbsd")]
-    return kqueue1(crate::OFlag::O_CLOEXEC);
-
-    #[cfg(not(target_os = "netbsd"))]
-    {
-        let kq = kqueue()?;
-        kq.set_cloexec(true)?;
-        return Ok(kq);
+    cfg_if::cfg_if! {
+        if #[cfg(target_os = "netbsd")] {
+            return kqueue1(crate::OFlag::O_CLOEXEC);
+        } else if #[cfg(apple)] {
+            return kqueue();
+        } else {
+            let kq = kqueue()?;
+            kq.set_cloexec(true)?;
+            return Ok(kq);
+        }
     }
 }
 
@@ -168,7 +175,9 @@ mod tests {
 
     #[test]
     fn test_cloexec_flag() {
+        #[cfg(not(apple))]
         assert!(!Kqueue::new().unwrap().as_ref().get_cloexec().unwrap());
+
         assert!(Kqueue::new_cloexec()
             .unwrap()
             .as_ref()
