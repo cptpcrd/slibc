@@ -119,6 +119,10 @@ define_oflag! {
     #[cfg(target_os = "freebsd")]
     O_TTY_INIT,
 
+    // NetBSD-specific
+    #[cfg(target_os = "netbsd")]
+    O_NOSIGPIPE,
+
     // O_SEARCH and O_EXEC are defined on some systems
 
     #[cfg(any(all(target_os = "linux", target_env = "musl"), target_os = "freebsd"))]
