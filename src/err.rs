@@ -58,6 +58,11 @@ impl Error {
         NonNull::new(ptr).ok_or_else(Self::last)
     }
 
+    /// If `res` is -1, return the last OS error. Otherwise return `FileDesc::new(res)`.
+    ///
+    /// # Safety
+    ///
+    /// See [`FileDesc::new()`](./struct.FileDesc.html#method.new).
     #[inline]
     pub(crate) unsafe fn unpack_fdesc(res: i32) -> Result<FileDesc> {
         Self::unpack(res).map(|fd| FileDesc::new(fd))
