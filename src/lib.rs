@@ -242,7 +242,9 @@ cfg_if::cfg_if! {
         target_os = "macos",
         target_os = "ios",
     ))] {
+        mod kqueue;
         mod sysctl;
+        pub use kqueue::*;
         pub use sysctl::*;
     }
 }
