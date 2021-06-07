@@ -11,6 +11,17 @@ use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd};
 ///
 /// On macOS, the kqueue file descriptor will also have its close-on-exec flag set. On the BSDs, it
 /// will NOT have its close-on-exec flag set. See [`kqueue_cloexec()`] (and `kqueue1()` on NetBSD).
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(
+        target_os = "freebsd",
+        target_os = "dragonfly",
+        target_os = "openbsd",
+        target_os = "netbsd",
+        target_os = "macos",
+        target_os = "ios",
+    )))
+)]
 #[inline]
 pub fn kqueue() -> Result<FileDesc> {
     unsafe { Error::unpack_fdesc(libc::kqueue()) }
@@ -33,6 +44,17 @@ pub fn kqueue1(flags: crate::OFlag) -> Result<FileDesc> {
 /// sets the close-on-exec flag by default). On other platforms, it calls [`kqueue()`] and sets the
 /// close-on-exec flag on the returned kqueue instance (which does NOT create a race condition
 /// because the kqueue instance is not inherited by `fork()`ed children).
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(
+        target_os = "freebsd",
+        target_os = "dragonfly",
+        target_os = "openbsd",
+        target_os = "netbsd",
+        target_os = "macos",
+        target_os = "ios",
+    )))
+)]
 #[inline]
 pub fn kqueue_cloexec() -> Result<FileDesc> {
     cfg_if::cfg_if! {
@@ -52,6 +74,17 @@ pub fn kqueue_cloexec() -> Result<FileDesc> {
 ///
 /// This is a low-level wrapper around `kevent(2)`. No higher-level APIs are currently available
 /// because kqueue is very complex.
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(
+        target_os = "freebsd",
+        target_os = "dragonfly",
+        target_os = "openbsd",
+        target_os = "netbsd",
+        target_os = "macos",
+        target_os = "ios",
+    )))
+)]
 #[inline]
 pub fn kevent_raw(
     kq: RawFd,
@@ -81,6 +114,17 @@ pub fn kevent_raw(
 }
 
 /// A wrapper around a kqueue instance.
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(
+        target_os = "freebsd",
+        target_os = "dragonfly",
+        target_os = "openbsd",
+        target_os = "netbsd",
+        target_os = "macos",
+        target_os = "ios",
+    )))
+)]
 #[derive(Debug)]
 pub struct Kqueue(FileDesc);
 
