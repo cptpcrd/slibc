@@ -24,6 +24,7 @@ pub fn memchr(s: &[u8], c: u8) -> Option<usize> {
     docsrs,
     doc(cfg(any(
         target_os = "linux",
+        target_os = "android",
         target_os = "openbsd",
         target_os = "netbsd",
         target_os = "freebsd",
@@ -32,6 +33,7 @@ pub fn memchr(s: &[u8], c: u8) -> Option<usize> {
 )]
 #[cfg(any(
     target_os = "linux",
+    target_os = "android",
     target_os = "openbsd",
     target_os = "netbsd",
     target_os = "freebsd",
@@ -105,6 +107,7 @@ mod tests {
 
     #[cfg(any(
         target_os = "linux",
+        target_os = "android",
         target_os = "openbsd",
         target_os = "netbsd",
         target_os = "freebsd",
