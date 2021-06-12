@@ -84,7 +84,7 @@ pub fn poll(fds: &mut [PollFd], timeout: libc::c_int) -> Result<usize> {
 #[inline]
 pub fn ppoll(
     fds: &mut [PollFd],
-    timeout: Option<crate::TimeSpec>,
+    timeout: Option<&crate::TimeSpec>,
     sigmask: Option<&crate::SigSet>,
 ) -> Result<usize> {
     if fds.len() > libc::nfds_t::MAX as usize {
@@ -175,7 +175,7 @@ mod tests {
         assert_eq!(
             ppoll(
                 &mut fds,
-                Some(crate::TimeSpec {
+                Some(&crate::TimeSpec {
                     tv_sec: 0,
                     tv_nsec: 0
                 }),
@@ -190,7 +190,7 @@ mod tests {
         assert_eq!(
             ppoll(
                 &mut fds,
-                Some(crate::TimeSpec {
+                Some(&crate::TimeSpec {
                     tv_sec: 0,
                     tv_nsec: 0
                 }),
@@ -207,7 +207,7 @@ mod tests {
         assert_eq!(
             ppoll(
                 &mut fds,
-                Some(crate::TimeSpec {
+                Some(&crate::TimeSpec {
                     tv_sec: 0,
                     tv_nsec: 0
                 }),

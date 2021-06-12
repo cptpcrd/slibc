@@ -950,7 +950,7 @@ pub fn sigwaitinfo(set: &SigSet) -> Result<(Signal, SigInfo)> {
 )]
 #[cfg(not(any(apple, target_os = "openbsd")))]
 #[inline]
-pub fn sigtimedwait(set: &SigSet, timeout: Option<crate::TimeSpec>) -> Result<(Signal, SigInfo)> {
+pub fn sigtimedwait(set: &SigSet, timeout: Option<&crate::TimeSpec>) -> Result<(Signal, SigInfo)> {
     unsafe {
         let mut info = core::mem::zeroed();
 

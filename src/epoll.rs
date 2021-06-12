@@ -152,7 +152,7 @@ pub fn epoll_pwait(
 pub fn epoll_pwait2(
     epfd: RawFd,
     events: &mut [EpollEvent],
-    timeout: Option<crate::TimeSpec>,
+    timeout: Option<&crate::TimeSpec>,
     sigmask: Option<&crate::SigSet>,
 ) -> Result<usize> {
     let n = Error::unpack(unsafe {
@@ -242,7 +242,7 @@ impl Epoll {
     pub fn pwait2(
         &self,
         events: &mut [EpollEvent],
-        timeout: Option<crate::TimeSpec>,
+        timeout: Option<&crate::TimeSpec>,
         sigmask: Option<&crate::SigSet>,
     ) -> Result<usize> {
         epoll_pwait2(self.0.fd(), events, timeout, sigmask)
@@ -375,7 +375,10 @@ mod tests {
                     tv_sec: 0,
                     tv_nsec: 0,
                 };
-                assert_eq!(poller.pwait2(&mut events, Some(timeout0), None).unwrap(), 1);
+                assert_eq!(
+                    poller.pwait2(&mut events, Some(&timeout0), None).unwrap(),
+                    1
+                );
                 assert_eq!(events[0].data(), r2.fd() as u64);
                 assert_eq!(events[0].events(), EpollEvents::IN);
 
