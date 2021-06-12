@@ -580,7 +580,7 @@ mod tests {
     fn test_statx_layout() {
         // Get random data
         let mut buf = [0u8; core::mem::size_of::<libc::statx>()];
-        getrandom::getrandom(&mut buf).unwrap();
+        crate::getrandom(&mut buf, crate::GrndFlags::empty()).unwrap();
 
         let stx1: libc::statx = unsafe { core::mem::transmute(buf) };
         let stx2: Statx = unsafe { core::mem::transmute(buf) };
