@@ -280,6 +280,11 @@ mod tests {
             tv_usec: 0,
         };
 
+        let timeout_short = crate::Timeval {
+            tv_sec: 0,
+            tv_usec: 1000,
+        };
+
         // Nothing to start
         load_sets!();
         assert_eq!(
@@ -303,7 +308,7 @@ mod tests {
                 Some(&mut readfds),
                 Some(&mut writefds),
                 Some(&mut errfds),
-                Some(&timeout_0)
+                Some(&timeout_short)
             )
             .unwrap(),
             1
@@ -319,7 +324,7 @@ mod tests {
                 Some(&mut readfds),
                 Some(&mut writefds),
                 Some(&mut errfds),
-                Some(&timeout_0)
+                Some(&timeout_short)
             )
             .unwrap(),
             2

@@ -192,7 +192,7 @@ mod tests {
                 &mut fds,
                 Some(&crate::TimeSpec {
                     tv_sec: 0,
-                    tv_nsec: 0
+                    tv_nsec: 1_000_000,
                 }),
                 None
             )
@@ -209,7 +209,7 @@ mod tests {
                 &mut fds,
                 Some(&crate::TimeSpec {
                     tv_sec: 0,
-                    tv_nsec: 0
+                    tv_nsec: 1_000_000,
                 }),
                 None
             )

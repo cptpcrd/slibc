@@ -344,13 +344,13 @@ mod tests {
 
         // Now we write some data and test again
         w1.write_all(b"a").unwrap();
-        assert_eq!(poller.wait(&mut events, 0).unwrap(), 1);
+        assert_eq!(poller.wait(&mut events, 1).unwrap(), 1);
         assert_eq!(events[0].data(), r1.fd() as u64);
         assert_eq!(events[0].events(), EpollEvents::IN);
 
         // Now make sure reading two files works
         w2.write_all(b"a").unwrap();
-        assert_eq!(poller.wait(&mut events, 0).unwrap(), 2);
+        assert_eq!(poller.wait(&mut events, 1).unwrap(), 2);
         assert_eq!(events[0].data(), r1.fd() as u64);
         assert_eq!(events[0].events(), EpollEvents::IN);
         assert_eq!(events[1].data(), r2.fd() as u64);
@@ -358,7 +358,7 @@ mod tests {
 
         // Now remove one of the files
         poller.del(r1.fd()).unwrap();
-        assert_eq!(poller.wait(&mut events, 0).unwrap(), 1);
+        assert_eq!(poller.wait(&mut events, 1).unwrap(), 1);
         assert_eq!(events[0].data(), r2.fd() as u64);
         assert_eq!(events[0].events(), EpollEvents::IN);
 
@@ -393,6 +393,6 @@ mod tests {
         poller
             .modify(r2.fd(), EpollEvents::OUT, r2.fd() as u64)
             .unwrap();
-        assert_eq!(poller.wait(&mut events, 0).unwrap(), 0);
+        assert_eq!(poller.wait(&mut events, 1).unwrap(), 0);
     }
 }
