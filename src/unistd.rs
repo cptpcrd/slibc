@@ -748,7 +748,8 @@ pub unsafe fn dup2(oldfd: RawFd, newfd: RawFd) -> Result<FileDesc> {
 /// 1. If `oldfd == newfd`, this will fail with EINVAL (except on NetBSD, where it becomes a
 ///    no-op).
 /// 2. If `O_CLOEXEC` is specified in `flags`, the close-on-exec flag will be set for the new
-///    file descriptor.
+///    file descriptor. (NetBSD also allows specifying `O_NONBLOCK` and `O_NOSIGPIPE` to set the
+///    corresponding flags.)
 ///
 /// # Safety
 ///
@@ -845,6 +846,8 @@ pub fn pipe() -> Result<(FileDesc, FileDesc)> {
 /// - `O_CLOEXEC`: Atomically set the close-on-exec flag on both new file descriptors.
 /// - `O_NONBLOCK`: Atomically set the non-blocking flag on both new file descriptors.
 /// - `O_DIRECT` (Linux 3.4+): Create a pipe in "packet" mode; see `pipe2(2)` for more information.
+/// - `O_NOSIGPIPE` (NetBSD): Fail with `EPIPE` instead of raising `SIGPIPE` when writing to a
+///   broken pipe.
 #[cfg_attr(
     docsrs,
     doc(cfg(any(
