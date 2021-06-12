@@ -174,7 +174,7 @@ pub fn getrandom(buf: &mut [u8], flags: GrndFlags) -> Result<usize> {
 /// On FreeBSD, this is supported since FreeBSD 12.0. On older versions of FreeBSD, this function
 /// will fail with `ENOSYS`.
 ///
-/// On macOS, this is supported since macOS 10.2. On older versions of macOS, this function will
+/// On macOS, this is supported since macOS 10.12. On older versions of macOS, this function will
 /// fail with `ENOSYS`.
 ///
 /// On Linux, this is supported since glibc 2.25 (or musl 1.1.20), and only if `getrandom(2)` is
