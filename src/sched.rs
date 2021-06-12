@@ -46,29 +46,41 @@ impl CpuSet {
     }
 
     /// Add a CPU to this set.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `cpu` is too large to be added to a CPU set.
     #[inline]
     pub fn add(&mut self, cpu: u32) {
+        if !Self::can_contain(cpu) {
+            panic!("CPU cannot fit in a CpuSet");
+        }
+
         unsafe {
             libc::CPU_SET(cpu as usize, &mut self.0);
         }
     }
 
-    /// Remove a CPU from this set.
+    /// Remove a CPU from this set if it is present.
     #[inline]
     pub fn remove(&mut self, cpu: u32) {
-        unsafe {
-            libc::CPU_CLR(cpu as usize, &mut self.0);
+        if Self::can_contain(cpu) {
+            unsafe {
+                libc::CPU_CLR(cpu as usize, &mut self.0);
+            }
         }
     }
 
     /// Return whether this set contains the specified CPU.
     #[inline]
     pub fn contains(&self, cpu: u32) -> bool {
-        if cpu >= core::mem::size_of::<libc::cpu_set_t>() as u32 * 8 {
-            return false;
-        }
+        Self::can_contain(cpu) && unsafe { libc::CPU_ISSET(cpu as usize, &self.0) }
+    }
 
-        unsafe { libc::CPU_ISSET(cpu as usize, &self.0) }
+    /// Check whether the given CPU can fit in a CPU set.
+    #[inline]
+    pub fn can_contain(cpu: u32) -> bool {
+        cpu < core::mem::size_of::<libc::cpu_set_t>() as u32 * 8
     }
 
     /// Return an iterator over this CPU set.
@@ -309,6 +321,12 @@ mod tests {
         check_empty(&set);
         set = [0, 1, 10].iter().cloned().collect::<CpuSet>();
         check_values(&set, &[0, 1, 10]);
+
+        // We can remove() CPUs that aren't present
+        set = CpuSet::new();
+        for cpu in 0..(core::mem::size_of::<CpuSet>() as u32 * 16) {
+            set.remove(cpu);
+        }
     }
 
     #[cfg(all(target_os = "linux", feature = "alloc"))]
