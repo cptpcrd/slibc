@@ -124,4 +124,17 @@ mod tests {
         ioctl_fionclex(r.fd()).unwrap();
         assert!(!r.get_cloexec().unwrap());
     }
+
+    #[test]
+    fn test_fionbio() {
+        let (r, _) = crate::pipe().unwrap();
+
+        assert!(!r.get_nonblocking().unwrap());
+
+        ioctl_fionbio(r.fd(), true).unwrap();
+        assert!(r.get_nonblocking().unwrap());
+
+        ioctl_fionbio(r.fd(), false).unwrap();
+        assert!(!r.get_nonblocking().unwrap());
+    }
 }
