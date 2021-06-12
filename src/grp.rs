@@ -201,6 +201,7 @@ impl fmt::Debug for Group {
 ///
 /// This is created by [`Group::members()`]. It yields `OsStr`s representing the name of each user
 /// that is a member of the group.
+#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 #[derive(Clone)]
 pub struct GroupMemberIter<'a> {
     mem_ptr: *mut *mut libc::c_char,
