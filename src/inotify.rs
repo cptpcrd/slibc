@@ -12,10 +12,12 @@ const EVENT_SIZE: usize = core::mem::size_of::<libc::inotify_event>();
 ///
 /// It may be desirable to use a buffer of size e.g. `INOTIFY_MIN_BUFSIZE * 8` or larger to read as
 /// many events as possible.
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
 pub const INOTIFY_MIN_BUFSIZE: usize = EVENT_SIZE + crate::NAME_MAX + 1;
 
 bitflags::bitflags! {
     /// Flags to [`inotify_init1()`] or [`Inotify::new()`].
+    #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
     pub struct InotifyFlags: libc::c_int {
         /// Set the `O_NONBLOCK` flag on the returned inotify file descriptor.
         const NONBLOCK = libc::IN_NONBLOCK;
@@ -31,6 +33,7 @@ bitflags::bitflags! {
     /// in the events yielded by an [`InotifyEventIter`].
     ///
     /// See `inotify(7)` for more information.
+    #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
     pub struct InotifyMask: u32 {
         /// The watched file (or a file in the watched directory) was accessed.
         const ACCESS = libc::IN_ACCESS;
@@ -111,6 +114,7 @@ bitflags::bitflags! {
     }
 }
 
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
 #[derive(Clone)]
 pub struct InotifyEvent<'a> {
     event: &'a libc::inotify_event,
@@ -181,6 +185,7 @@ impl fmt::Debug for InotifyEvent<'_> {
 }
 
 /// Create a new inotify file descriptor with the specified flags.
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
 #[inline]
 pub fn inotify_init1(flags: InotifyFlags) -> Result<FileDesc> {
     unsafe { Error::unpack_fdesc(libc::inotify_init1(flags.bits())) }
@@ -190,6 +195,7 @@ pub fn inotify_init1(flags: InotifyFlags) -> Result<FileDesc> {
 /// instance specified by `fd`.
 ///
 /// On success, a watch descriptor is returned.
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
 #[inline]
 pub fn inotify_add_watch<P: AsPath>(fd: RawFd, path: P, mask: InotifyMask) -> Result<i32> {
     path.with_cstr(|path| {
@@ -198,6 +204,7 @@ pub fn inotify_add_watch<P: AsPath>(fd: RawFd, path: P, mask: InotifyMask) -> Re
 }
 
 /// Remove the watch specified by the given watch descriptor.
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
 #[inline]
 pub fn inotify_rm_watch(fd: RawFd, wd: i32) -> Result<()> {
     Error::unpack_nz(unsafe { libc::inotify_rm_watch(fd, wd as _) })
@@ -206,6 +213,7 @@ pub fn inotify_rm_watch(fd: RawFd, wd: i32) -> Result<()> {
 /// An iterator over events that were `read()` from an inotify file descriptor.
 ///
 /// The easiest way to obtain one of these iterators is by calling [`Inotify::read_events()`].
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
 #[derive(Clone)]
 pub struct InotifyEventIter<'a> {
     buf: &'a [u8],
@@ -278,6 +286,7 @@ impl fmt::Debug for InotifyEventIter<'_> {
 }
 
 /// A wrapper around an inotify file descriptor.
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
 #[derive(Debug)]
 pub struct Inotify(FileDesc);
 

@@ -128,6 +128,7 @@ pub fn timerfd_gettime(fd: RawFd) -> Result<(Option<TimeSpec>, Option<TimeSpec>)
 }
 
 /// A wrapper around an timer file descriptor.
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
 #[derive(Debug)]
 pub struct TimerFd(FileDesc);
 

@@ -7,6 +7,7 @@ use crate::internal_prelude::*;
 
 bitflags::bitflags! {
     /// Flags for [`epoll_create1()`] or [`Epoll::new()`].
+    #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
     pub struct EpollFlags: libc::c_int {
         /// Set the close-on-exec flag on the new file descriptor.
         const CLOEXEC = libc::EPOLL_CLOEXEC;
@@ -14,6 +15,7 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
     pub struct EpollEvents: u32 {
         const IN = libc::EPOLLIN as u32;
         const OUT = libc::EPOLLOUT as u32;
@@ -29,6 +31,7 @@ bitflags::bitflags! {
 }
 
 /// An operation to be performed by [`epoll_ctl()`] or [`Epoll::ctl()`].
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 #[repr(i32)]
 #[allow(clippy::upper_case_acronyms)]
@@ -43,6 +46,7 @@ pub enum EpollCtlOp {
 /// See [`epoll_wait()`].
 ///
 /// This structure is guaranteed to be ABI-compatible with `libc::epoll_event`.
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
 #[derive(Copy, Clone, Debug)]
 #[repr(transparent)]
 pub struct EpollEvent(libc::epoll_event);
@@ -72,6 +76,7 @@ impl EpollEvent {
 }
 
 /// Create a new epoll instance and return a file descriptor referring to it.
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
 #[inline]
 pub fn epoll_create1(flags: EpollFlags) -> Result<FileDesc> {
     unsafe { Error::unpack_fdesc(libc::epoll_create1(flags.bits())) }
@@ -79,6 +84,7 @@ pub fn epoll_create1(flags: EpollFlags) -> Result<FileDesc> {
 
 /// Add, modify, or delete an entry in the interest list of the epoll instance referred to by
 /// `epfd`.
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
 #[inline]
 pub fn epoll_ctl(epfd: RawFd, op: EpollCtlOp, fd: RawFd, event: &mut EpollEvent) -> Result<()> {
     Error::unpack_nz(unsafe { libc::epoll_ctl(epfd, op as _, fd, event as *mut _ as *mut _) })
@@ -92,6 +98,7 @@ pub fn epoll_ctl(epfd: RawFd, op: EpollCtlOp, fd: RawFd, event: &mut EpollEvent)
 /// `timeout` is the amount of time in milliseconds that this function should block until either a)
 /// an event becomes available or b) a signal handler interrupts the call. A timeout of 0 will
 /// cause this function to never block, and a timeout of -1 will block indefinitely.
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
 #[inline]
 pub fn epoll_wait(epfd: RawFd, events: &mut [EpollEvent], timeout: libc::c_int) -> Result<usize> {
     let n = Error::unpack(unsafe {
@@ -164,6 +171,7 @@ pub fn epoll_pwait2(
 }
 
 /// A wrapper around an epoll instance.
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
 #[derive(Debug)]
 pub struct Epoll(FileDesc);
 

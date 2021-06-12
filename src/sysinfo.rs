@@ -3,7 +3,7 @@ use core::fmt;
 use crate::internal_prelude::*;
 
 /// System information returned by [`sysinfo()`].
-#[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
 #[derive(Copy, Clone)]
 pub struct SysInfo(libc::sysinfo);
 
@@ -114,7 +114,7 @@ impl fmt::Debug for SysInfo {
 }
 
 /// Get information on memory usage/swap usage/system load.
-#[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
 #[inline]
 pub fn sysinfo() -> Result<SysInfo> {
     let mut buf = MaybeUninit::uninit();

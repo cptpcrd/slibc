@@ -8,6 +8,7 @@ bitflags::bitflags! {
     /// Flags to [`signalfd()`].
     ///
     /// See `signalfd(2)` for more information.
+    #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
     pub struct SigFdFlags: libc::c_int {
         const NONBLOCK = libc::SFD_NONBLOCK;
         const CLOEXEC = libc::SFD_CLOEXEC;
@@ -17,12 +18,14 @@ bitflags::bitflags! {
 /// Create or modify a signal file descriptor.
 ///
 /// For a high-level interface, see [`SignalFd`].
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
 #[inline]
 pub fn signalfd<F: Into<Option<RawFd>>>(fd: F, mask: &SigSet, flags: SigFdFlags) -> Result<RawFd> {
     Error::unpack(unsafe { libc::signalfd(fd.into().unwrap_or(-1), mask.as_ref(), flags.bits()) })
 }
 
 /// A wrapper around a signal file descriptor.
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
 #[derive(Debug)]
 pub struct SignalFd(FileDesc);
 
@@ -119,6 +122,7 @@ impl FromRawFd for SignalFd {
     }
 }
 
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 #[repr(transparent)]
 pub struct SigFdSigInfo(libc::signalfd_siginfo);
