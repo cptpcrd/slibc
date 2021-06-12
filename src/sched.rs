@@ -33,6 +33,12 @@ impl CpuSet {
         }
     }
 
+    /// Check if this CPU set is empty.
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        *self == Self::new()
+    }
+
     /// Return the number of CPUs in this set.
     #[inline]
     pub fn len(&self) -> usize {
@@ -270,6 +276,7 @@ mod tests {
                 }
             }
 
+            assert_eq!(set.is_empty(), cpus.is_empty());
             assert_eq!(set.len(), cpus.len());
 
             assert_eq!(set.iter().len(), cpus.len());
