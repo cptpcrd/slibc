@@ -35,7 +35,7 @@ impl CpuSet {
 
     /// Return the number of CPUs in this set.
     #[inline]
-    pub fn count(&self) -> usize {
+    pub fn len(&self) -> usize {
         unsafe { libc::CPU_COUNT(&self.0) as _ }
     }
 
@@ -107,7 +107,7 @@ impl IntoIterator for CpuSet {
     fn into_iter(self) -> CpuSetIter {
         CpuSetIter {
             set: self,
-            n: self.count(),
+            n: self.len(),
             i: 0,
         }
     }
@@ -270,7 +270,7 @@ mod tests {
                 }
             }
 
-            assert_eq!(set.count(), cpus.len());
+            assert_eq!(set.len(), cpus.len());
 
             assert_eq!(set.iter().len(), cpus.len());
             assert_eq!(set.iter().count(), cpus.len());
