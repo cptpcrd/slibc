@@ -697,6 +697,16 @@ cfg_if::cfg_if! {
         pub const RWF_APPEND: libc::c_int = 0x10;
 
         pub const TFD_TIMER_CANCEL_ON_SET: libc::c_int = 2;
+
+        pub const IOPRIO_WHO_PROCESS: libc::c_int = 1;
+        pub const IOPRIO_WHO_PGRP: libc::c_int = 2;
+        pub const IOPRIO_WHO_USER: libc::c_int = 3;
+        pub const IOPRIO_CLASS_NONE: libc::c_int = 0;
+        pub const IOPRIO_CLASS_RT: libc::c_int = 1;
+        pub const IOPRIO_CLASS_BE: libc::c_int = 2;
+        pub const IOPRIO_CLASS_IDLE: libc::c_int = 3;
+        pub const IOPRIO_CLASS_SHIFT: libc::c_int = 13;
+        pub const IOPRIO_PRIO_MASK: libc::c_int = (1 << IOPRIO_CLASS_SHIFT) - 1;
     } else if #[cfg(bsd)] {
         pub use libc::IOV_MAX;
 

@@ -198,12 +198,14 @@ cfg_if::cfg_if! {
         mod epoll;
         mod eventfd;
         mod inotify;
+        mod ioprio;
         mod signalfd;
         mod sysinfo;
         mod timerfd;
         pub use epoll::*;
         pub use eventfd::*;
         pub use inotify::*;
+        pub use ioprio::*;
         pub use signalfd::*;
         pub use sysinfo::*;
         pub use timerfd::*;
