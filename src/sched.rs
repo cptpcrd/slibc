@@ -347,8 +347,11 @@ mod tests {
         getcpu(Some(&mut cpu2), None).unwrap();
         getcpu(None, Some(&mut node2)).unwrap();
 
-        assert!(sched_getaffinity(0).unwrap().contains(cpu1));
-        assert!(sched_getaffinity(0).unwrap().contains(cpu2));
+        #[cfg(target_os = "linux")]
+        {
+            assert!(sched_getaffinity(0).unwrap().contains(cpu1));
+            assert!(sched_getaffinity(0).unwrap().contains(cpu2));
+        }
         // XXX: Can't validate node1/node2
     }
 }

@@ -33,8 +33,10 @@ fn do_tests() {
     {
         restore_sigmask(test_tgkill);
         restore_sigmask(test_signalfd);
-        restore_sigmask(test_pidfd);
     }
+
+    #[cfg(target_os = "linux")]
+    restore_sigmask(test_pidfd);
 }
 
 fn test_sigmask() {
@@ -121,7 +123,7 @@ fn test_signalfd() {
     check_siginfo(&sfd, Signal::SIGUSR2);
 }
 
-#[cfg(linuxlike)]
+#[cfg(target_os = "linux")]
 fn test_pidfd() {
     use slibc::{pidfd_send_signal_simple, Errno, PidFd, PidFdOpenFlags, PidFdSignalFlags};
 
