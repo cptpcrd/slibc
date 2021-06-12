@@ -221,6 +221,7 @@ impl<F> DlFuncLoader<F> {
             addr => addr as *const u8,
         };
 
+        debug_assert!(!addr.is_null());
         Some(unsafe { core::mem::transmute_copy(&addr) })
     }
 }
@@ -384,5 +385,24 @@ mod tests {
             u8::parse_bytes_radix(b"2", 2, true),
             Err(IntParseBytesError::InvalidDigit)
         );
+    }
+
+    #[test]
+    fn test_dlsym() {
+        static NOEXIST: DlFuncLoader<unsafe extern "C" fn()> =
+            unsafe { DlFuncLoader::new(b"NO_SYMBOL_WITH_THIS_NAME_EXISTS\0") };
+        static CLOSE: DlFuncLoader<unsafe extern "C" fn(libc::c_int) -> libc::c_int> =
+            unsafe { DlFuncLoader::new(b"close\0") };
+
+        assert_eq!(NOEXIST.get(), None);
+        assert_eq!(NOEXIST.get(), None);
+
+        if cfg!(target_feature = "crt-static") {
+            assert_eq!(CLOSE.get(), None);
+            assert_eq!(CLOSE.get(), None);
+        } else {
+            assert_eq!(CLOSE.get().unwrap() as usize, libc::close as usize);
+            assert_eq!(CLOSE.get().unwrap() as usize, libc::close as usize);
+        }
     }
 }
