@@ -117,7 +117,7 @@ pub fn epoll_wait(epfd: RawFd, events: &mut [EpollEvent], timeout: libc::c_int) 
 ///
 /// `epfd`, `events`, and `timeout` are as for [`epoll_wait()`]. See `epoll_pwait(2)` for more
 /// information on `sigmask`.
-#[cfg_attr(docsrs, doc(cfg(not(target_os = "android"))))]
+#[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
 #[cfg(not(target_os = "android"))]
 #[inline]
 pub fn epoll_pwait(
@@ -146,7 +146,7 @@ pub fn epoll_pwait(
 /// nanosecond resolution.
 ///
 /// This system call was added in Linux 5.11; it will fail with `ENOSYS` on older kernels.
-#[cfg_attr(docsrs, doc(cfg(not(target_os = "android"))))]
+#[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
 #[cfg(not(target_os = "android"))]
 #[inline]
 pub fn epoll_pwait2(
@@ -219,7 +219,7 @@ impl Epoll {
     /// Wait for new events on this epoll instance.
     ///
     /// See [`epoll_pwait()`].
-    #[cfg_attr(docsrs, doc(cfg(not(target_os = "android"))))]
+    #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
     #[cfg(not(target_os = "android"))]
     #[inline]
     pub fn pwait(
@@ -236,7 +236,7 @@ impl Epoll {
     /// See [`epoll_pwait2()`].
     ///
     /// This system call was added in Linux 5.11; it will fail with `ENOSYS` on older kernels.
-    #[cfg_attr(docsrs, doc(cfg(not(target_os = "android"))))]
+    #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
     #[cfg(not(target_os = "android"))]
     #[inline]
     pub fn pwait2(
