@@ -125,6 +125,16 @@ impl AsRef<libc::timeval> for Timeval {
     }
 }
 
+impl From<libc::timeval> for Timeval {
+    #[inline]
+    fn from(tv: libc::timeval) -> Self {
+        Self {
+            tv_sec: tv.tv_sec,
+            tv_usec: tv.tv_usec,
+        }
+    }
+}
+
 impl From<TimeSpec> for Timeval {
     #[inline]
     fn from(t: TimeSpec) -> Self {
@@ -384,6 +394,7 @@ mod tests {
             unsafe { core::mem::transmute::<_, libc::timeval>(tv1) },
             tv2
         );
+        assert_eq!(tv1, Timeval::from(tv2));
     }
 
     fn isclose(t1: TimeSpec, t2: TimeSpec, nsec: u32) -> bool {
