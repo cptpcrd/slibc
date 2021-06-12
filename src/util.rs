@@ -430,6 +430,7 @@ mod tests {
         }
     }
 
+    #[cfg(freebsdlike)]
     #[test]
     fn test_getosreldate_real() {
         let osreldate = crate::getosreldate().unwrap();
