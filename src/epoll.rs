@@ -304,6 +304,14 @@ impl FromRawFd for Epoll {
 mod tests {
     use super::*;
 
+    #[cfg(not(target_os = "android"))]
+    fn has_pwait2() -> bool {
+        matches!(
+            epoll_pwait2(-1, &mut [], None, None).unwrap_err().code(),
+            libc::EBADF | libc::EINVAL
+        )
+    }
+
     #[test]
     fn test_poll() {
         let poller = Epoll::new(EpollFlags::CLOEXEC).unwrap();
@@ -322,6 +330,9 @@ mod tests {
 
         // Nothing to start
         assert_eq!(poller.wait(&mut events, 0).unwrap(), 0);
+        // pwait() works too
+        #[cfg(not(target_os = "android"))]
+        assert_eq!(poller.pwait(&mut events, 0, None).unwrap(), 0);
 
         // Now we write some data and test again
         w1.write_all(b"a").unwrap();
@@ -342,5 +353,35 @@ mod tests {
         assert_eq!(poller.wait(&mut events, 0).unwrap(), 1);
         assert_eq!(events[0].data(), r2.fd() as u64);
         assert_eq!(events[0].events(), EpollEvents::IN);
+
+        // Check with pwait() again
+        #[cfg(not(target_os = "android"))]
+        {
+            assert_eq!(poller.pwait(&mut events, 0, None).unwrap(), 1);
+            assert_eq!(events[0].data(), r2.fd() as u64);
+            assert_eq!(events[0].events(), EpollEvents::IN);
+
+            // Try pwait2() too if it's available
+            if has_pwait2() {
+                let timeout0 = crate::TimeSpec {
+                    tv_sec: 0,
+                    tv_nsec: 0,
+                };
+                assert_eq!(poller.pwait2(&mut events, Some(timeout0), None).unwrap(), 1);
+                assert_eq!(events[0].data(), r2.fd() as u64);
+                assert_eq!(events[0].events(), EpollEvents::IN);
+
+                assert_eq!(poller.pwait2(&mut events, None, None).unwrap(), 1);
+                assert_eq!(events[0].data(), r2.fd() as u64);
+                assert_eq!(events[0].events(), EpollEvents::IN);
+            }
+        }
+
+        // Modify the flags for the remaining file to just EPOLLOUT, and make sure that it doesn't
+        // poll as ready
+        poller
+            .modify(r2.fd(), EpollEvents::OUT, r2.fd() as u64)
+            .unwrap();
+        assert_eq!(poller.wait(&mut events, 0).unwrap(), 0);
     }
 }
