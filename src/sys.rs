@@ -435,6 +435,9 @@ cfg_if::cfg_if! {
 
         pub const _CS_PATH: libc::c_int = 1;
 
+        pub const SYS_GETRANDOM: i64 = 563;
+        pub const GETRANDOM_FIRST: libc::c_int = 1200061;
+
         pub const MNT_RDONLY: u64 = 0x1;
         pub const MNT_SYNCHRONOUS: u64 = 0x2;
         pub const MNT_NOEXEC: u64 = 0x4;
@@ -516,6 +519,9 @@ cfg_if::cfg_if! {
 
         pub const NAME_MAX: usize = 255;
 
+        pub const SYS_GETRANDOM: i64 = 550;
+        pub const GETRANDOM_FIRST: libc::c_int = 500710;
+
         pub const POSIX_FADV_NORMAL: libc::c_int = 0;
         pub const POSIX_FADV_SEQUENTIAL: libc::c_int = 1;
         pub const POSIX_FADV_RANDOM: libc::c_int = 2;
@@ -582,6 +588,8 @@ cfg_if::cfg_if! {
             pub fn swapon(path: *const libc::c_char) -> libc::c_int;
             pub fn swapoff(path: *const libc::c_char) -> libc::c_int;
             pub fn getosreldate() -> libc::c_int;
+
+            pub fn __syscall(number: i64, ...) -> libc::off_t;
         }
     }
 }

@@ -121,8 +121,7 @@ bitflags::bitflags! {
 /// See [`GrndFlags`] for more information.
 ///
 /// This is only available on Linux 3.17 and newer, on FreeBSD 12.0 and newer, or on DragonFlyBSD
-/// 5.7 and newer. It will fail with `ENOSYS` on older kernels. (On FreeBSD and DragonFlyBSD, it
-/// will also fail with `ENOSYS` in statically linked progams.)
+/// 5.7 and newer. It will fail with `ENOSYS` on older kernels.
 #[cfg_attr(
     docsrs,
     doc(cfg(any(
@@ -147,17 +146,18 @@ pub fn getrandom(buf: &mut [u8], flags: GrndFlags) -> Result<usize> {
 
     #[cfg(freebsdlike)]
     let n = {
-        static GETRANDOM: util::DlFuncLoader<
-            unsafe extern "C" fn(*mut libc::c_void, usize, libc::c_uint) -> isize,
-        > = unsafe { util::DlFuncLoader::new(b"getrandom\0") };
-
-        if let Some(func) = GETRANDOM.get() {
-            Error::unpack_size(unsafe {
-                func(buf.as_mut_ptr() as *mut _, buf.len(), flags.bits())
-            })?
-        } else {
+        if util::getosreldate_real().unwrap_or(0) < sys::GETRANDOM_FIRST {
             return Err(Error::from_code(libc::ENOSYS));
         }
+
+        Error::unpack_size(unsafe {
+            sys::__syscall(
+                sys::SYS_GETRANDOM,
+                buf.as_mut_ptr() as *mut libc::c_void,
+                buf.len(),
+                flags.bits(),
+            ) as isize
+        })?
     };
 
     Ok(n)

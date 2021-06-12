@@ -226,6 +226,30 @@ impl<F> DlFuncLoader<F> {
     }
 }
 
+#[cfg(freebsdlike)]
+#[inline]
+pub fn getosreldate_real() -> Option<libc::c_int> {
+    use core::sync::atomic::AtomicI32;
+    static OSRELDATE: AtomicI32 = AtomicI32::new(0);
+
+    match OSRELDATE.load(Ordering::Relaxed) {
+        0 => {
+            let mut osreldate = 0;
+            unsafe {
+                crate::sysctl(
+                    &[libc::CTL_KERN, libc::KERN_OSRELDATE],
+                    Some(core::slice::from_mut(&mut osreldate)),
+                    None,
+                )
+            }
+            .ok()?;
+            OSRELDATE.store(osreldate, Ordering::Relaxed);
+            Some(osreldate)
+        }
+        osreldate => Some(osreldate),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -404,5 +428,12 @@ mod tests {
             assert_eq!(GETUID.get().unwrap() as usize, libc::getuid as usize);
             assert_eq!(GETUID.get().unwrap() as usize, libc::getuid as usize);
         }
+    }
+
+    #[test]
+    fn test_getosreldate_real() {
+        let osreldate = crate::getosreldate().unwrap();
+        assert_eq!(getosreldate_real().unwrap(), osreldate);
+        assert_eq!(getosreldate_real().unwrap(), osreldate);
     }
 }
