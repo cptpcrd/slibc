@@ -369,6 +369,7 @@ mod tests {
             unsafe { core::mem::transmute::<_, libc::timespec>(ts1) },
             ts2
         );
+        assert_eq!(ts1, TimeSpec::from(ts2));
 
         let tv1 = Timeval {
             tv_sec: 123,
