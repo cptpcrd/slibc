@@ -640,6 +640,13 @@ impl std::os::unix::io::IntoRawFd for Socket {
     }
 }
 
+impl From<Socket> for FileDesc {
+    #[inline]
+    fn from(s: Socket) -> Self {
+        s.0
+    }
+}
+
 impl AsRef<BorrowedFd> for Socket {
     #[inline]
     fn as_ref(&self) -> &BorrowedFd {

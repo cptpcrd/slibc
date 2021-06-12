@@ -262,6 +262,13 @@ impl Epoll {
     }
 }
 
+impl From<Epoll> for FileDesc {
+    #[inline]
+    fn from(e: Epoll) -> Self {
+        e.0
+    }
+}
+
 impl AsRef<BorrowedFd> for Epoll {
     #[inline]
     fn as_ref(&self) -> &BorrowedFd {

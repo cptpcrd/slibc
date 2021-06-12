@@ -211,6 +211,13 @@ impl TimerFd {
     }
 }
 
+impl From<TimerFd> for FileDesc {
+    #[inline]
+    fn from(t: TimerFd) -> Self {
+        t.0
+    }
+}
+
 impl AsRef<BorrowedFd> for TimerFd {
     #[inline]
     fn as_ref(&self) -> &BorrowedFd {

@@ -332,6 +332,13 @@ impl Inotify {
     }
 }
 
+impl From<Inotify> for FileDesc {
+    #[inline]
+    fn from(t: Inotify) -> Self {
+        t.0
+    }
+}
+
 impl AsRef<BorrowedFd> for Inotify {
     #[inline]
     fn as_ref(&self) -> &BorrowedFd {

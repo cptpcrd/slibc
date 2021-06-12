@@ -182,6 +182,13 @@ impl Kqueue {
     }
 }
 
+impl From<Kqueue> for FileDesc {
+    #[inline]
+    fn from(k: Kqueue) -> Self {
+        k.0
+    }
+}
+
 impl AsRef<BorrowedFd> for Kqueue {
     #[inline]
     fn as_ref(&self) -> &BorrowedFd {

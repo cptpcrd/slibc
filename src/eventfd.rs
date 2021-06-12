@@ -104,6 +104,13 @@ impl EventFd {
     }
 }
 
+impl From<EventFd> for FileDesc {
+    #[inline]
+    fn from(e: EventFd) -> Self {
+        e.0
+    }
+}
+
 impl AsRef<BorrowedFd> for EventFd {
     #[inline]
     fn as_ref(&self) -> &BorrowedFd {
