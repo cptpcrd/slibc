@@ -174,6 +174,8 @@ macro_rules! parse_bytes_int_impl {
     };
 }
 
+parse_bytes_int_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
+
 #[allow(dead_code)]
 pub struct DlFuncLoader<F> {
     name: &'static [u8],
@@ -222,8 +224,6 @@ impl<F> DlFuncLoader<F> {
         Some(unsafe { core::mem::transmute_copy(&addr) })
     }
 }
-
-parse_bytes_int_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
 #[cfg(test)]
 mod tests {
