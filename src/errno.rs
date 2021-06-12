@@ -582,6 +582,7 @@ mod tests {
             assert_ne!(eno, Errno::Unknown);
             assert_eq!(format!("{:?}", eno), eno.name());
         }
+        assert_eq!(Errno::Unknown.name(), "Unknown");
     }
 
     #[cfg(feature = "alloc")]
