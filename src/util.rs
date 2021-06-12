@@ -391,18 +391,18 @@ mod tests {
     fn test_dlsym() {
         static NOEXIST: DlFuncLoader<unsafe extern "C" fn()> =
             unsafe { DlFuncLoader::new(b"NO_SYMBOL_WITH_THIS_NAME_EXISTS\0") };
-        static CLOSE: DlFuncLoader<unsafe extern "C" fn(libc::c_int) -> libc::c_int> =
-            unsafe { DlFuncLoader::new(b"close\0") };
+        static GETUID: DlFuncLoader<unsafe extern "C" fn() -> libc::uid_t> =
+            unsafe { DlFuncLoader::new(b"getuid\0") };
 
         assert_eq!(NOEXIST.get(), None);
         assert_eq!(NOEXIST.get(), None);
 
         if cfg!(target_feature = "crt-static") {
-            assert_eq!(CLOSE.get(), None);
-            assert_eq!(CLOSE.get(), None);
+            assert_eq!(GETUID.get(), None);
+            assert_eq!(GETUID.get(), None);
         } else {
-            assert_eq!(CLOSE.get().unwrap() as usize, libc::close as usize);
-            assert_eq!(CLOSE.get().unwrap() as usize, libc::close as usize);
+            assert_eq!(GETUID.get().unwrap() as usize, libc::getuid as usize);
+            assert_eq!(GETUID.get().unwrap() as usize, libc::getuid as usize);
         }
     }
 }
