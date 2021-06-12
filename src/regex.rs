@@ -224,6 +224,10 @@ impl Regex {
     ) -> Option<&'a [RegexMatch]> {
         use core::convert::TryInto;
 
+        if self.nosub {
+            matchbuf = &mut matchbuf[..0];
+        }
+
         let mut mstartend;
         let pmatch;
 
@@ -231,10 +235,6 @@ impl Regex {
             first.0.rm_so = 0;
             first.0.rm_eo = text.len().try_into().unwrap();
             pmatch = first as *mut _;
-
-            if self.nosub {
-                matchbuf = &mut matchbuf[..0];
-            }
         } else {
             mstartend = RegexMatch::uninit();
             mstartend.0.rm_so = 0;
