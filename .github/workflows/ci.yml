@@ -165,6 +165,27 @@ jobs:
           command: test
           args: --verbose --target ${{ matrix.target }} --no-default-features
 
+      - name: Test (std, release)
+        uses: actions-rs/cargo@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          command: test
+          args: --verbose --target ${{ matrix.target }} --release --no-default-features --features std
+
+      - name: Test (alloc, release)
+        uses: actions-rs/cargo@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          command: test
+          args: --verbose --target ${{ matrix.target }} --release --no-default-features --features alloc
+
+      - name: Test (no_std, release)
+        uses: actions-rs/cargo@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          command: test
+          args: --verbose --target ${{ matrix.target }} --release --no-default-features
+
   coverage-tarpaulin:
     name: Tarpaulin
 
