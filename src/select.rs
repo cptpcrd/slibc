@@ -273,7 +273,8 @@ mod tests {
             .iter()
             .copied()
             .max()
-            .unwrap();
+            .unwrap()
+            + 1;
 
         let timeout_0 = crate::Timeval {
             tv_sec: 0,
