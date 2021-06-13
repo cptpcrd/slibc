@@ -189,7 +189,7 @@ bitflags::bitflags! {
 #[non_exhaustive]
 #[repr(C)]
 pub struct Statx {
-    /// Indicates which fields are initialized (see [`StatxMask`] for more information).
+    /// Indicates which fields have been initialized (see [`StatxMask`] for more information).
     pub mask: StatxMask,
     /// The "preferred" block size for file I/O.
     pub blksize: u32,
