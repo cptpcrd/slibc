@@ -64,6 +64,18 @@ impl PosixSpawnFileActions {
             sys::posix_spawn_file_actions_adddup2(&mut self.0, oldfd, newfd)
         })
     }
+
+    /// Add a file action to mark the specified file descriptor as inheritable.
+    ///
+    /// The specified file descriptor will have its close-on-exec flag unset inside the child.
+    ///
+    /// This is especially useful in combination with [`PosixSpawnFlags::CLOEXEC_DEFAULT`].
+    #[cfg_attr(docsrs, doc(cfg(any(target_os = "macos", target_os = "ios"))))]
+    #[cfg(apple)]
+    #[inline]
+    pub fn addinherit_np(&mut self, fd: RawFd) -> Result<()> {
+        Error::unpack_eno(unsafe { sys::posix_spawn_file_actions_addinherit_np(&mut self.0, fd) })
+    }
 }
 
 #[cfg(target_os = "linux")]
@@ -176,6 +188,15 @@ bitflags::bitflags! {
         #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "macos", target_os = "ios"))))]
         #[cfg(any(target_os = "linux", apple))]
         const SETSID = sys::POSIX_SPAWN_SETSID as libc::c_short;
+
+        /// Behave as if all file descriptors had the close-on-exec flag set on them.
+        ///
+        /// If this flag is specified, it is necessary to mark any file descriptors that need to be
+        /// inherited (including stdin/stdout/stderr!) using
+        /// [`PosixSpawnFileActions::addinherit_np()`].
+        #[cfg_attr(docsrs, doc(cfg(any(target_os = "macos", target_os = "ios"))))]
+        #[cfg(apple)]
+        const CLOEXEC_DEFAULT = sys::POSIX_SPAWN_CLOEXEC_DEFAULT as libc::c_short;
     }
 }
 

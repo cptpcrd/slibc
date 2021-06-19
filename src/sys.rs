@@ -152,6 +152,12 @@ cfg_if::cfg_if! {
     } else if #[cfg(any(target_os = "macos", target_os = "ios"))] {
         pub use libc::getfsstat;
 
+        extern "C" {
+            pub fn posix_spawn_file_actions_addinherit_np(
+                file_actions: *mut libc::posix_spawn_file_actions_t, filedes: libc::c_int,
+            ) -> libc::c_int;
+        }
+
         pub const CTL_MAXNAME: i32 = 12;
 
         pub const CLOCK_MONOTONIC_RAW: libc::clockid_t = 4;
@@ -171,6 +177,7 @@ cfg_if::cfg_if! {
         pub const NAME_MAX: usize = 255;
 
         pub const POSIX_SPAWN_SETSID: libc::c_short = 0x400;
+        pub const POSIX_SPAWN_CLOEXEC_DEFAULT: libc::c_short = 0x4000;
 
         pub const MNT_RDONLY: u32 = 0x1;
         pub const MNT_SYNCHRONOUS: u32 = 0x2;
