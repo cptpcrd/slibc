@@ -398,9 +398,6 @@ mod tests {
 
     #[cfg(any(linuxlike, freebsdlike))]
     fn has_getrandom() -> bool {
-        if cfg!(all(freebsdlike, target_feature = "crt-static")) {
-            return false;
-        }
         #[cfg(target_os = "freebsd")]
         if crate::getosreldate().unwrap() < 1200061 {
             return false;
