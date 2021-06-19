@@ -156,6 +156,8 @@ cfg_if::cfg_if! {
             pub fn posix_spawn_file_actions_addinherit_np(
                 file_actions: *mut libc::posix_spawn_file_actions_t, filedes: libc::c_int,
             ) -> libc::c_int;
+
+            pub fn malloc_size(ptr: *const libc::c_void) -> usize;
         }
 
         pub const CTL_MAXNAME: i32 = 12;
@@ -430,6 +432,7 @@ cfg_if::cfg_if! {
                 ptr: *mut libc::c_void, size: usize, flags: libc::c_int,
             ) -> *mut libc::c_void;
             pub fn sdallocx(ptr: *mut libc::c_void, size: usize, flags: libc::c_int);
+            pub fn sallocx(ptr: *mut libc::c_void, flags: libc::c_int) -> usize;
         }
 
         #[cfg(feature = "alloc")]
@@ -698,6 +701,7 @@ cfg_if::cfg_if! {
         extern "C" {
             pub fn __libc_current_sigrtmin() -> libc::c_int;
             pub fn __libc_current_sigrtmax() -> libc::c_int;
+            pub fn malloc_usable_size(ptr: *mut libc::c_void) -> usize;
         }
 
         pub const IOV_MAX: usize = 1024;

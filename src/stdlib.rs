@@ -294,15 +294,45 @@ use std::alloc::{GlobalAlloc, Layout};
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Malloc;
 
-#[cfg(all(feature = "alloc", not(target_os = "freebsd")))]
+#[cfg(feature = "alloc")]
 impl Malloc {
+    #[cfg(not(target_os = "freebsd"))]
     const PTR_SIZE: usize = core::mem::size_of::<*mut libc::c_void>();
 
+    #[cfg(not(target_os = "freebsd"))]
     #[inline]
     unsafe fn alloc_memalign(layout: Layout) -> *mut u8 {
         let mut ptr = core::ptr::null_mut();
         libc::posix_memalign(&mut ptr, layout.align(), layout.size());
         ptr as *mut u8
+    }
+
+    /// Attempt to retrieve the amount of usable space in the block of memory (allocated using
+    /// `malloc()`) that starts at `ptr`.
+    ///
+    /// If the usable size cannot be determined, this function will return `None`. Callers should
+    /// always be prepared to handle this, e.g. by falling back on using the original allocation
+    /// size.
+    ///
+    /// Currently, the usable size can only be retrieved on Linux/Android, macOS/iOS, and FreeBSD;
+    /// however, that may change without notice. Callers should not e.g. assume that the usable size
+    /// can always be determined on any particular platform.
+    ///
+    /// # Safety
+    ///
+    /// `ptr` must be a non-NULL pointer representing an allocation obtained from the `malloc()`
+    /// family of functions (e.g. using this struct).
+    #[allow(unreachable_code, unused_variables)]
+    #[inline]
+    pub unsafe fn usable_size(&self, ptr: *mut u8) -> Option<usize> {
+        #[cfg(linuxlike)]
+        return Some(sys::malloc_usable_size(ptr as *mut _));
+        #[cfg(apple)]
+        return Some(sys::malloc_size(ptr as *const _));
+        #[cfg(target_os = "freebsd")]
+        return Some(sys::sallocx(ptr as *mut _, 0));
+
+        None
     }
 }
 
@@ -501,12 +531,18 @@ mod tests {
             assert!(!ptr.is_null());
             assert_eq!((ptr as usize) % core::mem::align_of::<T>(), 0);
             Malloc.dealloc(ptr, layout);
+            if let Some(size) = Malloc.usable_size(ptr) {
+                assert!(size >= layout.size());
+            }
 
             let ptr = Malloc.alloc_zeroed(layout);
             assert!(!ptr.is_null());
             assert_eq!((ptr as usize) % core::mem::align_of::<T>(), 0);
             assert_eq!(*(ptr as *mut T), core::mem::zeroed::<T>());
             Malloc.dealloc(ptr, layout);
+            if let Some(size) = Malloc.usable_size(ptr) {
+                assert!(size >= layout.size());
+            }
         }
 
         unsafe {
@@ -528,12 +564,18 @@ mod tests {
             assert!(!ptr.is_null());
             assert_eq!((ptr as usize) % core::mem::align_of::<T>(), 0);
             Malloc.dealloc(ptr, layout);
+            if let Some(size) = Malloc.usable_size(ptr) {
+                assert!(size >= layout.size());
+            }
 
             let ptr = Malloc.alloc_zeroed(layout);
             assert!(!ptr.is_null());
             assert_eq!((ptr as usize) % core::mem::align_of::<T>(), 0);
             assert_eq!(*(ptr as *mut [T; 10]), [core::mem::zeroed(); 10]);
             Malloc.dealloc(ptr, layout);
+            if let Some(size) = Malloc.usable_size(ptr) {
+                assert!(size >= layout.size());
+            }
         }
 
         unsafe {
