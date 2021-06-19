@@ -295,6 +295,112 @@ impl PosixSpawnAttr {
     }
 }
 
+#[cfg(apple)]
+static SET_UID: util::DlFuncLoader<
+    unsafe extern "C" fn(*mut libc::posix_spawnattr_t, libc::uid_t) -> libc::c_int,
+> = unsafe { util::DlFuncLoader::new(b"posix_spawnattr_set_uid_np\0") };
+#[cfg(apple)]
+static SET_GID: util::DlFuncLoader<
+    unsafe extern "C" fn(*mut libc::posix_spawnattr_t, libc::gid_t) -> libc::c_int,
+> = unsafe { util::DlFuncLoader::new(b"posix_spawnattr_set_gid_np\0") };
+#[cfg(apple)]
+static SET_GROUPS: util::DlFuncLoader<
+    unsafe extern "C" fn(
+        *mut libc::posix_spawnattr_t,
+        libc::c_int,
+        *const libc::gid_t,
+        libc::uid_t,
+    ) -> libc::c_int,
+> = unsafe { util::DlFuncLoader::new(b"posix_spawnattr_set_groups_np\0") };
+#[cfg(apple)]
+static SET_LOGIN: util::DlFuncLoader<
+    unsafe extern "C" fn(*mut libc::posix_spawnattr_t, *const libc::c_char) -> libc::c_int,
+> = unsafe { util::DlFuncLoader::new(b"posix_spawnattr_set_login_np\0") };
+
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "macos", target_os = "ios"))))]
+#[cfg(apple)]
+impl PosixSpawnAttr {
+    /// Check whether [`Self::set_uid_np()`], [`Self::set_gid_np()`], [`Self::set_groups_np()`],
+    /// and [`Self::set_login_np()`] are supported by the current system.
+    ///
+    /// If this returns `true`, none of these 3 functions should fail with `ENOSYS`.
+    #[inline]
+    pub fn has_set_creds_np() -> bool {
+        let res = SET_UID.get().is_some();
+        debug_assert_eq!(SET_GID.get().is_some(), res);
+        debug_assert_eq!(SET_GROUPS.get().is_some(), res);
+        debug_assert_eq!(SET_LOGIN.get().is_some(), res);
+        res
+    }
+
+    /// Set the UID of the child.
+    #[inline]
+    pub fn set_uid_np(&mut self, uid: libc::uid_t) -> Result<()> {
+        Error::unpack_eno(unsafe {
+            if let Some(func) = SET_UID.get() {
+                func(&mut self.0, uid)
+            } else {
+                libc::ENOSYS
+            }
+        })
+    }
+
+    /// Set the GID of the child.
+    #[inline]
+    pub fn set_gid_np(&mut self, gid: libc::gid_t) -> Result<()> {
+        Error::unpack_eno(unsafe {
+            if let Some(func) = SET_GID.get() {
+                func(&mut self.0, gid)
+            } else {
+                libc::ENOSYS
+            }
+        })
+    }
+
+    /// Set the supplementary group list.
+    ///
+    /// `groups` specifies the new supplementary group list. `gmuid` specifies a UID to be used for
+    /// group membership checks.
+    #[inline]
+    pub fn set_groups_np(
+        &mut self,
+        groups: &[libc::gid_t],
+        gmuid: Option<libc::uid_t>,
+    ) -> Result<()> {
+        #[cfg(target_pointer_width = "64")]
+        if groups.len() > libc::c_int::MAX as usize {
+            return Err(Error::from_code(libc::EINVAL));
+        }
+
+        Error::unpack_eno(unsafe {
+            if let Some(func) = SET_GROUPS.get() {
+                func(
+                    &mut self.0,
+                    groups.len() as _,
+                    groups.as_ptr(),
+                    gmuid.unwrap_or(sys::KAUTH_UID_NONE),
+                )
+            } else {
+                libc::ENOSYS
+            }
+        })
+    }
+
+    /// Set the login name of the child.
+    #[inline]
+    pub fn set_login_np<L: AsPath>(&mut self, login: L) -> Result<()> {
+        login.with_cstr(|login| {
+            Error::unpack_eno(unsafe {
+                if let Some(func) = SET_LOGIN.get() {
+                    func(&mut self.0, login.as_ptr())
+                } else {
+                    libc::ENOSYS
+                }
+            })
+        })
+    }
+}
+
 impl Drop for PosixSpawnAttr {
     #[inline]
     fn drop(&mut self) {

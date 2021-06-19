@@ -179,6 +179,8 @@ cfg_if::cfg_if! {
         pub const POSIX_SPAWN_SETSID: libc::c_short = 0x400;
         pub const POSIX_SPAWN_CLOEXEC_DEFAULT: libc::c_short = 0x4000;
 
+        pub const KAUTH_UID_NONE: libc::uid_t = libc::uid_t::MAX - 100;
+
         pub const MNT_RDONLY: u32 = 0x1;
         pub const MNT_SYNCHRONOUS: u32 = 0x2;
         pub const MNT_NOEXEC: u32 = 0x4;
