@@ -17,8 +17,8 @@ import sys
 #   friendly: https://github.com/freebsd/freebsd-src/blob/main/lib/libc/gen/errlst.c
 #   raw: https://github.com/freebsd/freebsd-src/raw/main/lib/libc/gen/errlst.c
 # netbsd:
-#   friendly: https://github.com/NetBSD/src/blob/4618257c9b66cbfb216387cd3d0740f2b1b70750/lib/libc/compat/gen/compat_errlist.c
-#   raw: https://github.com/NetBSD/src/raw/4618257c9b66cbfb216387cd3d0740f2b1b70750/lib/libc/compat/gen/compat_errlist.c
+#   friendly: https://github.com/NetBSD/src/blob/trunk/lib/libc/compat/gen/compat_errlist.c
+#   raw: https://github.com/NetBSD/src/raw/trunk/lib/libc/compat/gen/compat_errlist.c
 # openbsd:
 #   friendly: https://github.com/openbsd/src/blob/master/lib/libc/gen/errlist.c
 #   raw: https://github.com/openbsd/src/raw/master/lib/libc/gen/errlist.c
