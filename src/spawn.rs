@@ -185,7 +185,10 @@ bitflags::bitflags! {
         /// Make the child process the session leader of a new session.
         ///
         /// This is equivalent to calling `setsid(2)` inside the child.
-        #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "macos", target_os = "ios"))))]
+        #[cfg_attr(
+            docsrs,
+            doc(cfg(any(target_os = "linux", target_os = "macos", target_os = "ios")))
+        )]
         #[cfg(any(target_os = "linux", apple))]
         const SETSID = sys::POSIX_SPAWN_SETSID as libc::c_short;
 
