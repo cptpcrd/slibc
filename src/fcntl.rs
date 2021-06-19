@@ -299,6 +299,118 @@ pub fn copy_file_range(
     Ok(n)
 }
 
+#[cfg(any(freebsdlike, apple))]
+bitflags::bitflags! {
+    #[cfg_attr(
+        docsrs,
+        doc(cfg(any(
+            target_os = "freebsd",
+            target_os = "dragonfly",
+            target_os = "macos",
+            target_os = "ios",
+        )))
+    )]
+    pub struct SendFileFlags: libc::c_int {
+        #[cfg_attr(docsrs, doc(cfg(target_os = "freebsd")))]
+        #[cfg(target_os = "freebsd")]
+        const NODISKIO = libc::SF_NODISKIO;
+        #[cfg_attr(docsrs, doc(cfg(target_os = "freebsd")))]
+        #[cfg(target_os = "freebsd")]
+        const NOCACHE = libc::SF_NOCACHE;
+        #[cfg_attr(docsrs, doc(cfg(target_os = "freebsd")))]
+        #[cfg(target_os = "freebsd")]
+        const SYNC = libc::SF_SYNC;
+        #[cfg_attr(docsrs, doc(cfg(target_os = "freebsd")))]
+        #[cfg(target_os = "freebsd")]
+        const USER_READAHEAD = libc::SF_USER_READAHEAD;
+
+        #[doc(hidden)]
+        #[cfg(not(target_os = "freebsd"))]
+        const __RESERVED = 0;
+    }
+}
+
+#[cfg_attr(
+    docsrs,
+    doc(cfg(any(
+        target_os = "freebsd",
+        target_os = "dragonfly",
+        target_os = "macos",
+        target_os = "ios",
+    )))
+)]
+#[cfg(any(freebsdlike, apple))]
+#[derive(Clone, Debug)]
+#[repr(transparent)]
+pub struct SendHdtr<'a, 'b> {
+    inner: libc::sf_hdtr,
+    headers: core::marker::PhantomData<&'a [crate::IoVec<'b>]>,
+    trailers: core::marker::PhantomData<&'a [crate::IoVec<'b>]>,
+}
+
+#[cfg(any(freebsdlike, apple))]
+impl<'a, 'b> SendHdtr<'a, 'b> {
+    #[inline]
+    pub fn new(headers: &'a [crate::IoVec<'b>], trailers: &'a [crate::IoVec<'b>]) -> Self {
+        Self {
+            inner: libc::sf_hdtr {
+                headers: headers.as_ptr() as _,
+                hdr_cnt: headers.len() as _,
+                trailers: trailers.as_ptr() as _,
+                trl_cnt: trailers.len() as _,
+            },
+            headers: core::marker::PhantomData,
+            trailers: core::marker::PhantomData,
+        }
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "freebsd", target_os = "dragonfly"))))]
+#[cfg(freebsdlike)]
+pub fn sendfile(
+    fd: RawFd,
+    s: RawFd,
+    offset: u64,
+    nbytes: usize,
+    hdtr: Option<&SendHdtr>,
+    sbytes: Option<&mut u64>,
+    flags: SendFileFlags,
+) -> Result<()> {
+    Error::unpack_nz(unsafe {
+        libc::sendfile(
+            fd,
+            s,
+            offset as i64,
+            nbytes,
+            hdtr.map_or_else(core::ptr::null, |ht| ht) as _,
+            sbytes.map_or_else(core::ptr::null, |s| s) as *mut i64,
+            flags.bits(),
+        )
+    })
+}
+
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "macos", target_os = "ios"))))]
+#[cfg(apple)]
+pub fn sendfile(
+    fd: RawFd,
+    s: RawFd,
+    offset: u64,
+    len: &mut u64,
+    hdtr: Option<&SendHdtr>,
+    flags: SendFileFlags,
+) -> Result<()> {
+    Error::unpack_nz(unsafe {
+        libc::sendfile(
+            fd,
+            s,
+            offset as i64,
+            len as *mut u64 as *mut i64,
+            hdtr.map_or_else(core::ptr::null, |ht| ht) as _,
+            flags.bits(),
+        )
+    })
+}
+
 #[cfg_attr(
     docsrs,
     doc(cfg(any(
