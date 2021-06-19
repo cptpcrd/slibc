@@ -64,6 +64,15 @@ cfg_if::cfg_if! {
             pub fn syncfs(fd: libc::c_int) -> libc::c_int;
 
             pub fn mlock2(addr: *const libc::c_void, len: libc::size_t, flags: libc::c_int) -> libc::c_int;
+
+            pub fn copy_file_range(
+                fd_in: libc::c_int,
+                off_in: *mut libc::off64_t,
+                fd_out: libc::c_int,
+                off_out: *mut libc::off64_t,
+                len: usize,
+                flags: libc::c_uint,
+            ) -> isize;
         }
 
         pub const MLOCK_ONFAULT: libc::c_int = 1;
@@ -728,6 +737,10 @@ cfg_if::cfg_if! {
         pub const IOPRIO_CLASS_IDLE: libc::c_int = 3;
         pub const IOPRIO_CLASS_SHIFT: libc::c_int = 13;
         pub const IOPRIO_PRIO_MASK: libc::c_int = (1 << IOPRIO_CLASS_SHIFT) - 1;
+
+        pub const SPLICE_F_MOVE: libc::c_uint = 0x01;
+        pub const SPLICE_F_NONBLOCK: libc::c_uint = 0x02;
+        pub const SPLICE_F_MORE: libc::c_uint = 0x04;
     } else if #[cfg(bsd)] {
         pub use libc::IOV_MAX;
 

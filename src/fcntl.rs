@@ -197,6 +197,108 @@ pub fn readahead(fd: RawFd, offset: u64, count: usize) -> Result<()> {
     }
 }
 
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
+#[cfg(linuxlike)]
+#[inline]
+pub fn sendfile(
+    out_fd: RawFd,
+    in_fd: RawFd,
+    offset: Option<&mut libc::off_t>,
+    count: usize,
+) -> Result<usize> {
+    Error::unpack_size(unsafe {
+        libc::sendfile(
+            out_fd,
+            in_fd,
+            offset.map_or_else(core::ptr::null_mut, |o| o),
+            count,
+        )
+    })
+}
+
+#[cfg(linuxlike)]
+bitflags::bitflags! {
+    #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
+    pub struct SpliceFlags: libc::c_uint {
+        const MOVE = sys::SPLICE_F_MOVE;
+        const NONBLOCK = sys::SPLICE_F_NONBLOCK;
+        const MORE = sys::SPLICE_F_MORE;
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
+#[cfg(linuxlike)]
+#[inline]
+pub fn splice(
+    fd_in: RawFd,
+    off_in: Option<&mut u64>,
+    fd_out: RawFd,
+    off_out: Option<&mut u64>,
+    len: usize,
+    flags: SpliceFlags,
+) -> Result<usize> {
+    Error::unpack_size(unsafe {
+        libc::splice(
+            fd_in,
+            off_in.map_or_else(core::ptr::null_mut, |o| o) as *mut i64,
+            fd_out,
+            off_out.map_or_else(core::ptr::null_mut, |o| o) as *mut i64,
+            len,
+            flags.bits(),
+        )
+    })
+}
+
+#[cfg(linuxlike)]
+bitflags::bitflags! {
+    #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
+    pub struct CopyFileFlags: libc::c_uint {
+        #[doc(hidden)]
+        const __RESERVED = 0;
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
+#[cfg(linuxlike)]
+#[inline]
+pub fn copy_file_range(
+    fd_in: RawFd,
+    off_in: Option<&mut u64>,
+    fd_out: RawFd,
+    off_out: Option<&mut u64>,
+    len: usize,
+    flags: CopyFileFlags,
+) -> Result<usize> {
+    cfg_if::cfg_if! {
+        if #[cfg(target_os = "linux")] {
+            let n = Error::unpack_size(unsafe {
+                sys::copy_file_range(
+                    fd_in,
+                    off_in.map_or_else(core::ptr::null_mut, |o| o) as *mut i64,
+                    fd_out,
+                    off_out.map_or_else(core::ptr::null_mut, |o| o) as *mut i64,
+                    len,
+                    flags.bits(),
+                )
+            })?;
+        } else {
+            let n = Error::unpack_size(unsafe {
+                libc::syscall(
+                    libc::SYS_copy_file_range,
+                    fd_in,
+                    off_in.map_or_else(core::ptr::null_mut, |o| o) as *mut i64,
+                    fd_out,
+                    off_out.map_or_else(core::ptr::null_mut, |o| o) as *mut i64,
+                    len,
+                    flags.bits(),
+                ) as isize
+            })?;
+        }
+    }
+
+    Ok(n)
+}
+
 #[cfg_attr(
     docsrs,
     doc(cfg(any(
