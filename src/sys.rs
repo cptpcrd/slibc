@@ -165,8 +165,6 @@ cfg_if::cfg_if! {
             pub fn posix_spawn_file_actions_addinherit_np(
                 file_actions: *mut libc::posix_spawn_file_actions_t, filedes: libc::c_int,
             ) -> libc::c_int;
-
-            pub fn malloc_size(ptr: *const libc::c_void) -> usize;
         }
 
         pub const CTL_MAXNAME: i32 = 12;
