@@ -64,7 +64,7 @@ pub fn kqueue_cloexec() -> Result<FileDesc> {
             return kqueue();
         } else {
             let kq = kqueue()?;
-            kq.set_cloexec(true)?;
+            crate::ioctl_fioclex(kq.fd())?;
             return Ok(kq);
         }
     }

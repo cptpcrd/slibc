@@ -153,14 +153,14 @@ impl BorrowedFd {
     pub fn set_cloexec(&self, cloexec: bool) -> Result<()> {
         // Here's how we handle this for different platforms:
         //
-        // - On macOS/*BSD, call ioctl_fioclex()/ioctl_fionclex().
+        // - On macOS/most *BSDs, call ioctl_fioclex()/ioctl_fionclex().
         // - On other platforms, just call fcntl().
         //
-        // We don't use ioctl_fioclex()/ioctl_fionclex() on Linux because they don't work on O_PATH
-        // file descriptors.
+        // We don't use ioctl_fioclex()/ioctl_fionclex() on Linux and FreeBSD because they don't
+        // work on O_PATH file descriptors (FreeBSD 14.0 adds O_PATH support).
 
         cfg_if::cfg_if! {
-            if #[cfg(bsd)] {
+            if #[cfg(any(apple, netbsdlike, target_os = "dragonfly"))] {
                 if cloexec {
                     crate::ioctl_fioclex(self.0)?;
                 } else {
