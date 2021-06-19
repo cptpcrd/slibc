@@ -530,7 +530,7 @@ mod tests {
             assert_eq!((ptr as usize) % core::mem::align_of::<T>(), 0);
             Malloc.dealloc(ptr, layout);
             if let Some(size) = Malloc.usable_size(ptr) {
-                assert!(size >= layout.size());
+                assert!(size >= layout.size(), "{} < {}", size, layout.size());
             }
 
             let ptr = Malloc.alloc_zeroed(layout);
@@ -539,7 +539,7 @@ mod tests {
             assert_eq!(*(ptr as *mut T), core::mem::zeroed::<T>());
             Malloc.dealloc(ptr, layout);
             if let Some(size) = Malloc.usable_size(ptr) {
-                assert!(size >= layout.size());
+                assert!(size >= layout.size(), "{} < {}", size, layout.size());
             }
         }
 
@@ -563,7 +563,7 @@ mod tests {
             assert_eq!((ptr as usize) % core::mem::align_of::<T>(), 0);
             Malloc.dealloc(ptr, layout);
             if let Some(size) = Malloc.usable_size(ptr) {
-                assert!(size >= layout.size());
+                assert!(size >= layout.size(), "{} < {}", size, layout.size());
             }
 
             let ptr = Malloc.alloc_zeroed(layout);
@@ -572,7 +572,7 @@ mod tests {
             assert_eq!(*(ptr as *mut [T; 10]), [core::mem::zeroed(); 10]);
             Malloc.dealloc(ptr, layout);
             if let Some(size) = Malloc.usable_size(ptr) {
-                assert!(size >= layout.size());
+                assert!(size >= layout.size(), "{} < {}", size, layout.size());
             }
         }
 
