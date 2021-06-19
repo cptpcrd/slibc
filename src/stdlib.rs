@@ -314,9 +314,9 @@ impl Malloc {
     /// always be prepared to handle this, e.g. by falling back on using the original allocation
     /// size.
     ///
-    /// Currently, the usable size can only be retrieved on Linux/Android, FreeBSD, and (sometimes)
-    /// macOS/iOS; however, that may change without notice. Callers should not e.g. assume that the
-    /// usable size can always be determined on any particular platform.
+    /// Currently, the usable size can only **sometimes** be retrieved on Linux/Android, FreeBSD,
+    /// and macOS/iOS; however, that may change without notice. Callers should not e.g. assume that
+    /// the usable size can always be determined on any particular platform.
     ///
     /// # Safety
     ///
@@ -325,17 +325,23 @@ impl Malloc {
     #[allow(unreachable_code, unused_variables)]
     #[inline]
     pub unsafe fn usable_size(&self, ptr: *mut u8) -> Option<usize> {
-        #[cfg(linuxlike)]
-        return Some(sys::malloc_usable_size(ptr as *mut _));
-        #[cfg(apple)]
-        match sys::malloc_size(ptr as *const _) {
-            0 => (),
-            size => return Some(size),
+        cfg_if::cfg_if! {
+            if #[cfg(linuxlike)] {
+                let size = sys::malloc_usable_size(ptr as *mut _);
+            } else if #[cfg(apple)] {
+                let size = sys::malloc_size(ptr as *const _);
+            } else if #[cfg(target_os = "freebsd")] {
+                let size = sys::sallocx(ptr as *mut _, 0);
+            } else {
+                let size = 0;
+            }
         }
-        #[cfg(target_os = "freebsd")]
-        return Some(sys::sallocx(ptr as *mut _, 0));
 
-        None
+        if size == 0 {
+            None
+        } else {
+            Some(size)
+        }
     }
 }
 
