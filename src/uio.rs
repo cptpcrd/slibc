@@ -238,14 +238,19 @@ bitflags::bitflags! {
 #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
 #[cfg(linuxlike)]
 #[inline]
-pub fn preadv2(fd: RawFd, iov: &mut [IoVecMut], offset: u64, flags: RWFlags) -> Result<usize> {
+pub fn preadv2(
+    fd: RawFd,
+    iov: &mut [IoVecMut],
+    offset: Option<u64>,
+    flags: RWFlags,
+) -> Result<usize> {
     Error::unpack_size(unsafe {
         libc::syscall(
             libc::SYS_preadv2,
             fd,
             iov.as_ptr() as *const libc::iovec,
             iov.len().try_into().unwrap_or(i32::MAX),
-            offset as libc::off_t,
+            offset.unwrap_or(u64::MAX) as libc::off_t,
             flags.bits(),
         ) as isize
     })
@@ -254,14 +259,14 @@ pub fn preadv2(fd: RawFd, iov: &mut [IoVecMut], offset: u64, flags: RWFlags) -> 
 #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
 #[cfg(linuxlike)]
 #[inline]
-pub fn pwritev2(fd: RawFd, iov: &[IoVec], offset: u64, flags: RWFlags) -> Result<usize> {
+pub fn pwritev2(fd: RawFd, iov: &[IoVec], offset: Option<u64>, flags: RWFlags) -> Result<usize> {
     Error::unpack_size(unsafe {
         libc::syscall(
             libc::SYS_pwritev2,
             fd,
             iov.as_ptr() as *const libc::iovec,
             iov.len().try_into().unwrap_or(i32::MAX),
-            offset as libc::off_t,
+            offset.unwrap_or(u64::MAX) as libc::off_t,
             flags.bits(),
         ) as isize
     })
