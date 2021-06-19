@@ -176,10 +176,16 @@ mod tests {
     fn test_strerror() {
         assert_eq!(Error::from_code(libc::EISDIR).strerror(), "Is a directory");
 
-        assert_eq!(Error::from_code(-1).strerror(), "Unknown error");
+        let unknown_error = if cfg!(all(target_os = "linux", target_env = "musl")) {
+            "No error information"
+        } else {
+            "Unknown error"
+        };
+
+        assert_eq!(Error::from_code(-1).strerror(), unknown_error);
 
         #[cfg(any(target_env = "", target_env = "gnu"))]
-        assert_eq!(Error::from_code(8192).strerror(), "Unknown error");
+        assert_eq!(Error::from_code(8192).strerror(), unknown_error);
     }
 
     #[cfg(feature = "std")]

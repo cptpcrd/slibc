@@ -89,6 +89,6 @@ pub(crate) fn strerror_imp(eno: i32) -> &'static str {
         libc::ENOMEDIUM => "No medium found",
         libc::EMEDIUMTYPE => "Wrong medium type",
         libc::EMULTIHOP => "Multihop attempted",
-        _ => "Unknown error",
+        _ => "No error information",
     }
 }

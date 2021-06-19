@@ -61,16 +61,22 @@ mod tests {
     fn test_strerror_correct() {
         use super::*;
 
+        let unknown_error = if cfg!(all(target_os = "linux", target_env = "musl")) {
+            "No error information"
+        } else {
+            "Unknown error"
+        };
+
         for eno in 0..=4096 {
             if let Some(s) = libc_strerror(eno) {
                 assert_eq!(strerror(eno), s);
             } else if eno >= 2048 {
-                assert_eq!(strerror(eno), "Unknown error");
+                assert_eq!(strerror(eno), unknown_error);
             }
         }
 
         for i in -4096..0 {
-            assert_eq!(strerror(i), "Unknown error");
+            assert_eq!(strerror(i), unknown_error);
         }
     }
 }
