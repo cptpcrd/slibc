@@ -294,16 +294,72 @@ use std::alloc::{GlobalAlloc, Layout};
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Malloc;
 
-#[cfg(feature = "alloc")]
 impl Malloc {
-    #[cfg(not(target_os = "freebsd"))]
+    /// Allocate a block of memory containing at least `size` bytes.
+    ///
+    /// Upon failure, NULL is returned.
+    #[inline]
+    pub fn malloc(size: usize) -> *mut u8 {
+        unsafe { libc::malloc(size) as *mut u8 }
+    }
+
+    /// Allocate a block of memory containing space for at least `nelem` elements which are `size`
+    /// bytes long.
+    #[inline]
+    pub fn calloc(nelem: usize, size: usize) -> *mut u8 {
+        unsafe { libc::calloc(nelem, size) as *mut u8 }
+    }
+
+    /// Allocate a block of memory with the given alignment.
+    ///
+    /// A pointer to the memory is stored in `ptr`. If an error occurs, `ptr` may be either set to
+    /// NULL OR left as-is.
+    ///
+    /// # Safety
+    ///
+    /// `align` must be a power of two, and a multiple of the size of a normal pointer (i.e.
+    /// `core::mem::size_of::<*const u8>()`).
+    #[inline]
+    pub unsafe fn posix_memalign(ptr: &mut *mut u8, align: usize, size: usize) -> Result<()> {
+        Error::unpack_nz(libc::posix_memalign(
+            ptr as *mut *mut u8 as *mut *mut libc::c_void,
+            align,
+            size,
+        ))
+    }
+
+    /// Resize a previously allocated block of memory.
+    ///
+    /// Upon failure, NULL is returned and the allocation is left unchanged.
+    ///
+    /// # Safety
+    ///
+    /// `ptr` must either be NULL or point to a valid allocation obtained using the `malloc()`
+    /// family of functions.
+    #[inline]
+    pub unsafe fn realloc(ptr: *mut u8, size: usize) -> *mut u8 {
+        libc::realloc(ptr as _, size) as *mut u8
+    }
+
+    /// Free a previously allocated block of memory.
+    ///
+    /// # Safety
+    ///
+    /// `ptr` must either be NULL or point to a valid allocation obtained using the `malloc()`
+    /// family of functions.
+    #[inline]
+    pub unsafe fn free(ptr: *mut u8) {
+        libc::free(ptr as _);
+    }
+
+    #[cfg(all(feature = "alloc", not(target_os = "freebsd")))]
     const PTR_SIZE: usize = core::mem::size_of::<*mut libc::c_void>();
 
-    #[cfg(not(target_os = "freebsd"))]
+    #[cfg(all(feature = "alloc", not(target_os = "freebsd")))]
     #[inline]
     unsafe fn alloc_memalign(layout: Layout) -> *mut u8 {
         let mut ptr = core::ptr::null_mut();
-        libc::posix_memalign(&mut ptr, layout.align(), layout.size());
+        let _ = Self::posix_memalign(&mut ptr, layout.align(), layout.size());
         ptr as *mut u8
     }
 
@@ -379,7 +435,7 @@ unsafe impl GlobalAlloc for Malloc {
             #[inline]
             unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
                 if layout.align() <= Self::PTR_SIZE {
-                    libc::malloc(layout.size()) as *mut u8
+                    Self::malloc(layout.size())
                 } else {
                     Self::alloc_memalign(layout)
                 }
@@ -388,7 +444,7 @@ unsafe impl GlobalAlloc for Malloc {
             #[inline]
             unsafe fn alloc_zeroed(&self, layout: Layout) -> *mut u8 {
                 if layout.align() <= Self::PTR_SIZE {
-                    libc::calloc(1, layout.size()) as *mut u8
+                    Self::calloc(1, layout.size())
                 } else {
                     let ptr = Self::alloc_memalign(layout);
                     if !ptr.is_null() {
@@ -403,7 +459,7 @@ unsafe impl GlobalAlloc for Malloc {
                 &self, old_ptr: *mut u8, layout: Layout, new_size: usize,
             ) -> *mut u8 {
                 if layout.align() <= Self::PTR_SIZE {
-                    libc::realloc(old_ptr as *mut _, new_size) as *mut u8
+                    Self::realloc(old_ptr, new_size)
                 } else {
                     let new_ptr = Self::alloc_memalign(
                         Layout::from_size_align_unchecked(new_size, layout.align())
@@ -419,7 +475,7 @@ unsafe impl GlobalAlloc for Malloc {
 
             #[inline]
             unsafe fn dealloc(&self, ptr: *mut u8, _layout: Layout) {
-                libc::free(ptr as *mut _);
+                Self::free(ptr);
             }
         }
     }
