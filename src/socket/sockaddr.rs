@@ -357,6 +357,14 @@ impl UnixAddr {
         Ok(Self(addr))
     }
 
+    #[inline]
+    pub fn new_unnamed() -> Self {
+        Self(libc::sockaddr_un {
+            sun_family: libc::AF_UNIX as _,
+            ..unsafe { core::mem::zeroed() }
+        })
+    }
+
     /// If this `UnixAddr` represents a path, return the path as an `OsStr`.
     #[inline]
     pub fn path(&self) -> Option<&OsStr> {
@@ -712,7 +720,7 @@ mod tests {
 
     #[test]
     fn test_unixaddr_unnamed() {
-        let addr = UnixAddr::new("").unwrap();
+        let addr = UnixAddr::new_unnamed();
         assert_eq!(addr.path(), None);
         #[cfg(linuxlike)]
         assert_eq!(addr.abstract_name(), None);
