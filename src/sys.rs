@@ -441,6 +441,9 @@ cfg_if::cfg_if! {
                 ptr: *mut libc::c_void, size: usize, flags: libc::c_int,
             ) -> *mut libc::c_void;
             pub fn sdallocx(ptr: *mut libc::c_void, size: usize, flags: libc::c_int);
+        }
+
+        extern "C" {
             pub fn sallocx(ptr: *mut libc::c_void, flags: libc::c_int) -> usize;
         }
 
