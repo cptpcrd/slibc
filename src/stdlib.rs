@@ -289,8 +289,6 @@ use std::alloc::{GlobalAlloc, Layout};
 ///
 /// - On FreeBSD, the `*allocx()` functions are used, since they provide better handling of large
 ///   alignments.
-#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
-#[cfg(feature = "alloc")]
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Malloc;
 
