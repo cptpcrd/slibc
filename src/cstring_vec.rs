@@ -66,7 +66,13 @@ impl CStringVec {
     /// Replace the element at the specified index `i` with the new string `new`.
     #[inline]
     pub fn replace(&mut self, i: usize, new: CString) {
-        debug_assert!(i < self.0.len() - 1);
+        assert!(
+            i < self.0.len() - 1,
+            "index {} out of bounds for CStringVec of length {} (the trailing NULL cannot be overwritten)",
+            i,
+            self.0.len(),
+        );
+
         let ptr = core::mem::replace(&mut self.0[i], new.into_raw());
         if !ptr.is_null() {
             unsafe {
