@@ -8,7 +8,7 @@ use crate::internal_prelude::*;
 
 /// A "borrowed" file descriptor.
 ///
-/// Unlike with [`FileDesc`](./struct.FileDesc.html), file descriptor is **NOT** automatically
+/// Unlike with [`FileDesc`](./struct.FileDesc.html), the file descriptor is **NOT** automatically
 /// closed when the `BorrowedFd` struct is dropped.
 #[derive(Debug)]
 pub struct BorrowedFd(RawFd);

@@ -26,8 +26,11 @@ fn parse_v4_octets(s: &[u8]) -> Option<[u8; 4]> {
 pub struct Inet4Addr(pub(crate) libc::in_addr);
 
 impl Inet4Addr {
+    /// An IP address referring to localhost; i.e. `127.0.0.1`.
     pub const LOCALHOST: Self = Self::new(127, 0, 0, 1);
+    /// An IP address representing an unspecified address; i.e. `0.0.0.0`.
     pub const UNSPECIFIED: Self = Self::new(0, 0, 0, 0);
+    /// An IP address representing the broadcast address; i.e. `255.255.255.255`.
     pub const BROADCAST: Self = Self::new(255, 255, 255, 255);
 
     /// Create a new Ipv4 address from the given octets.
@@ -51,15 +54,14 @@ impl Inet4Addr {
         self.octets() == [0, 0, 0, 0]
     }
 
-    /// Check whether the address portion of this socket address represents a loopback address
-    /// (`127.0.0.1/8`).
+    /// Check whether this address represents a loopback address (`127.0.0.1/8`).
     #[inline]
     pub fn is_loopback(&self) -> bool {
         self.octets()[0] == 127
     }
 
-    /// Check whether the address portion of this socket address represents a private address
-    /// (`10.0.0.0/8`, `172.16.0.0/12`, or `192.168.0.0/16`).
+    /// Check whether this address represents a private address (`10.0.0.0/8`, `172.16.0.0/12`, or
+    /// `192.168.0.0/16`).
     #[inline]
     pub fn is_private(&self) -> bool {
         match self.octets() {
@@ -70,20 +72,19 @@ impl Inet4Addr {
         }
     }
 
-    /// Check whether the address portion of this socket address represents a link-local address
-    /// (`169.254.0.0/16`).
+    /// Check whether this address represents a link-local address (`169.254.0.0/16`).
     #[inline]
     pub fn is_link_local(&self) -> bool {
         self.octets()[..2] == [169, 254]
     }
 
-    /// Check whether the address portion of this socket address represents the broadcast
-    /// address (`255.255.255.255`).
+    /// Check whether this address represents the broadcast address (`255.255.255.255`).
     #[inline]
     pub fn is_broadcast(&self) -> bool {
         self.octets() == [255, 255, 255, 255]
     }
 
+    /// Convert this IPv4 address to an IPv6 address of the form `::ffff:a.b.c.d`.
     #[inline]
     pub fn to_ipv6_mapped(&self) -> Inet6Addr {
         let octets = self.octets();
@@ -153,7 +154,9 @@ impl fmt::Display for Inet4Addr {
 pub struct Inet6Addr(pub(crate) libc::in6_addr);
 
 impl Inet6Addr {
+    /// An IP address referring to localhost; i.e. `::1`.
     pub const LOCALHOST: Self = Self::new(0, 0, 0, 0, 0, 0, 0, 1);
+    /// An IP address representing an unspecified address; i.e. `::`.
     pub const UNSPECIFIED: Self = Self::new(0, 0, 0, 0, 0, 0, 0, 0);
 
     /// Create a new Ipv6 address from eight 16-bit segments.
@@ -198,22 +201,19 @@ impl Inet6Addr {
         self.0.s6_addr
     }
 
-    /// Check whether the address portion of this socket address represents the "unspecified"
-    /// address (`::`).
+    /// Check whether this address represents the "unspecified" address (`::`).
     #[inline]
     pub fn is_unspecified(&self) -> bool {
         self.octets() == [0; 16]
     }
 
-    /// Check whether the address portion of this socket address represents a loopback address
-    /// (`::1`).
+    /// Check whether this address represents a loopback address (`::1`).
     #[inline]
     pub fn is_loopback(&self) -> bool {
         self.octets() == [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
     }
 
-    /// Check whether the address portion of this socket address represents a multicast address
-    /// (`ff00::/8`).
+    /// Check whether this address represents a multicast address (`ff00::/8`).
     #[inline]
     pub fn is_multicast(&self) -> bool {
         self.octets()[0] == 0xFF
