@@ -2064,4 +2064,25 @@ mod tests {
             );
         }
     }
+
+    #[cfg(not(target_os = "android"))]
+    #[test]
+    fn test_sync() {
+        // Just make sure it doesn't segfault
+        sync();
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn test_syncfs() {
+        let f = crate::open(crate::c_paths::slash(), OFlag::O_RDONLY, 0).unwrap();
+        f.syncfs().unwrap();
+    }
+
+    #[test]
+    fn test_sync_file() {
+        let f = crate::open(crate::c_paths::slash(), OFlag::O_RDONLY, 0).unwrap();
+        f.sync_all().unwrap();
+        f.sync_data().unwrap();
+    }
 }
