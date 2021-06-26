@@ -43,27 +43,27 @@ impl Inet4Addr {
 
     /// Get the four octets that make up this address
     #[inline]
-    pub fn octets(&self) -> [u8; 4] {
+    pub const fn octets(&self) -> [u8; 4] {
         self.0.s_addr.to_ne_bytes()
     }
 
     /// Check whether the address portion of this socket address represents the "unspecified"
     /// address (`0.0.0.0`).
     #[inline]
-    pub fn is_unspecified(&self) -> bool {
-        self.octets() == [0, 0, 0, 0]
+    pub const fn is_unspecified(&self) -> bool {
+        matches!(self.octets(), [0, 0, 0, 0])
     }
 
     /// Check whether this address represents a loopback address (`127.0.0.1/8`).
     #[inline]
-    pub fn is_loopback(&self) -> bool {
+    pub const fn is_loopback(&self) -> bool {
         self.octets()[0] == 127
     }
 
     /// Check whether this address represents a private address (`10.0.0.0/8`, `172.16.0.0/12`, or
     /// `192.168.0.0/16`).
     #[inline]
-    pub fn is_private(&self) -> bool {
+    pub const fn is_private(&self) -> bool {
         match self.octets() {
             [10, ..] => true,
             [192, 168, ..] => true,
@@ -74,19 +74,19 @@ impl Inet4Addr {
 
     /// Check whether this address represents a link-local address (`169.254.0.0/16`).
     #[inline]
-    pub fn is_link_local(&self) -> bool {
-        self.octets()[..2] == [169, 254]
+    pub const fn is_link_local(&self) -> bool {
+        matches!(self.octets(), [169, 254, ..])
     }
 
     /// Check whether this address represents the broadcast address (`255.255.255.255`).
     #[inline]
-    pub fn is_broadcast(&self) -> bool {
-        self.octets() == [255, 255, 255, 255]
+    pub const fn is_broadcast(&self) -> bool {
+        matches!(self.octets(), [255, 255, 255, 255])
     }
 
     /// Convert this IPv4 address to an IPv6 address of the form `::ffff:a.b.c.d`.
     #[inline]
-    pub fn to_ipv6_mapped(&self) -> Inet6Addr {
+    pub const fn to_ipv6_mapped(&self) -> Inet6Addr {
         let octets = self.octets();
         Inet6Addr::new(
             0,
@@ -180,7 +180,7 @@ impl Inet6Addr {
 
     /// Get the eight 16-bit segments that represent this Ipv6 address.
     #[inline]
-    pub fn segments(&self) -> [u16; 8] {
+    pub const fn segments(&self) -> [u16; 8] {
         let [a1, a2, b1, b2, c1, c2, d1, d2, e1, e2, f1, f2, g1, g2, h1, h2] = self.0.s6_addr;
 
         [
@@ -197,25 +197,25 @@ impl Inet6Addr {
 
     /// Get the sixteen octets that represent this IPv6 address.
     #[inline]
-    pub fn octets(&self) -> [u8; 16] {
+    pub const fn octets(&self) -> [u8; 16] {
         self.0.s6_addr
     }
 
     /// Check whether this address represents the "unspecified" address (`::`).
     #[inline]
-    pub fn is_unspecified(&self) -> bool {
-        self.octets() == [0; 16]
+    pub const fn is_unspecified(&self) -> bool {
+        matches!(self.octets(), [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
     }
 
     /// Check whether this address represents a loopback address (`::1`).
     #[inline]
-    pub fn is_loopback(&self) -> bool {
-        self.octets() == [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+    pub const fn is_loopback(&self) -> bool {
+        matches!(self.octets(), [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
     }
 
     /// Check whether this address represents a multicast address (`ff00::/8`).
     #[inline]
-    pub fn is_multicast(&self) -> bool {
+    pub const fn is_multicast(&self) -> bool {
         self.octets()[0] == 0xFF
     }
 
@@ -234,7 +234,7 @@ impl Inet6Addr {
     /// );
     /// ```
     #[inline]
-    pub fn to_ipv4(&self) -> Option<Inet4Addr> {
+    pub const fn to_ipv4(&self) -> Option<Inet4Addr> {
         match self.octets() {
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, a, b, c, d] => {
                 Some(Inet4Addr::new(a, b, c, d))
@@ -246,7 +246,7 @@ impl Inet6Addr {
 
     /// If this address is of the form `::ffff:a.b.c.d`, return the IPv4 version (i.e. `a.b.c.d`).
     #[inline]
-    pub fn to_ipv4_mapped(&self) -> Option<Inet4Addr> {
+    pub const fn to_ipv4_mapped(&self) -> Option<Inet4Addr> {
         match self.octets() {
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, a, b, c, d] => {
                 Some(Inet4Addr::new(a, b, c, d))

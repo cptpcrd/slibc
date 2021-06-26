@@ -394,17 +394,14 @@ impl UnixAddr {
     /// This method returns `false` if and only if [`Self::path()`] (and `Self::abstract_name()` on
     /// Linux/Android) would both return None.
     #[inline]
-    pub fn is_unnamed(&self) -> bool {
-        if self.0.sun_path[0] != 0 {
-            return false;
+    pub const fn is_unnamed(&self) -> bool {
+        match self.0.sun_path {
+            #[cfg(linuxlike)]
+            [0, 0, ..] => true,
+            #[cfg(not(linuxlike))]
+            [0, ..] => true,
+            _ => false,
         }
-
-        #[cfg(linuxlike)]
-        if self.0.sun_path[1] != 0 {
-            return false;
-        }
-
-        true
     }
 
     #[inline]
