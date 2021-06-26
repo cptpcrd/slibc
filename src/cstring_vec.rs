@@ -57,12 +57,6 @@ impl CStringVec {
         Self(v)
     }
 
-    /// Create a new `CStringVec` with one element `cstr` and a trailing NULL.
-    #[inline]
-    pub fn new_with(cstr: CString) -> Self {
-        Self(vec![cstr.into_raw(), core::ptr::null_mut()])
-    }
-
     /// Replace the element at the specified index `i` with the new string `new`.
     #[inline]
     pub fn replace(&mut self, i: usize, new: CString) {
@@ -249,8 +243,6 @@ mod tests {
         check_cstringvec_empty(CStringVec::new());
         check_cstringvec_empty(CStringVec::with_capacity(0));
         check_cstringvec_empty(CStringVec::with_capacity(10));
-
-        check_cstringvec(CStringVec::new_with(CString::new("abc").unwrap()), &["abc"]);
     }
 
     #[test]
@@ -302,9 +294,8 @@ mod tests {
     #[cfg(feature = "std")]
     #[test]
     fn test_cstringvec_debug() {
-        assert_eq!(
-            format!("{:?}", CStringVec::new_with(CString::new("abc").unwrap())),
-            "[Some(\"abc\"), None]",
-        );
+        let mut csvec = CStringVec::new();
+        csvec.push(CString::new("abc").unwrap());
+        assert_eq!(format!("{:?}", csvec), "[Some(\"abc\"), None]");
     }
 }
