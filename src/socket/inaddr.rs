@@ -204,13 +204,19 @@ impl Inet6Addr {
     /// Check whether this address represents the "unspecified" address (`::`).
     #[inline]
     pub const fn is_unspecified(&self) -> bool {
-        matches!(self.octets(), [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+        matches!(
+            self.octets(),
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        )
     }
 
     /// Check whether this address represents a loopback address (`::1`).
     #[inline]
     pub const fn is_loopback(&self) -> bool {
-        matches!(self.octets(), [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+        matches!(
+            self.octets(),
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+        )
     }
 
     /// Check whether this address represents a multicast address (`ff00::/8`).
