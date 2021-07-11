@@ -176,6 +176,20 @@ macro_rules! parse_bytes_int_impl {
 
 parse_bytes_int_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
+/// A caching dynamic function loader that uses `dlsym()`.
+///
+/// # Example
+///
+/// ```ignore
+/// static GETUID: DlFuncLoader<unsafe extern "C" fn() -> libc::uid_t> =
+///     unsafe { DlFuncLoader::new(b"getuid\0") };
+///
+/// if let Some(getuid) = GETUID.get() {
+///     println!("UID: {}", getuid());
+/// } else {
+///     println!("Unable to load getuid()");
+/// }
+/// ```
 #[allow(dead_code)]
 pub struct DlFuncLoader<F> {
     name: &'static [u8],
@@ -185,6 +199,12 @@ pub struct DlFuncLoader<F> {
 
 #[allow(dead_code)]
 impl<F> DlFuncLoader<F> {
+    /// Create a new `DlFuncLoader`.
+    ///
+    /// # Safety
+    ///
+    /// - `name` must be NUL-terminated; e.g. `"getuid\0"`.
+    /// - The generic type `F` must be an `unsafe extern "C" fn`. See the struct-level example.
     #[inline]
     pub const unsafe fn new(name: &'static [u8]) -> Self {
         Self {
@@ -194,6 +214,9 @@ impl<F> DlFuncLoader<F> {
         }
     }
 
+    /// Try to load the named function.
+    ///
+    /// The value returned by this method will be cached after the first call.
     #[inline]
     pub fn get(&self) -> Option<F> {
         debug_assert_eq!(self.name.last(), Some(&0));
