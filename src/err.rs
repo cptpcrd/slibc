@@ -134,10 +134,10 @@ impl From<Error> for std::io::Error {
 
 #[cfg_attr(docsrs, doc(cfg(feature = "nix")))]
 #[cfg(feature = "nix")]
-impl From<Error> for nix::Error {
+impl From<Error> for nix::errno::Errno {
     #[inline]
     fn from(e: Error) -> Self {
-        Self::Sys(nix::errno::Errno::from_i32(e.0))
+        Self::from_i32(e.0)
     }
 }
 

@@ -404,16 +404,7 @@ impl From<Errno> for std::io::Error {
 impl From<Errno> for nix::errno::Errno {
     #[inline]
     fn from(e: Errno) -> Self {
-        nix::errno::Errno::from_i32(e as i32)
-    }
-}
-
-#[cfg_attr(docsrs, doc(cfg(feature = "nix")))]
-#[cfg(feature = "nix")]
-impl From<Errno> for nix::Error {
-    #[inline]
-    fn from(e: Errno) -> Self {
-        Self::Sys(e.into())
+        Self::from_i32(e as i32)
     }
 }
 
@@ -620,15 +611,6 @@ mod tests {
         assert_eq!(
             nix::errno::Errno::from(Errno::Unknown),
             nix::errno::Errno::UnknownErrno
-        );
-
-        assert_eq!(
-            nix::Error::from(Errno::ENOENT),
-            nix::Error::Sys(nix::errno::Errno::ENOENT)
-        );
-        assert_eq!(
-            nix::Error::from(Errno::Unknown),
-            nix::Error::Sys(nix::errno::Errno::UnknownErrno)
         );
 
         assert_eq!(Errno::from(nix::errno::Errno::ENOENT), Errno::ENOENT);
