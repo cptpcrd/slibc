@@ -8,24 +8,18 @@ use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd};
 bitflags::bitflags! {
     #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
     pub struct PidFdOpenFlags: libc::c_uint {
-        #[doc(hidden)]
-        const __RESERVED = 0;
     }
 }
 
 bitflags::bitflags! {
     #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
     pub struct PidFdGetfdFlags: libc::c_uint {
-        #[doc(hidden)]
-        const __RESERVED = 0;
     }
 }
 
 bitflags::bitflags! {
     #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
     pub struct PidFdSignalFlags: libc::c_uint {
-        #[doc(hidden)]
-        const __RESERVED = 0;
     }
 }
 
