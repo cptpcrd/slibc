@@ -468,7 +468,7 @@ mod tests {
 
         for entry in [cur1, cur2].iter() {
             #[cfg(feature = "std")]
-            assert_eq!(hash(&entry), hash(&entry.clone()));
+            assert_eq!(hash(entry), hash(&entry.clone()));
 
             assert_eq!(format!("{:?}", entry), format!("{:?}", entry.clone()));
             assert_eq!(entry, &entry.clone());

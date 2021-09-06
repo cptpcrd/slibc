@@ -85,6 +85,7 @@ impl Inet4Addr {
     }
 
     /// Convert this IPv4 address to an IPv6 address of the form `::ffff:a.b.c.d`.
+    #[allow(clippy::wrong_self_convention)]
     #[inline]
     pub const fn to_ipv6_mapped(&self) -> Inet6Addr {
         let octets = self.octets();
@@ -239,6 +240,7 @@ impl Inet6Addr {
     ///     Some(Inet4Addr::new(0, 0, 0, 1)),
     /// );
     /// ```
+    #[allow(clippy::wrong_self_convention)]
     #[inline]
     pub const fn to_ipv4(&self) -> Option<Inet4Addr> {
         match self.octets() {
@@ -251,6 +253,7 @@ impl Inet6Addr {
     }
 
     /// If this address is of the form `::ffff:a.b.c.d`, return the IPv4 version (i.e. `a.b.c.d`).
+    #[allow(clippy::wrong_self_convention)]
     #[inline]
     pub const fn to_ipv4_mapped(&self) -> Option<Inet4Addr> {
         match self.octets() {

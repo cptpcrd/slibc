@@ -821,7 +821,7 @@ impl Iterator for SigSetIter {
     type Item = Signal;
 
     fn next(&mut self) -> Option<Signal> {
-        while let Some(sig) = self.it.next() {
+        for sig in &mut self.it {
             if self.set.contains(sig) {
                 return Some(sig);
             }

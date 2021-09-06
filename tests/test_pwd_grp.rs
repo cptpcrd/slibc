@@ -52,7 +52,7 @@ fn test_passwd_iter() {
         #[cfg(feature = "std")]
         assert_eq!(hash_pwd(&pwd), hash_pwd(&pwd.clone()));
 
-        if duplicate_names.iter().find(|&p| p == pwd.name()).is_none() {
+        if !duplicate_names.iter().any(|p| p == pwd.name()) {
             // Look up by name and make sure we get the same result
             let pwd2 = Passwd::lookup_name(pwd.name()).unwrap().unwrap();
             assert_eq!(pwd, pwd2);

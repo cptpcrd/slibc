@@ -40,7 +40,7 @@ pub fn osstr_from_buf(buf: &[u8]) -> &OsStr {
     OsStr::from_bytes(match crate::memchr(buf, 0) {
         Some(index) => {
             debug_assert!(index < buf.len());
-            unsafe { &buf.get_unchecked(0..index) }
+            unsafe { buf.get_unchecked(0..index) }
         }
         None => buf,
     })
