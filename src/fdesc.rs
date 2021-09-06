@@ -4,7 +4,7 @@ use std::io::prelude::*;
 use std::os::unix::prelude::*;
 
 use crate::ffi::RawFd;
-use crate::internal_prelude::*;
+use crate::BorrowedFd;
 
 /// A helper struct that wraps a file descriptor and provides useful methods.
 ///

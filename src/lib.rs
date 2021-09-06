@@ -119,8 +119,8 @@ pub mod ffi;
 mod borrowed_fd;
 mod fdesc;
 
-pub use borrowed_fd::*;
-pub use fdesc::*;
+pub use borrowed_fd::BorrowedFd;
+pub use fdesc::FileDesc;
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "alloc")] {
