@@ -172,6 +172,7 @@ impl core::ops::DerefMut for FileDesc {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::internal_prelude::*;
 
     fn get_fdesc() -> FileDesc {
         crate::pipe().unwrap().0
