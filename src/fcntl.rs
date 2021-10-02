@@ -253,8 +253,6 @@ pub fn splice(
 bitflags::bitflags! {
     #[cfg_attr(docsrs, doc(cfg(any(target_os = "linux", target_os = "android"))))]
     pub struct CopyFileFlags: libc::c_uint {
-        #[doc(hidden)]
-        const __RESERVED = 0;
     }
 }
 
@@ -323,10 +321,6 @@ bitflags::bitflags! {
         #[cfg_attr(docsrs, doc(cfg(target_os = "freebsd")))]
         #[cfg(target_os = "freebsd")]
         const USER_READAHEAD = libc::SF_USER_READAHEAD;
-
-        #[doc(hidden)]
-        #[cfg(not(target_os = "freebsd"))]
-        const __RESERVED = 0;
     }
 }
 
