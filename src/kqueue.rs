@@ -242,7 +242,7 @@ mod tests {
                 .as_ref()
                 .get_cloexec()
                 .unwrap());
-            assert!(!Kqueue::new_flags(crate::OFlag::O_CLOEXEC)
+            assert!(Kqueue::new_flags(crate::OFlag::O_CLOEXEC)
                 .unwrap()
                 .as_ref()
                 .get_cloexec()
