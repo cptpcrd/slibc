@@ -363,6 +363,20 @@ impl<'a, 'b> SendHdtr<'a, 'b> {
             trailers: core::marker::PhantomData,
         }
     }
+
+    #[inline]
+    pub fn headers(&self) -> &'a [crate::IoVec<'b>] {
+        unsafe {
+            core::slice::from_raw_parts(self.inner.headers as *const _, self.inner.hdr_cnt as _)
+        }
+    }
+
+    #[inline]
+    pub fn trailers(&self) -> &'a [crate::IoVec<'b>] {
+        unsafe {
+            core::slice::from_raw_parts(self.inner.trailers as *const _, self.inner.trl_cnt as _)
+        }
+    }
 }
 
 #[cfg_attr(docsrs, doc(cfg(any(target_os = "freebsd", target_os = "dragonfly"))))]
