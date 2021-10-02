@@ -352,6 +352,8 @@ pub struct SendHdtr<'a, 'b> {
 impl<'a, 'b> SendHdtr<'a, 'b> {
     #[inline]
     pub fn new(headers: &'a [crate::IoVec<'b>], trailers: &'a [crate::IoVec<'b>]) -> Self {
+        use core::convert::TryInto;
+
         Self {
             inner: libc::sf_hdtr {
                 headers: headers.as_ptr() as _,
