@@ -147,6 +147,26 @@ impl CStringVec {
         self.0[len - 2] = cstr.into_raw();
     }
 
+    /// Get a `CStr` referring to the `CString` at the given index `i`.
+    ///
+    /// If there is a NULL pointer at the given index (see [invariants](#invariants)), `None` is
+    /// returned.
+    pub fn get_cstr(&self, i: usize) -> Option<&CStr> {
+        assert!(
+            i < self.0.len() - 1,
+            "index {} out of bounds for CStringVec of length {} (cannot remove the trailing NULL)",
+            i,
+            self.0.len(),
+        );
+
+        let ptr = self.0[i];
+        if !ptr.is_null() {
+            Some(unsafe { CStr::from_ptr(ptr) })
+        } else {
+            None
+        }
+    }
+
     /// Get a raw pointer to the start of the `Vec`.
     ///
     /// This is suitable for passing as `argv` or `envp` to e.g. `execve()`.
@@ -302,6 +322,40 @@ mod tests {
         csvec.push(CString::new("abc").unwrap());
         csvec.push(CString::new("def").unwrap());
         check_cstringvec(csvec, &["abc", "def"]);
+    }
+
+    #[test]
+    fn test_cstringvec_get_cstr() {
+        let mut csvec = CStringVec::new();
+        csvec.push(CString::new("abc").unwrap());
+        csvec.push(CString::new("def").unwrap());
+
+        assert_eq!(
+            csvec.get_cstr(0),
+            Some(CStr::from_bytes_with_nul(b"abc\0").unwrap()),
+        );
+        assert_eq!(
+            csvec.get_cstr(1),
+            Some(CStr::from_bytes_with_nul(b"def\0").unwrap()),
+        );
+
+        let csvec = unsafe {
+            CStringVec::from_vec(vec![
+                CString::new("abc").unwrap().into_raw(),
+                core::ptr::null_mut(),
+                CString::new("def").unwrap().into_raw(),
+                core::ptr::null_mut(),
+            ])
+        };
+        assert_eq!(
+            csvec.get_cstr(0),
+            Some(CStr::from_bytes_with_nul(b"abc\0").unwrap()),
+        );
+        assert_eq!(csvec.get_cstr(1), None);
+        assert_eq!(
+            csvec.get_cstr(2),
+            Some(CStr::from_bytes_with_nul(b"def\0").unwrap()),
+        );
     }
 
     #[test]
