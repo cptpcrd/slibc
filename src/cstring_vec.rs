@@ -75,6 +75,57 @@ impl CStringVec {
         }
     }
 
+    /// Insert a `CString` at the given index `i`.
+    pub fn insert(&mut self, mut i: usize, new: CString) {
+        assert!(
+            i < self.0.len(),
+            "index {} out of bounds for CStringVec of length {} (cannot insert after the trailing NULL)",
+            i,
+            self.0.len(),
+        );
+
+        // Add another NULL, then copy everything forward
+
+        self.0.push(core::ptr::null_mut());
+
+        // We avoid using e.g. copy_within() so we can ensure that we never have duplicate
+        // (non-NULL) pointers in the case of a panic.
+        let mut last = new.into_raw();
+        while i < self.0.len() - 1 {
+            core::mem::swap(&mut last, &mut self.0[i]);
+            i += 1;
+        }
+        debug_assert!(last.is_null());
+    }
+
+    /// Remove the `CString` at the given index `i`.
+    ///
+    /// If there was a `CString` at the given index, it is returned. However, if there was a NULL
+    /// pointer at the given index (see [invariants](#invariants)), `None` is returned. In either
+    /// case the inner `Vec` is now one element shorter.
+    pub fn remove(&mut self, i: usize) -> Option<CString> {
+        assert!(
+            i < self.0.len() - 1,
+            "index {} out of bounds for CStringVec of length {} (cannot remove the trailing NULL)",
+            i,
+            self.0.len(),
+        );
+
+        // Again, we avoid using e.g. copy_within() so we can ensure that we never have duplicate
+        // (non-NULL) pointers in the case of a panic.
+        let mut ptr = core::ptr::null_mut();
+        for j in (i..self.0.len()).rev() {
+            core::mem::swap(&mut ptr, &mut self.0[j]);
+        }
+        self.0.truncate(self.0.len() - 1);
+
+        if !ptr.is_null() {
+            Some(unsafe { CString::from_raw(ptr) })
+        } else {
+            None
+        }
+    }
+
     /// Reserve space for `n` more `CString`s to be added to the end of the `Vec`.
     #[inline]
     pub fn reserve(&mut self, n: usize) {
@@ -265,6 +316,55 @@ mod tests {
 
         csvec.replace(0, CString::new("jkl").unwrap());
         check_cstringvec(csvec, &["jkl", "ghi"]);
+    }
+
+    #[test]
+    fn test_cstringvec_insert() {
+        let mut csvec = CStringVec::new();
+        csvec.insert(0, CString::new("abc").unwrap());
+        check_cstringvec(csvec.clone(), &["abc"]);
+
+        csvec.push(CString::new("def").unwrap());
+        check_cstringvec(csvec.clone(), &["abc", "def"]);
+
+        csvec.insert(1, CString::new("ghi").unwrap());
+        check_cstringvec(csvec.clone(), &["abc", "ghi", "def"]);
+
+        csvec.insert(0, CString::new("jkl").unwrap());
+        check_cstringvec(csvec.clone(), &["jkl", "abc", "ghi", "def"]);
+
+        csvec.insert(4, CString::new("mno").unwrap());
+        check_cstringvec(csvec.clone(), &["jkl", "abc", "ghi", "def", "mno"]);
+    }
+
+    #[test]
+    fn test_cstringvec_remove() {
+        let mut csvec = CStringVec::new();
+        csvec.push(CString::new("abc").unwrap());
+        csvec.push(CString::new("def").unwrap());
+        csvec.push(CString::new("ghi").unwrap());
+        csvec.push(CString::new("jkl").unwrap());
+        check_cstringvec(csvec.clone(), &["abc", "def", "ghi", "jkl"]);
+
+        assert_eq!(csvec.remove(2), Some(CString::new("ghi").unwrap()));
+        check_cstringvec(csvec.clone(), &["abc", "def", "jkl"]);
+
+        assert_eq!(csvec.remove(0), Some(CString::new("abc").unwrap()));
+        check_cstringvec(csvec.clone(), &["def", "jkl"]);
+
+        assert_eq!(csvec.remove(1), Some(CString::new("jkl").unwrap()));
+        check_cstringvec(csvec.clone(), &["def"]);
+
+        let mut csvec = unsafe {
+            CStringVec::from_vec(vec![
+                CString::new("abc").unwrap().into_raw(),
+                core::ptr::null_mut(),
+                CString::new("def").unwrap().into_raw(),
+                core::ptr::null_mut(),
+            ])
+        };
+        assert_eq!(csvec.remove(1), None);
+        check_cstringvec(csvec.clone(), &["abc", "def"]);
     }
 
     #[test]
