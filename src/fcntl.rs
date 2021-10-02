@@ -382,7 +382,7 @@ pub fn sendfile(
             s,
             offset as i64,
             nbytes,
-            hdtr.map_or_else(core::ptr::null, |ht| ht) as _,
+            hdtr.map_or_else(core::ptr::null, |ht| &ht.inner) as _,
             sbytes.map_or_else(core::ptr::null, |s| s) as *mut i64,
             flags.bits(),
         )
@@ -405,7 +405,7 @@ pub fn sendfile(
             s,
             offset as i64,
             len as *mut u64 as *mut i64,
-            hdtr.map_or_else(core::ptr::null, |ht| ht) as _,
+            hdtr.map_or_else(core::ptr::null, |ht| &ht.inner) as _,
             flags.bits(),
         )
     })
