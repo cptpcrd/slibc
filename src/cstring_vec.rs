@@ -290,9 +290,19 @@ impl core::iter::FromIterator<CString> for CStringVec {
 mod tests {
     use super::*;
 
-    fn check_cstringvec<S: PartialEq<OsStr> + fmt::Debug + ?Sized>(csvec: CStringVec, strs: &[&S]) {
-        fn check_inner<S: PartialEq<OsStr> + fmt::Debug + ?Sized>(csvec: &CStringVec, strs: &[&S]) {
+    fn check_cstringvec<S: AsRef<OsStr> + PartialEq<OsStr> + fmt::Debug + ?Sized>(
+        csvec: CStringVec,
+        strs: &[&S],
+    ) {
+        fn check_inner<S: AsRef<OsStr> + PartialEq<OsStr> + fmt::Debug + ?Sized>(
+            csvec: &CStringVec,
+            strs: &[&S],
+        ) {
             assert_eq!(csvec.len(), strs.len() + 1, "{:?} != {:?}", csvec, strs);
+            for (i, s) in strs.iter().enumerate() {
+                assert_eq!(csvec.get_cstr(i).unwrap().to_bytes(), s.as_ref().as_bytes());
+            }
+
             assert!(csvec.last().unwrap().is_null(), "{:?}", csvec);
         }
 
