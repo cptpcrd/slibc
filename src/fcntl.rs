@@ -355,9 +355,9 @@ impl<'a, 'b> SendHdtr<'a, 'b> {
         Self {
             inner: libc::sf_hdtr {
                 headers: headers.as_ptr() as _,
-                hdr_cnt: headers.len() as _,
+                hdr_cnt: headers.len().try_into().unwrap(),
                 trailers: trailers.as_ptr() as _,
-                trl_cnt: trailers.len() as _,
+                trl_cnt: trailers.len().try_into().unwrap(),
             },
             headers: core::marker::PhantomData,
             trailers: core::marker::PhantomData,
