@@ -457,7 +457,11 @@ impl DoubleEndedIterator for SignalRtIter {
 impl ExactSizeIterator for SignalRtIter {
     #[inline]
     fn len(&self) -> usize {
-        (self.0.end() + 1 - self.0.start()) as usize
+        if self.0.is_empty() {
+            0
+        } else {
+            (self.0.end() + 1 - self.0.start()) as usize
+        }
     }
 }
 
@@ -1077,9 +1081,14 @@ mod tests {
     #[test]
     fn test_signal_rt_iter() {
         let n_rtsigs = Signal::rt_signals().len();
-        for (i, sig) in Signal::rt_signals().enumerate() {
+        let mut rtsigs = Signal::rt_signals();
+        let mut i = 0;
+        while let Some(sig) = rtsigs.next() {
+            assert_eq!(n_rtsigs - i - 1, rtsigs.len());
             assert_eq!(Signal::rt_signals().nth(i), Some(sig));
             assert_eq!(Signal::rt_signals().nth_back(n_rtsigs - i - 1), Some(sig));
+            assert_eq!(Signal::rt_signals().position_of(sig), Some(i));
+            i += 1;
         }
 
         assert_eq!(Signal::rt_signals().nth(n_rtsigs), None);
@@ -1099,10 +1108,12 @@ mod tests {
         let mut it = Signal::rt_signals();
         it.by_ref().count();
         assert_eq!(it.next(), None);
+        assert_eq!(it.len(), 0);
 
         let mut it = Signal::rt_signals();
         it.by_ref().rev().count();
         assert_eq!(it.next(), None);
+        assert_eq!(it.len(), 0);
     }
 
     #[cfg(all(
