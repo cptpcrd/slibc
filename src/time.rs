@@ -33,6 +33,16 @@ impl AsRef<libc::timespec> for TimeSpec {
     }
 }
 
+impl From<TimeSpec> for libc::timespec {
+    #[inline]
+    fn from(ts: TimeSpec) -> Self {
+        Self {
+            tv_sec: ts.tv_sec,
+            tv_nsec: ts.tv_nsec,
+        }
+    }
+}
+
 impl From<libc::timespec> for TimeSpec {
     #[inline]
     fn from(ts: libc::timespec) -> Self {
@@ -122,6 +132,16 @@ impl AsRef<libc::timeval> for Timeval {
     #[inline]
     fn as_ref(&self) -> &libc::timeval {
         unsafe { &*(self as *const _ as *const _) }
+    }
+}
+
+impl From<Timeval> for libc::timeval {
+    #[inline]
+    fn from(tv: Timeval) -> Self {
+        Self {
+            tv_sec: tv.tv_sec,
+            tv_usec: tv.tv_usec,
+        }
     }
 }
 
@@ -380,6 +400,7 @@ mod tests {
             ts2
         );
         assert_eq!(ts1, TimeSpec::from(ts2));
+        assert_eq!(ts2, libc::timespec::from(ts1));
 
         let tv1 = Timeval {
             tv_sec: 123,
@@ -395,6 +416,7 @@ mod tests {
             tv2
         );
         assert_eq!(tv1, Timeval::from(tv2));
+        assert_eq!(tv2, libc::timeval::from(tv1));
     }
 
     fn isclose(t1: TimeSpec, t2: TimeSpec, nsec: u32) -> bool {

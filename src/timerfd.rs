@@ -68,18 +68,18 @@ pub fn timerfd_settime(
     value: Option<TimeSpec>,
 ) -> Result<(Option<TimeSpec>, Option<TimeSpec>)> {
     let new_itspec = libc::itimerspec {
-        it_interval: *interval
+        it_interval: interval
             .unwrap_or(TimeSpec {
                 tv_sec: 0,
                 tv_nsec: 0,
             })
-            .as_ref(),
-        it_value: *value
+            .into(),
+        it_value: value
             .unwrap_or(TimeSpec {
                 tv_sec: 0,
                 tv_nsec: 0,
             })
-            .as_ref(),
+            .into(),
     };
 
     let mut old_itspec = MaybeUninit::uninit();
