@@ -912,6 +912,19 @@ mod tests {
                 Inet6SockAddr::new(Inet6Addr::new(0, 0, 0, 0, 0, 0, 258, 0), 80, 0, 0),
                 "[::1.2.0.0]:80",
             ),
+            // Zero sequences
+            (
+                Inet6SockAddr::new(Inet6Addr::new(1, 0, 3, 4, 5, 6, 7, 8), 80, 0, 0),
+                "[1:0:3:4:5:6:7:8]:80",
+            ),
+            (
+                Inet6SockAddr::new(Inet6Addr::new(1, 2, 3, 4, 5, 6, 7, 0), 80, 0, 0),
+                "[1:2:3:4:5:6:7:0]:80",
+            ),
+            (
+                Inet6SockAddr::new(Inet6Addr::new(0, 2, 3, 4, 5, 6, 7, 8), 80, 0, 0),
+                "[0:2:3:4:5:6:7:8]:80",
+            ),
         ]
         .iter()
         {

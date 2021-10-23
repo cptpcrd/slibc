@@ -388,7 +388,7 @@ impl fmt::Display for Inet6Addr {
                 }
             } else if let Some(first_zero) = first_zero.take() {
                 let new_range = first_zero..i;
-                if new_range.len() > zeroed_range.len() {
+                if new_range.len() > zeroed_range.len().max(1) {
                     zeroed_range = new_range;
                 }
             }
@@ -396,7 +396,7 @@ impl fmt::Display for Inet6Addr {
 
         if let Some(first_zero) = first_zero {
             let new_range = first_zero..segments.len();
-            if new_range.len() > zeroed_range.len() {
+            if new_range.len() > zeroed_range.len().max(1) {
                 zeroed_range = new_range;
             }
         }
