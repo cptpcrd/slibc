@@ -1167,6 +1167,8 @@ mod tests {
             for sig in all_signals() {
                 assert!(!set.contains(sig));
             }
+
+            assert_eq!(set.iter().next(), None);
         }
 
         fn check_full(set: SigSet) {
@@ -1181,6 +1183,8 @@ mod tests {
             for sig in all_signals() {
                 assert!(set.contains(sig));
             }
+
+            assert!(set.iter().eq(all_signals()));
         }
 
         fn check_neither(set: SigSet) {
@@ -1188,6 +1192,16 @@ mod tests {
             assert!(!set.is_full());
             assert_ne!(set, SigSet::full());
             assert_ne!(set, SigSet::empty());
+
+            let n = set.iter().count();
+            assert!(n > 0, "{} < 0", n);
+            assert!(
+                n < all_signals().count(),
+                "{} > {}",
+                n,
+                all_signals().count(),
+            );
+            assert_eq!(n, all_signals().filter(|&sig| set.contains(sig)).count());
         }
 
         let mut s;
@@ -1237,10 +1251,13 @@ mod tests {
         s.remove(Signal::SIGTERM);
         check_neither(s);
 
-        #[cfg(any(linuxlike, target_os = "freebsd", target_os = "netbsd"))]
-        {
-            check_neither(Signal::posix_signals().collect());
-            check_neither(Signal::rt_signals().collect());
+        cfg_if::cfg_if! {
+            if #[cfg(any(linuxlike, target_os = "freebsd", target_os = "netbsd"))] {
+                check_neither(Signal::posix_signals().collect());
+                check_neither(Signal::rt_signals().collect());
+            } else {
+                check_full(Signal::posix_signals().collect());
+            }
         }
 
         s = SigSet::empty();
