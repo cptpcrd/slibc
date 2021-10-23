@@ -74,6 +74,19 @@ impl Read for FileDesc {
 }
 
 #[cfg(feature = "std")]
+impl Read for &FileDesc {
+    #[inline]
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        Read::read(&mut &self.0, buf)
+    }
+
+    #[inline]
+    fn read_vectored(&mut self, bufs: &mut [std::io::IoSliceMut<'_>]) -> std::io::Result<usize> {
+        Read::read_vectored(&mut &self.0, bufs)
+    }
+}
+
+#[cfg(feature = "std")]
 impl Write for FileDesc {
     #[inline]
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
@@ -92,10 +105,36 @@ impl Write for FileDesc {
 }
 
 #[cfg(feature = "std")]
+impl Write for &FileDesc {
+    #[inline]
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        Write::write(&mut &self.0, buf)
+    }
+
+    #[inline]
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+
+    #[inline]
+    fn write_vectored(&mut self, bufs: &[std::io::IoSlice<'_>]) -> std::io::Result<usize> {
+        Write::write_vectored(&mut &self.0, bufs)
+    }
+}
+
+#[cfg(feature = "std")]
 impl Seek for FileDesc {
     #[inline]
     fn seek(&mut self, pos: std::io::SeekFrom) -> std::io::Result<u64> {
         Seek::seek(&mut self.0, pos)
+    }
+}
+
+#[cfg(feature = "std")]
+impl Seek for &FileDesc {
+    #[inline]
+    fn seek(&mut self, pos: std::io::SeekFrom) -> std::io::Result<u64> {
+        Seek::seek(&mut &self.0, pos)
     }
 }
 
