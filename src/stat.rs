@@ -164,6 +164,18 @@ impl Stat {
         self.0.st_size as u64
     }
 
+    /// Get the block size of this file.
+    #[inline]
+    pub fn blksize(&self) -> u64 {
+        self.0.st_blksize as u64
+    }
+
+    /// Get the number of blocks used by this file.
+    #[inline]
+    pub fn blocks(&self) -> u64 {
+        self.0.st_blocks as u64
+    }
+
     /// Get the last access time of this file (if available).
     #[inline]
     pub fn atime(&self) -> TimeSpec {
