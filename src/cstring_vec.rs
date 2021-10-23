@@ -70,7 +70,7 @@ impl CStringVec {
         let ptr = core::mem::replace(&mut self.0[i], new.into_raw());
         if !ptr.is_null() {
             unsafe {
-                CString::from_raw(ptr);
+                drop(CString::from_raw(ptr));
             }
         }
     }
@@ -226,7 +226,7 @@ impl Drop for CStringVec {
         for &ptr in &self.0 {
             if !ptr.is_null() {
                 unsafe {
-                    CString::from_raw(ptr);
+                    drop(CString::from_raw(ptr));
                 }
             }
         }

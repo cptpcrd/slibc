@@ -926,10 +926,7 @@ pub fn gethostname_alloc() -> Result<CString> {
     // _SC_HOST_NAME_MAX may not take the trailing NUL byte into account
     let maxlen = sysconf(SysconfName::HOST_NAME_MAX).unwrap_or(1024) + 1;
 
-    let mut buf = Vec::with_capacity(maxlen);
-    unsafe {
-        buf.set_len(maxlen);
-    }
+    let mut buf = vec![0; maxlen];
 
     Error::unpack(unsafe { libc::gethostname(buf.as_mut_ptr() as *mut _, buf.len()) })?;
 
@@ -986,10 +983,7 @@ pub fn getdomainname_alloc() -> Result<CString> {
     #[cfg(not(linuxlike))]
     let maxlen = sysconf(SysconfName::HOST_NAME_MAX).unwrap_or(1024) + 1;
 
-    let mut buf = Vec::with_capacity(maxlen);
-    unsafe {
-        buf.set_len(maxlen);
-    }
+    let mut buf = vec![0; maxlen];
 
     Error::unpack(unsafe { libc::getdomainname(buf.as_mut_ptr() as *mut _, buf.len() as _) })?;
 
@@ -1086,10 +1080,7 @@ pub fn ttyname_r(fd: RawFd, buf: &mut [u8]) -> Result<&CStr> {
 pub fn ttyname_alloc(fd: RawFd) -> Result<CString> {
     let maxlen = crate::sysconf(crate::SysconfName::TTY_NAME_MAX).unwrap_or(100);
 
-    let mut buf = Vec::with_capacity(maxlen);
-    unsafe {
-        buf.set_len(maxlen);
-    }
+    let mut buf = vec![0; maxlen];
 
     let len = ttyname_r(fd, &mut buf)?.to_bytes().len();
 
@@ -1170,10 +1161,7 @@ pub fn getlogin_r(buf: &mut [u8]) -> Result<&CStr> {
 pub fn getlogin_alloc() -> Result<CString> {
     let maxlen = crate::sysconf(crate::SysconfName::LOGIN_NAME_MAX).unwrap_or(100);
 
-    let mut buf = Vec::with_capacity(maxlen);
-    unsafe {
-        buf.set_len(maxlen);
-    }
+    let mut buf = vec![0; maxlen];
 
     let len = getlogin_r(&mut buf)?.to_bytes().len();
 
@@ -1220,10 +1208,7 @@ pub fn getcwd(buf: &mut [u8]) -> Result<&CStr> {
 #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 #[cfg(feature = "alloc")]
 pub fn getcwd_alloc() -> Result<CString> {
-    let mut buf = Vec::with_capacity(crate::PATH_MAX);
-    unsafe {
-        buf.set_len(crate::PATH_MAX);
-    }
+    let mut buf = vec![0; crate::PATH_MAX];
 
     if unsafe { libc::getcwd(buf.as_mut_ptr() as *mut _, buf.len()) }.is_null() {
         return Err(Error::last());
@@ -1319,10 +1304,7 @@ pub fn readlinkat<P: AsPath>(dirfd: RawFd, path: P, buf: &mut [u8]) -> Result<us
 #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 #[cfg(feature = "alloc")]
 pub fn readlink_alloc<P: AsPath>(path: P) -> Result<OsString> {
-    let mut buf = Vec::with_capacity(crate::PATH_MAX);
-    unsafe {
-        buf.set_len(crate::PATH_MAX);
-    }
+    let mut buf = vec![0; crate::PATH_MAX];
 
     let n = readlink(path, &mut buf)?;
 
@@ -1334,10 +1316,7 @@ pub fn readlink_alloc<P: AsPath>(path: P) -> Result<OsString> {
 #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 #[cfg(feature = "alloc")]
 pub fn readlinkat_alloc<P: AsPath>(dirfd: RawFd, path: P) -> Result<OsString> {
-    let mut buf = Vec::with_capacity(crate::PATH_MAX);
-    unsafe {
-        buf.set_len(crate::PATH_MAX);
-    }
+    let mut buf = vec![0; crate::PATH_MAX];
 
     let n = readlinkat(dirfd, path, &mut buf)?;
 

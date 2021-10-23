@@ -52,9 +52,7 @@ impl CpuSet {
     /// Panics if `cpu` is too large to be added to a CPU set.
     #[inline]
     pub fn add(&mut self, cpu: u32) {
-        if !Self::can_contain(cpu) {
-            panic!("CPU cannot fit in a CpuSet");
-        }
+        assert!(Self::can_contain(cpu), "CPU cannot fit in a CpuSet");
 
         unsafe {
             libc::CPU_SET(cpu as usize, &mut self.0);

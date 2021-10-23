@@ -414,9 +414,12 @@ mod tests {
             let left = $left;
             let right = $right;
 
-            if !isclose(left, right, 100_000) {
-                panic!("assertion failed: {:?} !~ {:?}", left, right);
-            }
+            assert!(
+                isclose(left, right, 100_000),
+                "assertion failed: {:?} !~ {:?}",
+                left,
+                right,
+            );
         }};
     }
 

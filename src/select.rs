@@ -45,9 +45,10 @@ impl FdSet {
     /// Panics if `fd` cannot be added to a file descriptor set (see [`Self::can_contain()`]).
     #[inline]
     pub fn add(&mut self, fd: RawFd) {
-        if !Self::can_contain(fd) {
-            panic!("file descriptor cannot fit in an FdSet");
-        }
+        assert!(
+            Self::can_contain(fd),
+            "file descriptor cannot fit in an FdSet",
+        );
 
         unsafe {
             libc::FD_SET(fd, &mut self.0);

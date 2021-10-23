@@ -39,10 +39,7 @@ pub fn ptsname_r(fd: RawFd, buf: &mut [u8]) -> Result<&CStr> {
 pub fn ptsname_alloc(fd: RawFd) -> Result<CString> {
     let maxlen = crate::sysconf(crate::SysconfName::TTY_NAME_MAX).unwrap_or(100);
 
-    let mut buf = Vec::with_capacity(maxlen);
-    unsafe {
-        buf.set_len(maxlen);
-    }
+    let mut buf = vec![0; maxlen];
 
     let len = ptsname_r(fd, &mut buf)?.to_bytes().len();
 
@@ -257,10 +254,7 @@ pub unsafe fn realpath_unchecked<P: AsPath>(path: P, buf: &mut [u8]) -> Result<&
 #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 #[cfg(feature = "alloc")]
 pub fn realpath_alloc<P: AsPath>(path: P) -> Result<CString> {
-    let mut buf = Vec::with_capacity(crate::PATH_MAX);
-    unsafe {
-        buf.set_len(crate::PATH_MAX);
-    }
+    let mut buf = vec![0; crate::PATH_MAX];
 
     let len = unsafe { realpath_unchecked(path, &mut buf)? }
         .to_bytes()
