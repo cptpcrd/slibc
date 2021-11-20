@@ -920,6 +920,24 @@ impl SigInfo {
     }
 }
 
+impl fmt::Debug for SigInfo {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut ds = f.debug_struct("SigInfo");
+        ds.field("si_signo", &self.si_signo());
+        ds.field("si_errno", &self.si_errno());
+        ds.field("si_code", &self.si_code());
+
+        #[cfg(not(netbsdlike))]
+        {
+            ds.field("si_pid", &self.si_pid());
+            ds.field("si_uid", &self.si_uid());
+            ds.field("si_status", &self.si_status());
+        }
+
+        ds.finish()
+    }
+}
+
 #[inline]
 pub fn pause() {
     unsafe {
