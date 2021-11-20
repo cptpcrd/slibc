@@ -8,6 +8,7 @@ use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd};
 bitflags::bitflags! {
     #[cfg_attr(docsrs, doc(cfg(target_os = "linux")))]
     pub struct PidFdOpenFlags: libc::c_uint {
+        const NONBLOCK = sys::PIDFD_NONBLOCK;
     }
 }
 
@@ -185,5 +186,18 @@ mod tests {
         let r2_stat = r2.stat().unwrap();
         assert_eq!(r1_stat.dev(), r2_stat.dev());
         assert_eq!(r1_stat.ino(), r2_stat.ino());
+    }
+
+    #[test]
+    fn test_pidfd_open_nonblock() {
+        if pidfd_open(libc::pid_t::MAX, PidFdOpenFlags::NONBLOCK).unwrap_err() != Errno::ESRCH {
+            return;
+        }
+
+        let pfd = PidFd::open(crate::getpid(), PidFdOpenFlags::empty()).unwrap();
+        assert!(!pfd.as_ref().get_nonblocking().unwrap());
+
+        let pfd = PidFd::open(crate::getpid(), PidFdOpenFlags::NONBLOCK).unwrap();
+        assert!(pfd.as_ref().get_nonblocking().unwrap());
     }
 }

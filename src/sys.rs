@@ -86,6 +86,8 @@ cfg_if::cfg_if! {
 
         pub const POSIX_SPAWN_SETSID: libc::c_short = 0x80;
 
+        pub const PIDFD_NONBLOCK: libc::c_uint = libc::O_NONBLOCK as _;
+
         #[cfg(any(target_env = "", target_env = "gnu"))]
         #[derive(Copy, Clone, Debug)]
         #[repr(C)]
